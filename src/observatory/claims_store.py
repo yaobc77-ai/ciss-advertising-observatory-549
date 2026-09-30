@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from contextlib import nullcontext
 from datetime import datetime
 
 from psycopg.types.json import Jsonb
@@ -208,7 +209,13 @@ class ClaimsStore:
         return _hash({"schema_version": 1, "results": results, "reviews": reviews, "retractions": events})
 
     def matches(self, filters: Filters, *, nc_ids=None, sc_ids=None, taxonomy=None,
-                review_state=None, offset=0, limit=20):
+                review_state=None, offset=0, limit=20, _connection=None):
+        """Read published matches; an internal caller may share its read snapshot.
+
+        ``_connection`` is for the bounded graph reader, after it has started a
+        repeatable-read read-only transaction. It is never a public tool input.
+        Counts of matches do not measure completed classification coverage.
+        """
         offset, limit = self.db._page_bounds(offset, limit)
         where, params = self.db.where(filters)
         conditions = [where, "c.body_hash=v.body_hash", "c.version_id=r.current_version",
@@ -238,26 +245,47 @@ class ClaimsStore:
                 "JOIN claims2_runs run USING(run_key) "
                 "JOIN claims2_taxonomies tax ON tax.bundle_fingerprint=run.bundle_fingerprint")
         query = join + " WHERE " + " AND ".join(conditions)
-        with self.db.connect() as conn:
-            conn.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY")
+        with nullcontext(_connection) if _connection is not None else self.db.connect() as conn:
+            if _connection is None:
+                conn.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            scope = conn.execute(
+                "SELECT count(*) AS scope_records FROM records r "
+                "JOIN record_versions v ON v.version_id=r.current_version WHERE " + where,
+                self.db.where(filters)[1],
+            ).fetchone()["scope_records"]
             if not self._available(conn):
                 return {"available": False, "claims_version": None, "total_records": 0,
-                        "total_matches": 0, "records": [], "offset": offset, "limit": limit}
+                        "total_matches": 0, "records": [], "offset": offset, "limit": limit,
+                        "category_counts": [],
+                        "meaning": "Published taxonomy assignments; not independent fact checking.",
+                        "coverage": "No published results are available; absence is not a negative classification.",
+                        "coverage_summary": {"scope_records": scope, "published_match_records": 0,
+                                             "classification_completion_known": False}}
             version = self._version(conn)
             totals = conn.execute("SELECT count(DISTINCT c.record_id) AS total_records,count(*) AS total_matches " + query, params).fetchone()
+            categories = conn.execute(
+                "SELECT c.nc_id,c.sc_id,run.bundle_fingerprint AS taxonomy_version,"
+                "tax.payload->'subclaims'->>c.nc_id AS nc_definition,"
+                "tax.payload->'superclaims'->>c.sc_id AS sc_definition,"
+                "count(DISTINCT c.record_id) AS record_count,count(*) AS assignment_count "
+                + query + " GROUP BY c.nc_id,c.sc_id,run.bundle_fingerprint,tax.payload "
+                "ORDER BY record_count DESC,run.bundle_fingerprint,c.nc_id",
+                params,
+            ).fetchall()
             selected = conn.execute("SELECT DISTINCT c.record_id " + query + " ORDER BY c.record_id LIMIT %s OFFSET %s",
                                     params + [limit, offset]).fetchall()
             ids = [row["record_id"] for row in selected]
             rows = []
             if ids:
-                rows = conn.execute("SELECT c.candidate_key,c.record_id,c.version_id,c.nc_id,c.sc_id,review.review_state,"
+                rows = conn.execute("SELECT c.candidate_key,c.record_id,c.version_id,c.body_hash,c.nc_id,c.sc_id,review.review_state,"
                                     "review.review_key AS review_version,"
                                     "c.quote,c.start_char AS start,c.end_char AS end,run.upstream_run_id AS run_id,"
                                     "run.bundle_fingerprint AS taxonomy_version,"
                                     "tax.payload->'subclaims'->>c.nc_id AS nc_definition,"
                                     "tax.payload->'superclaims'->>c.sc_id AS sc_definition,"
                                     "v.payload->>'title' AS title,v.payload->>'publisher' AS publisher,"
-                                    "v.payload->>'sponsor' AS sponsor,v.payload->>'url' AS url,r.dataset "
+                                    "v.payload->>'sponsor' AS sponsor,v.payload->>'url' AS url,"
+                                    "v.payload->>'archive_url' AS archive_url,v.payload->>'published_at' AS date,r.dataset "
                                     + query + " AND c.record_id=ANY(%s) ORDER BY c.record_id,c.candidate_key",
                                     params + [ids]).fetchall()
         grouped = {key: {"record_id": key, "claims": []} for key in ids}
@@ -265,5 +293,8 @@ class ClaimsStore:
             grouped[row["record_id"]]["claims"].append(row)
         return {"available": True, "claims_version": version, **totals,
                 "records": list(grouped.values()), "offset": offset, "limit": limit,
+                "category_counts": categories,
                 "meaning": "Published taxonomy assignments; not independent fact checking.",
-                "coverage": "Records with published matches only; unmatched records are not classified negatives."}
+                "coverage": "Records with published matches only; unmatched records are not classified negatives.",
+                "coverage_summary": {"scope_records": scope, "published_match_records": totals["total_records"],
+                                     "classification_completion_known": False}}

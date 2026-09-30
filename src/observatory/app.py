@@ -661,7 +661,20 @@ def _tools_card(result, links_enabled):
     data = result["structured_result"]
     kind = data.get("kind")
     sections = [html.Span("Read-only data tools", className="eyebrow")]
-    if kind == "graph":
+    if kind == "claims":
+        from observatory.claims_ui import claims_record_cards, public_claims
+
+        sections.extend([html.H3("Published CLAIMS2 assignments"), html.P(result["answer"], className="answer-text")])
+        try:
+            claims = public_claims(data)
+            sections.append(html.P(claims["note"], className="scope-note"))
+            sections.extend(claims_record_cards(claims["records"], links_enabled))
+            if not claims["records"]:
+                sections.append(html.P("No published matching assignments are available in this selection."))
+        except (TypeError, ValueError):
+            sections.append(html.P("These CLAIMS2 results are unavailable. Submit the question again.", className="scope-note"))
+        sections.append(dcc.Link("Browse published evidence in Data →", href="/data"))
+    elif kind == "graph":
         graph = data.get("graph") or {}
         nodes = {node["id"]: node for node in graph.get("nodes", [])}
         sections.extend([
@@ -1048,7 +1061,7 @@ def create_app(service, settings, record_details=None) -> Dash:
 
     from observatory.record_view import register_record_page
 
-    register_record_page(app.server, record_details)
+    register_record_page(app.server, record_details, service=service)
     from observatory.knowledge_routes import register_knowledge_routes
 
     register_knowledge_routes(app.server, service, record_details)
@@ -1072,6 +1085,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                 "collection_graph": True,
                 "graph_breakdowns": True,
                 "research_agent": agent_enabled,
+                "claims_read_view": True,
             },
         }
         public_state = {
@@ -1792,6 +1806,9 @@ def create_app(service, settings, record_details=None) -> Dash:
     from observatory.historical_theme_ui import register_historical_themes
 
     register_historical_themes(app, service, enabled)
+    from observatory.claims_ui import register_claims_browser
+
+    register_claims_browser(app, service, enabled)
 
     @app.callback(
         Output("research-question", "value"),

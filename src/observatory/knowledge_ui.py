@@ -35,9 +35,10 @@ def knowledge_panel():
             dcc.RadioItems(id="knowledge-layer", options=[
                 {"label": "Sources", "value": "sources"},
                 {"label": "Historical labels", "value": "annotations"},
+                {"label": "CLAIMS2 evidence", "value": "claims2"},
             ], value="sources", inline=True, className="knowledge-layer"),
             html.Div([
-                html.Label("Annotation version", htmlFor="knowledge-annotation"),
+                html.Label("Analysis record", htmlFor="knowledge-annotation"),
                 dcc.Dropdown(id="knowledge-annotation", options=[], clearable=False,
                              placeholder="No historical annotations available"),
             ], id="knowledge-annotation-wrap", className="knowledge-annotation", style={"display": "none"}),
@@ -124,6 +125,8 @@ STATUS_TEXT = {
     "reviewed_local_capture": "Reviewed local capture",
     "exact_character_match": "Exact match to stored text",
     "not_verified": "Not verified",
+    "automatic_unverified": "Automatic taxonomy match · semantic review pending",
+    "human_supported": "Human-supported taxonomy match · not independent fact checking",
 }
 
 
@@ -148,7 +151,8 @@ def _properties(properties, links_enabled):
                 values.append(html.Div([html.Dt(_human(key)), html.Dd(html.A("Open source ↗", href=url, target="_blank", rel="noopener noreferrer"))]))
             continue
         rendered = _property_value(key, value)
-        target = technical if key.endswith(("_id", "_hash", "_sha256")) or key in {"sha256", "label_key", "ordinal", "source_row"} else values
+        is_hash = isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
+        target = technical if is_hash or key.endswith(("_id", "_hash", "_sha256")) or key in {"sha256", "label_key", "ordinal", "source_row"} else values
         target.append(html.Div([html.Dt(_human(key)), html.Dd(rendered)]))
     return html.Div([
         html.Dl(values, className="knowledge-properties"),
@@ -200,8 +204,9 @@ def _figure_style(figure):
     return {"height": f"{figure.layout.height}px", "width": f"{width}px", "minWidth": "100%"}
 
 
-def _annotation_options(focused):
-    annotations = sorted((node for node in focused["nodes"] if type_key(node) == "annotation"),
+def _annotation_options(focused, layer="annotations"):
+    kind = "claimassignment" if layer == "claims2" else "annotation"
+    annotations = sorted((node for node in focused["nodes"] if type_key(node) == kind),
                          key=lambda node: (node.get("label", ""), node["id"]))
     return [{"label": node.get("label") or "Historical annotation", "value": node["id"]}
             for node in annotations]
@@ -273,11 +278,11 @@ def register_knowledge_graph(app, service, links_enabled, record_details=None, *
             focus = articles[0]["id"] if articles else None
             selected = None
         focused = focused_graph(graph, focus)
-        layer = "annotations" if layer == "annotations" else "sources"
-        annotation_options = _annotation_options(focused)
+        layer = layer if layer in {"annotations", "claims2"} else "sources"
+        annotation_options = _annotation_options(focused, layer)
         if not isinstance(annotation_id, str) or annotation_id not in {item["value"] for item in annotation_options}:
             annotation_id = annotation_options[0]["value"] if annotation_options else None
-            if layer == "annotations":
+            if layer in {"annotations", "claims2"}:
                 selected = None
         visible = graph_layer(focused, layer, annotation_id)
         if trigger == "knowledge-graph":
@@ -299,7 +304,7 @@ def register_knowledge_graph(app, service, links_enabled, record_details=None, *
                             for edge in visible["edges"])
         count = len(articles)
         coverage = (f"Page contains articles {offset + 1 if count else 0}–{offset + count} of {total:,} in the current filters. "
-                    f"This {'historical label' if layer == 'annotations' else 'source'} view shows {len(visible['nodes'])} nodes and {len(visible['edges'])} typed relations "
+                    f"This {'CLAIMS2 evidence' if layer == 'claims2' else 'historical label' if layer == 'annotations' else 'source'} view shows {len(visible['nodes'])} nodes and {len(visible['edges'])} typed relations "
                     f"from the article's full graph ({len(focused['nodes'])} nodes, {len(focused['edges'])} relations). "
                     "Download includes all articles on this page.")
         focused_ids = {rid for node in article_nodes(focused) for rid in node.get("record_ids", [])}
@@ -311,12 +316,17 @@ def register_knowledge_graph(app, service, links_enabled, record_details=None, *
         warnings = [html.P(message, className="scope-note") for message in messages]
         if layer == "annotations" and not annotation_options:
             warnings.insert(0, html.P("No historical annotations are available for this article. No labels or evidence have been inferred.", className="scope-note"))
+        if layer == "claims2":
+            warnings.insert(0, html.P(
+                "Published matches only. Missing results are not negative classifications."
+                if annotation_options else "No published CLAIMS2 matches for this article; classification or review may be pending.",
+                className="scope-note"))
         figure = knowledge_figure(visible, selected)
         return (figure, coverage, warnings, _inspector(graph, visible, selected, links_enabled),
                 selected, offset, offset == 0, offset + PAGE_SIZE >= total, options, focus, item_options,
                 json.dumps(selected, sort_keys=True) if selected else None,
                 _figure_style(figure), annotation_options, annotation_id,
-                {"display": "block" if layer == "annotations" else "none"})
+                {"display": "block" if layer in {"annotations", "claims2"} and annotation_options else "none"})
 
     @app.callback(Output("knowledge-download", "data"), Output("knowledge-export-status", "children"),
                   Input("knowledge-export", "n_clicks"), State("native-network-data", "data"),

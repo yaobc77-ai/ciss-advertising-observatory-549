@@ -209,6 +209,7 @@ def test_health_reports_release_and_features_without_serializing_configuration(a
         "collection_graph": True,
         "graph_breakdowns": True,
         "research_agent": False,
+        "claims_read_view": True,
     }
     assert response.json["application"]["version"]
     assert SECRET not in response.get_data(as_text=True)

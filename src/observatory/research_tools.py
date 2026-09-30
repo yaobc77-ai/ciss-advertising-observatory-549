@@ -38,6 +38,8 @@ Name = Annotated[str, Field(min_length=1, max_length=200)]
 Names = Annotated[list[Name], Field(max_length=20)]
 RecordId = Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$")]
 Question = Annotated[str, Field(min_length=1, max_length=2000)]
+NcId = Annotated[str, Field(pattern=r"^NC_[1-9][0-9]*$", max_length=100)]
+ScId = Annotated[str, Field(pattern=r"^SC_[1-9][0-9]*$", max_length=100)]
 _DIMENSIONS = ("publishers", "sponsors", "platforms", "keywords", "labels", "record_ids")
 _RECORD_FIELDS = ("record_id", "version_id", "dataset", "title", "date", "publisher",
                   "sponsor", "retrievable", "url", "archive_url")
@@ -100,6 +102,15 @@ class GraphRequest(ScopedRequest):
     limit: Annotated[StrictInt, Field(ge=1, le=5)] | None = None
 
 
+class ClaimsRequest(ScopedRequest):
+    nc_ids: Annotated[list[NcId], Field(max_length=20)] | None = None
+    sc_ids: Annotated[list[ScId], Field(max_length=20)] | None = None
+    taxonomy: Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")] | None = None
+    review_state: Literal["automatic_unverified", "human_supported"] | None = None
+    offset: Annotated[StrictInt, Field(ge=0, le=100000)] | None = None
+    limit: Annotated[StrictInt, Field(ge=1, le=20)] | None = None
+
+
 TOOLS = {
     "resolve_entity": (ResolveEntityRequest,
         "Resolve a sponsor or publisher against actual source names. Returns candidates, not corporate identity merges; ask for clarification when ambiguous."),
@@ -115,6 +126,8 @@ TOOLS = {
         "Read graph node/predicate definitions, source identity policy and adapter limitations. The graph expresses recorded provenance, not verified greenwashing."),
     "get_graph_neighborhood": (GraphRequest,
         "Read a paged typed source graph for at most five selected native articles. This bounded neighborhood is not the complete graph or a basis for corpus totals."),
+    "get_claims_matches": (ClaimsRequest,
+        "Read published CLAIMS2 NC_/SC_ taxonomy assignments with definitions, review states and exact version-bound source quotes. Optional category IDs, taxonomy fingerprint and review state narrow current collection filters. Counts cover published positive matches only; unmatched records are not classified negatives and assignments do not establish verified greenwashing or factual truth. No classification or writes occur."),
 }
 
 
@@ -431,12 +444,23 @@ class ToolCatalog:
                 "coverage": "retrieved_passages_only_not_complete_corpus",
                 "semantic_support": "not_verified"}
 
+    def _get_claims_matches(self, request, filters):
+        result = self.service.claims_matches(
+            filters, nc_ids=request.nc_ids, sc_ids=request.sc_ids, taxonomy=request.taxonomy,
+            review_state=request.review_state, offset=request.offset or 0, limit=request.limit or 5,
+        )
+        # Full-selection category aggregates are useful in the dashboard but
+        # can dwarf bounded source evidence sent to a model or MCP client.
+        result.pop("category_counts", None)
+        return result
+
     @staticmethod
     def _graph_schema():
         return {"schema_version": SCHEMA_VERSION, "node_types": deepcopy(NODE_TYPES),
                 "predicates": deepcopy(PREDICATES), "identity_policy": deepcopy(IDENTITY_POLICY),
                 "adapters": {"statistics": ["native", "social"], "keyword_evidence": ["native", "social"],
                              "versioned_record_detail": ["native"], "knowledge_graph": ["native"],
+                             "claims2_published_matches": ["native", "social"],
                              "external_fact_check": "not_connected", "reviewed_source_attachments": "not_connected"},
                 "claims_status": "historical_annotations_are_not_verified_greenwashing"}
 

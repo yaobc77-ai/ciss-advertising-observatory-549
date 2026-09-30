@@ -1,8 +1,9 @@
 # CLAIMS integration plan
 
-Updated September 30, 2026. Status: source audit, candidate decoder and
-source-reviewed result importer implemented; product integration remains scheduled. No
-CLAIMS 2 results have been newly classified, imported or published by this work.
+Updated September 30, 2026. Status: source audit, candidate decoder, reviewed
+result importer, read-only product views and optional maintenance source lookup
+implemented. All 37 saved-result candidates remain on hold. No real CLAIMS2
+results have been newly classified, imported or published by this work.
 
 ## Current scope
 
@@ -149,11 +150,11 @@ analysis version; it does not overwrite the prior batch.
 |---|---|---|
 | **1. Implemented: bundle and linkage audit** | Read-only SQLite and original-text snapshots; exact input joins; retained paragraph order; strict and explicit versioned ASCII-projection comparisons | [Actual audit](claims_source_audit.md) and [receipt](../reports/claims_source_linkage_20260930.json); private source/evidence review files, zero database writes and model calls |
 | **2. Candidate adapter and importer implemented** | Strict decoding, file-bound review, original-quote/current-source checks, independent CLAIMS2 tables and append-only review revisions | [Import guide](claims_result_import.md). Synthetic transaction, repeat import, progressive review, promotion, stale-body and retraction checks; real candidates remain held pending authority/source/domain decisions |
-| **3. Read-only product integration** | Show published NC/SC definitions, run and review status in record details; add claim filters, coverage and count exports; add typed article-to-claim and NC-to-SC graph edges | Counts reconcile to distinct current records; each selection opens the matching articles and exact evidence, not just a total |
+| **3. Read-only product integration implemented** | Show published NC/SC definitions, run and review status in record details; add claim filters, coverage and count exports; add typed article-to-claim and NC-to-SC graph edges | Counts reconcile to distinct current records; each selection opens the matching articles and exact evidence, not just a total |
 | **4. Offline processing for remaining articles** | Reuse the upstream extractor through a narrow frozen-taxonomy adapter in an isolated run directory; reserve cost and log usage; classify new or changed eligible bodies only | Saved bounded-batch results, per-input failures, source checks and an explicit publication report; new taxonomy proposals stay separate |
-| **5. RAG and regression verification** | Add a read-only claims tool and optional taxonomy-aware retrieval; generate answers from original source quotes; compare retrieval with and without the new analysis filter | Counts and ordinary searches still work; unanalysed articles remain searchable; source location and semantic support are evaluated separately |
+| **5. Read tool implemented; answer evaluation pending** | Query and MCP share `get_claims_matches`; it returns published assignments and original quotes. Taxonomy-aware retrieval comparisons and independent answer review remain to be done | Counts and ordinary searches retain their own scope; an absent assignment is not a negative classification; source location and semantic support are evaluated separately |
 
-Stage 3 depends on valid stage 2 imports, not on a full new model run. Stage 4
+The [stage 3 interfaces](claims_read_views.md) are implemented; their actual data depends on valid stage 2 imports, not on a full new model run. Stage 4
 can fill uncovered articles after the saved-output integration works. New
 proposal approval or taxonomy editing should remain a separate maintenance
 workflow; public questions cannot apply a merge or mutate category definitions.
@@ -192,7 +193,8 @@ for output meanings and the exact completion boundary. The March sentence run
 remains a separate candidate; its malformed mapping is not silently repaired.
 
 The next step is to review the available source bindings and authority/version
-choices, then publish approved results through the implemented importer and add read-only product tools.
+choices, then publish approved results through the implemented importer for the
+existing read-only product tools.
 Partial text evidence must not be promoted to a complete retained-input
 association. A domain review must separately decide whether a quote supports
 its classification.
@@ -212,3 +214,12 @@ Sources: supplied archive and the inspected upstream paths above; earlier
 [source review](https://github.com/yaobc77-ai/ciss-advertising-observatory/blob/main/reports/UPSTREAM_SOURCE_REVIEW_20260918.zh-CN.md) remain
 historical context. Source inspection and audit did not change a taxonomy,
 label or source database; maintenance package publication is recorded separately.
+
+## Legacy source lookup
+
+Unknown article URLs in the legacy results are a separate source-review task.
+[Source discovery](claims_source_discovery.md) runs local literal matching first,
+then at most one paid web search through a separate maintenance MCP tool when
+explicitly enabled. The tool is hidden by default and is not a public question
+fallback. Search candidates do not publish source associations or classification
+results.

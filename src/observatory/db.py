@@ -191,6 +191,67 @@ class Database:
         with self.connect() as conn:
             return conn.execute(sql + " ORDER BY date DESC NULLS LAST,record_id", params).fetchall()
 
+    def claims_source_candidates(self, excerpt, limit=5, *, filters=None):
+        """Find literal legacy excerpts without declaring an article identity.
+
+        Search current eligible native text only. Accepted source intervals
+        matter here too: a navigation match cannot establish source evidence.
+        At most 100 matching articles are inspected and five returned; any
+        incomplete scan is explicit. No normalization or model call occurs.
+        """
+        from .chunking import retrieval_spans
+
+        if not isinstance(excerpt, str) or not 40 <= len(excerpt) <= 2000 or not excerpt.strip():
+            raise ValueError("Use an original excerpt of 40–2000 characters")
+        _, limit = self._page_bounds(0, limit)
+        limit = min(limit, 5)
+        filters = filters or Filters(dataset="native")
+        if filters.dataset != "native":
+            raise ValueError("Legacy CLAIMS source discovery uses the native collection")
+        where, params = self.where(filters)
+        with self.connect() as conn:
+            conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            rows = conn.execute(
+                "SELECT r.record_id,v.version_id,v.body,v.body_hash,v.payload,"
+                "count(*) OVER() AS literal_record_matches "
+                "FROM records r JOIN record_versions v ON v.version_id=r.current_version WHERE "
+                + where + " AND (v.payload->>'retrievable')::boolean AND strpos(v.body,%s)>0 "
+                "ORDER BY r.record_id LIMIT 100", [*params, excerpt],
+            ).fetchall()
+        candidates, scanned = [], 0
+        for row in rows:
+            scanned += 1
+            if digest(row["body"]) != row["body_hash"]:
+                continue
+            payload = row["payload"]
+            spans = retrieval_spans(row["body"], retrieval_ranges=payload.get("retrieval_ranges"),
+                                    retrieval_end=payload.get("retrieval_end"))
+            start = row["body"].find(excerpt)
+            accepted, location_count = [], 0
+            while start >= 0:
+                end = start + len(excerpt)
+                if any(left <= start < end <= right for left, right in spans):
+                    location_count += 1
+                    if len(accepted) < 10:
+                        accepted.append({"start": start, "end": end})
+                start = row["body"].find(excerpt, start + 1)
+            if accepted:
+                candidates.append({
+                    "source_kind": "local_current_article", "source_association": "needs_review",
+                    "record_id": row["record_id"], "version_id": row["version_id"], "body_hash": row["body_hash"],
+                    "url": payload.get("url", ""), "title": payload.get("title", ""),
+                    "publisher": payload.get("publisher", ""), "quote": excerpt,
+                    "locations": accepted, "location_count": location_count,
+                    "locations_complete": location_count <= 10, "location_status": "exact_original_characters",
+                })
+            if len(candidates) >= limit:
+                break
+        total = rows[0]["literal_record_matches"] if rows else 0
+        return {"status": "ok", "candidates": candidates, "literal_record_matches": total,
+                "scanned_records": scanned, "scan_complete": total <= scanned, "candidate_limit": limit,
+                "filters": filters.model_dump(mode="json"),
+                "meaning": "Text matches propose article identities; source association still needs review."}
+
     def knowledge_map_rows(self, filters: Filters):
         """Complete filtered graph identities from one read-only SQL snapshot.
 
@@ -266,7 +327,13 @@ class Database:
                 """ + base + " ORDER BY (v.payload->>'published_at') DESC NULLS LAST,r.record_id LIMIT %s OFFSET %s",
                 [*params, limit, offset],
             ).fetchall()
-        return {"rows": rows, "total": total, "offset": offset, "limit": limit}
+            from .claims_store import ClaimsStore
+
+            # The source page and its derived assignments must describe the
+            # same snapshot, including a concurrent retraction or body update.
+            selected = filters.model_copy(update={"record_ids": [row["record_id"] for row in rows]}) if rows else filters
+            claims2 = ClaimsStore(self).matches(selected, limit=20, _connection=conn)
+        return {"rows": rows, "total": total, "offset": offset, "limit": limit, "claims2": claims2}
 
     @staticmethod
     def _page_order(sort_by, descending):

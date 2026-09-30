@@ -15,6 +15,9 @@ TYPE_STYLE = {
     "annotation": (3, "#8c718c", "Historical annotation"),
     "label": (4, "#667c85", "Label category"),
     "evidencespan": (4, "#4e7d70", "Evidence span"),
+    "claimassignment": (3, "#4e7d70", "CLAIMS2 assignment"),
+    "subclaim": (4, "#627887", "Subclaim"),
+    "superclaim": (5, "#627887", "Superclaim"),
 }
 
 
@@ -79,13 +82,31 @@ def _node_hover(node, title):
             lines.append(str(properties["label_key"]))
         if properties.get("scheme"):
             lines.append("Scheme: " + str(properties["scheme"]))
+    elif type_key(node) in {"subclaim", "superclaim"}:
+        lines.append(str(node.get("properties", {}).get("definition") or ""))
     return "<br>".join(escape(line) for line in lines)
 
 
 def graph_layer(graph, layer="sources", annotation_id=None):
     """A named view, not a change to graph identity or the complete export."""
     nodes, edges = graph.get("nodes", []), graph.get("edges", [])
-    if layer != "annotations":
+    if layer == "claims2":
+        assignments = sorted((n for n in nodes if type_key(n) == "claimassignment"), key=lambda n: (n["label"], n["id"]))
+        if annotation_id not in {node["id"] for node in assignments}:
+            annotation_id = assignments[0]["id"] if assignments else None
+        selected = next((node for node in assignments if node["id"] == annotation_id), None)
+        candidate = selected.get("properties", {}).get("candidate_key") if selected else None
+        ids = {node["id"] for node in nodes if type_key(node) == "article"}
+        if annotation_id:
+            ids.add(annotation_id)
+            leaves = {edge["target"] for edge in edges if edge["source"] == annotation_id}
+            ids.update(leaves)
+            ids.update(edge["target"] for edge in edges if edge["source"] in leaves
+                       and edge["predicate"] in {"subclaim_of", "located_in"})
+        edges = [edge for edge in edges if edge.get("predicate") in {
+            "has_claim_assignment", "assigns_subclaim", "subclaim_of", "cites_claim_evidence", "located_in"}
+            and (edge["predicate"] == "located_in" or edge.get("provenance", {}).get("candidate_key") == candidate)]
+    elif layer != "annotations":
         ids = {node["id"] for node in nodes if type_key(node) in {
             "article", "sponsorcandidate", "outlet", "sourceartifact", "textversion"}}
     else:
@@ -107,11 +128,11 @@ def _layout(graph):
     """Two readable card columns; each visible annotation owns its leaf rows."""
     nodes = graph.get("nodes", [])
     articles = [n for n in nodes if type_key(n) == "article"]
-    annotations = [n for n in nodes if type_key(n) == "annotation"]
+    annotations = [n for n in nodes if type_key(n) in {"annotation", "claimassignment"}]
     captures = {e["target"] for e in graph.get("edges", []) if e.get("predicate") == "derived_from"}
     roots = {n["id"] for n in articles + annotations}
     order = {"sponsorcandidate": 0, "outlet": 1, "sourceartifact": 2, "label": 3,
-             "evidencespan": 4, "textversion": 5}
+             "subclaim": 3, "superclaim": 4, "evidencespan": 5, "textversion": 6}
     leaves = sorted((n for n in nodes if n["id"] not in roots | captures),
                     key=lambda n: (order.get(type_key(n), 3), _category_name(n), n["id"]))
     first_y = 225 if annotations else 75
@@ -131,7 +152,7 @@ def _layout(graph):
         half_height = 56 if type_key(node) == "article" else 44
         boxes[node["id"]] = (x - half_width, y - half_height, x + half_width, y + half_height)
     height = max(520, int(max((b[3] for b in boxes.values()), default=400) + 34))
-    width = 930 if any(e.get("predicate") == "located_in" for e in graph.get("edges", [])) else 810
+    width = 930 if any(e.get("predicate") in {"located_in", "subclaim_of"} for e in graph.get("edges", [])) else 810
     return centers, boxes, width, height
 
 

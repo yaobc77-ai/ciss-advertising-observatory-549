@@ -25,23 +25,41 @@ from .models import Filters
 from .research_tools import ToolCatalog
 
 
-def build_mcp_server(catalog: ToolCatalog):
+def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
     """Register exact schemas, preserving forbidden extras at the executor."""
+    settings = getattr(catalog.service, "settings", None)
+    if source_search is None and getattr(settings, "claims_source_search_enabled", False):
+        from .claims_source_search import ClaimsSourceSearch
+
+        source_search = ClaimsSourceSearch(catalog.service.rag, enabled=True,
+                                           base_filters=catalog.base_filters)
+    maintenance_enabled = source_search is not None and source_search.enabled
 
     async def list_tools(context, params):
-        return ListToolsResult(tools=[Tool(name=definition["name"], description=definition["description"],
+        listed = [Tool(name=definition["name"], description=definition["description"],
                                           input_schema=definition["inputSchema"], annotations=ToolAnnotations(
             read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False,
-        )) for definition in catalog.mcp_definitions()])
+        )) for definition in catalog.mcp_definitions()]
+        if maintenance_enabled:
+            definition = source_search.definition()
+            listed.append(Tool(name=definition["name"], description=definition["description"],
+                               input_schema=definition["inputSchema"], annotations=ToolAnnotations(
+                # Corpus state is read-only, but a paid search writes its usage ledger.
+                read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=True,
+            )))
+        return ListToolsResult(tools=listed)
 
     async def call_tool(context, params):
         # Blocking PostgreSQL reads run outside the SDK event loop. This is a
         # fixed catalog dispatch, never a dynamically selected Python function.
-        result = await anyio.to_thread.run_sync(catalog.call, params.name, params.arguments or {})
+        if maintenance_enabled and params.name == source_search.definition()["name"]:
+            result = await anyio.to_thread.run_sync(source_search.call, params.arguments or {})
+        else:
+            result = await anyio.to_thread.run_sync(catalog.call, params.name, params.arguments or {})
         return CallToolResult(
             structured_content=result,
             content=[TextContent(type="text", text=json.dumps(result, ensure_ascii=False, allow_nan=False))],
-            is_error=result.get("status") in {"invalid_request", "unavailable"},
+            is_error=result.get("status") in {"invalid_request", "unavailable", "limited", "disabled"},
         )
 
     return Server(
@@ -49,7 +67,14 @@ def build_mcp_server(catalog: ToolCatalog):
         instructions=("Read-only tools for eligible advertising records. Respect filters, candidate identity "
                       "and source-version limitations. Counts come from record_statistics; graph pages and "
                       "retrieved passages do not establish full-corpus totals. Historical categories do not "
-                      "establish verified greenwashing. No SQL, arbitrary URLs, local paths or writes are exposed."),
+                      "establish verified greenwashing. CLAIMS2 reads return published NC/SC assignments, "
+                      "review states and source evidence; unmatched records are not classified negatives. "
+                      "No SQL, arbitrary URLs, local paths, classification or corpus writes are exposed. "
+                      "An optional find_claims_source_candidates maintenance tool may be present only by "
+                      "explicit opt-in. It searches unchanged legacy excerpts locally first, then at most "
+                      "one paid external search, writes usage accounting only, and returns pending source "
+                      "candidates requiring review. Never use it as a fallback for public questions or "
+                      "treat candidate identities as approved sources."),
         on_list_tools=list_tools, on_call_tool=call_tool,
     )
 

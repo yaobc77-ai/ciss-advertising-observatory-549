@@ -75,7 +75,7 @@ class FakeCatalog:
                            "additionalProperties": False}, "strict": True,
         } for name in [
             "resolve_entity", "record_statistics", "search_records", "get_graph_schema",
-            "get_graph_neighborhood", "get_record_sources", "get_record",
+            "get_graph_neighborhood", "get_record_sources", "get_record", "get_claims_matches",
         ]]
 
     def entity_context(self):
@@ -347,7 +347,7 @@ def test_actual_usage_settled_once_and_audit_contains_no_prose():
     assert len(rag.budget.settled) == 1
     usage = rag.budget.settled[0][2]
     assert usage["observatory_request"]["stage"] == "research_agent"
-    assert usage["observatory_request"]["policy"] == "research-tools-v1"
+    assert usage["observatory_request"]["policy"] == "research-tools-v2"
     assert calls[0]["store"] is False
     assert calls[0]["parallel_tool_calls"] is False
     assert calls[0]["tool_choice"] == "required"

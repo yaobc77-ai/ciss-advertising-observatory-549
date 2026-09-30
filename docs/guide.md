@@ -8,7 +8,7 @@
 - Use **Records** to open article details, stored text, and available original or archived sources. Export the selected records or grouped counts as CSV.
 - Open **Query** for keyword search or generated answers. Generated answers can use database tools for statistics and retrieved passages for content questions. Check the cited sources when interpreting an advertising claim.
 
-The social collection remains unavailable until its client dataset is imported. CLAIMS integration is scheduled separately. Historical labels record earlier annotations; they are not a new CLAIMS classification or a verified assessment of greenwashing.
+The social collection remains unavailable until its client dataset is imported. CLAIMS2 import and read-only views are implemented; real results still await reviewed publication. Historical labels record earlier annotations and remain separate from CLAIMS2 evidence.
 
 Maintainers can run a [read-only CLAIMS source audit](claims_source_audit.md) against the supplied saved results before importing classifications. This command does not publish new labels.
 

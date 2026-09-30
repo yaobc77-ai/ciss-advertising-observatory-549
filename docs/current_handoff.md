@@ -1,6 +1,6 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.5**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_5_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+Updated 30 September 2026. Maintenance package: **0.4.6**. The latest verified hosted application before this update is **0.4.5**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_5_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -8,6 +8,14 @@ CLAIMS2 evidence and review revisions use independent tables and a separate `cla
 article versions, retrieval profiles and historical twelve-label annotations are unchanged.
 The 37 located candidates remain held in a private pending review file. No real labels,
 customer approvals, frozen acceptance run or model calls were added by this update.
+
+The **0.4.6** implementation adds [read-only CLAIMS2 views](claims_read_views.md)
+in Overview, article detail, Query and the article-provenance graph. Each selected
+assignment keeps its own taxonomy and source evidence. [Legacy URL discovery](claims_source_discovery.md)
+checks exact local text first and can make one paid web search through an explicitly
+enabled maintenance MCP tool. Candidate URLs require review and do not update
+articles or classifications. The 0.4.6 release checks and any real search receipt
+must be recorded separately from the earlier evidence below.
 
 [Live dashboard](https://ciss-advertising-observatory-production.up.railway.app/data) · [Questions](https://ciss-advertising-observatory-production.up.railway.app/query) · [Project page](https://yaobc77-ai.github.io/ciss-advertising-observatory-549/) · [English repository](https://github.com/yaobc77-ai/ciss-advertising-observatory-549)
 
@@ -17,14 +25,14 @@ This guide describes the current application. Earlier reports and presentation f
 
 The native collection is connected. The recorded release contains 275 active records, of which 263 are eligible for statistics and 226 have text eligible for retrieval. Its active retrieval profile is `sentence600-v1`, with 556 passages. These are different counts: missing or unsuitable text does not necessarily exclude a record from statistics.
 
-The social importer and separate collection view exist, but the client social dataset is not connected. Real social data and customer review materials are recorded as deferred TODOs under the latest user direction. Historical labels can be explored; they are earlier automatic annotations, not independently verified greenwashing findings. The original project description placed CLAIMS integration in future work; the latest customer priority now schedules that integration as project work. It is not live yet, and retraining a classifier has not been requested. Animal agriculture remains future work.
+The social importer and separate collection view exist, but the client social dataset is not connected. Real social data and customer review materials are recorded as deferred TODOs under the latest user direction. Historical labels can be explored; they are earlier automatic annotations, not independently verified greenwashing findings. The original project description placed CLAIMS integration in future work; the latest customer priority now schedules that integration as project work. Reviewed import and read-only record, graph and MCP interfaces are implemented; all 37 real candidates await reviewed publication. Retraining a classifier has not been requested. Animal agriculture remains future work.
 
 | Project question | Where to demonstrate it |
 | --- | --- |
 | Compare native ad counts by company and outlet | **Data → Overview**: the company–outlet matrix and exported count table. |
 | Find each outlet's sponsors or each company's publishers | **Data → Knowledge graph**: select an entity, inspect named connections and their distribution, then open the supporting articles. |
 | Compare dates, companies, outlets and sponsors | Apply the visible collection filters. Counts, charts, exports and article lists use the selected scope. Unknown dates are reported separately. |
-| Explore themes supported by existing data | Historical label distributions and their supporting articles. Labels may overlap; unlabelled records do not prove an absence of themes. |
+| Explore themes supported by existing data | Historical label distributions and their supporting articles. A separate CLAIMS2 view reads published NC/SC assignments; actual publication is pending. Labels may overlap; absent annotations do not prove an absence of themes. |
 | Explore social advertising | The social view will require the real export and a confirmed field mapping before its statistics can be accepted. |
 | Ask grounded questions about both datasets | **Query**: database tools answer count and list questions; retrieved passages support content answers. Real social and cross-collection evaluation remain pending. |
 
@@ -42,14 +50,14 @@ Selecting a company, outlet, connection, distribution row or article shows that 
 | Model integration | OpenAI Python SDK, Responses API; configured defaults `gpt-5.6-luna` and `text-embedding-3-small` |
 | Text processing | pySBD, tiktoken; Lingua for conservative language checks |
 | Delivery | uv and `uv.lock`, Docker, Railway, pytest, Ruff, GitHub Actions |
-| Optional tool access | MCP Python SDK; the same constrained read-only tools used by the application |
+| Optional tool access | MCP Python SDK; shared read-only question tools and a separately enabled maintenance source lookup |
 
 The database stores records, immutable text versions, annotations, passages, retrieval profiles and publication state, embeddings, import reports, saved answers, model outputs and the usage ledger. Keep the ledger and previous versions when upgrading.
 
 Migration 3 adds six CLAIMS2 tables for taxonomies, runs, import manifests, immutable
 evidence assignments, review revisions and retractions. Applying it creates storage;
 it does not approve or import classifications. The importer is a maintenance CLI.
-The new CLAIMS2 website and MCP read-only views remain the next integration stage.
+The [CLAIMS2 website and MCP reads](claims_read_views.md) consume only published current-source assignments. The optional [legacy source lookup](claims_source_discovery.md) is a separate maintenance workflow. Its MCP tool is hidden by default; `OBS_CLAIMS_SOURCE_SEARCH_ENABLED=true` exposes it in that process. A local hit makes no model call; external search uses the shared API budget and changes usage accounting only.
 
 Dashboard browsing and keyword search do not call a model. With `OBS_RESEARCH_AGENT_ENABLED=true`, **Generate answer** first uses the configured model to interpret the question and choose constrained tools. This includes count questions: counting uses database records, but model interpretation has an API cost. Content generation also uses the API budget. Turning the flag off retains the earlier fixed-pattern statistics route.
 
@@ -211,7 +219,7 @@ Use the provided Dockerfile. Set `OBS_HOST=0.0.0.0`; Railway supplies `PORT`. Co
 
 The deployment contract uses `/app/.venv/bin/observatory migrate` before startup, `/healthz` with a 60-second timeout, and deployment after successful CI. Check the platform's applied settings and logs: the repository's `railway.json` alone does not demonstrate that a setting was adopted.
 
-The observed public health response for this publication on 30 September 2026 identifies application **0.4.4** at commit `e01edc9e7767f37691686d1a999c8423a0a2ceb4`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. The source, data and index identifiers match the earlier 0.4.3 observation. Both repository CI runs passed; the query/data routes and static project page returned HTTP 200. These checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json), which binds the tested application commits before a documentation-only follow-up. A healthy endpoint is not proof that every user workflow or attachment works.
+The historical public health observation on 30 September 2026 identifies application **0.4.4** at commit `e01edc9e7767f37691686d1a999c8423a0a2ceb4`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. The source, data and index identifiers match the earlier 0.4.3 observation. Both repository CI runs passed; the query/data routes and static project page returned HTTP 200. These checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json), which binds the tested application commits before a documentation-only follow-up. A healthy endpoint is not proof that every user workflow or attachment works.
 
 The latest 0.4.5 observation identifies commit `f2c9142e9274dc4f694c5ac0e6a61270997d753c`.
 Its successful deployment and migration-3 log were checked in the existing
@@ -229,7 +237,7 @@ After deployment, verify filters, the matrix, entity selection, exact article dr
 Build the source archive from a reviewed clean commit, using a new output name:
 
 ```sh
-python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.5.zip
+python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.6.zip
 ```
 
 The builder includes tracked public code, documents, assets, `Dockerfile`,

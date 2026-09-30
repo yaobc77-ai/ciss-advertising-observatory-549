@@ -3,6 +3,7 @@
 import dash_ag_grid as dag
 from dash import dcc, html
 
+from .claims_ui import claims_panel
 from .collection_graph_ui import collection_graph_panel
 from .historical_theme_ui import historical_theme_panel
 from .knowledge_ui import knowledge_panel
@@ -118,6 +119,7 @@ def data_panel(dataset, links_enabled, empty_figure):
                 historical_theme_panel() if native else None,
             ], className="exploration-split historical-theme-split chart-wide" if native else "chart-wide"),
         ], className="charts-grid"),
+        claims_panel() if native else None,
     ], id=f"{dataset}-overview", className="data-view")
 
     records = html.Section([

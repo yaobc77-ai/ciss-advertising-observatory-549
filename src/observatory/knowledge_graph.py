@@ -18,7 +18,7 @@ from urllib.parse import quote, urlsplit
 
 from .analytics import sponsor_display, sponsor_metadata
 
-SCHEMA_VERSION = "advertising-source-graph-v1"
+SCHEMA_VERSION = "advertising-source-graph-v2"
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
 _KEY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}\Z")
 _LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9 _.-]{0,119}\Z")
@@ -40,6 +40,12 @@ NODE_TYPES = {
               "identity_fields": ["dataset", "scheme", "label_key"]},
     "EvidenceSpan": {"description": "A character-located quotation; semantic support is not inferred.",
                      "identity_fields": ["dataset", "record_id", "version_id", "start", "end"]},
+    "ClaimAssignment": {"description": "A published CLAIMS2 assignment with a current source and review revision.",
+                        "identity_fields": ["candidate_key"]},
+    "Subclaim": {"description": "An NC definition in one exact CLAIMS2 taxonomy bundle.",
+                 "identity_fields": ["taxonomy_version", "nc_id"]},
+    "Superclaim": {"description": "An SC definition in one exact CLAIMS2 taxonomy bundle.",
+                   "identity_fields": ["taxonomy_version", "sc_id"]},
 }
 IDENTITY_POLICY = {
     "entity_resolution": "exact_source_values_only_no_alias_merging",
@@ -83,6 +89,14 @@ PREDICATES = {
         "A version- and hash-bound exact character span. Matching text does not prove semantic support."),
     "located_in": _predicate("located in", "EvidenceSpan", "TextVersion",
         "Python Unicode character positions within this exact text version."),
+    "has_claim_assignment": _predicate("has published CLAIMS2 match", "Article", "ClaimAssignment",
+        "A published taxonomy assignment, not an independent finding of false or misleading advertising."),
+    "assigns_subclaim": _predicate("assigns subclaim", "ClaimAssignment", "Subclaim",
+        "The saved assignment uses this NC definition under its exact taxonomy version."),
+    "subclaim_of": _predicate("mapped to superclaim", "Subclaim", "Superclaim",
+        "The pinned taxonomy maps this NC to this SC. An unmapped NC has no inferred parent."),
+    "cites_claim_evidence": _predicate("cites original passage", "ClaimAssignment", "EvidenceSpan",
+        "An exact source passage for the assignment. Location and semantic review are distinct."),
 }
 
 
@@ -167,7 +181,7 @@ def _public_annotation(payload):
     }
 
 
-def build_graph(rows, *, links_enabled=True, attachments_by_record=None):
+def build_graph(rows, *, links_enabled=True, attachments_by_record=None, claims2=None):
     """Return a bounded, deterministic, JSON-safe graph of supplied public rows.
 
     The caller controls paging. Exact dataset/field/source-value identities are
@@ -350,6 +364,10 @@ def build_graph(rows, *, links_enabled=True, attachments_by_record=None):
              "nodes": sorted(nodes.values(), key=lambda item: item["id"]),
              "edges": sorted(edges.values(), key=lambda item: item["id"]),
              "warnings": [warnings[key] for key in sorted(warnings)]}
+    if claims2 is not None:
+        from .claims_graph import extend_claims_graph
+
+        graph = extend_claims_graph(graph, list(seen.values()), claims2)
     validate_graph(graph, rows=list(seen.values()))
     return graph
 
@@ -425,7 +443,7 @@ def validate_graph(graph, *, rows=None):
         ):
             raise ValueError("Graph edge record provenance conflicts with endpoint membership")
         for endpoint in (source, target):
-            if endpoint["type"] in {"Article", "TextVersion", "EvidenceSpan"} and (
+            if endpoint["type"] in {"Article", "TextVersion", "EvidenceSpan", "ClaimAssignment"} and (
                 endpoint["properties"].get("version_id") != provenance["version_id"]
             ):
                 raise ValueError("Graph edge version provenance conflicts with endpoint version")

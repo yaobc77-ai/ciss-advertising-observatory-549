@@ -3,6 +3,8 @@
 from flask import abort, render_template_string
 
 from .analytics import sponsor_display, sponsor_metadata
+from .claims_ui import COVERAGE, MEANING, public_claims
+from .models import Filters
 
 TEMPLATE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -31,6 +33,15 @@ TEMPLATE = """<!doctype html>
 <iframe class="snapshot-preview" src="{{ asset.url }}" title="{{ asset.label }} PDF preview"></iframe>{% endif %}
 <details><summary>Attachment verification</summary><p class="record-reference">SHA-256 {{ asset.sha256 }}</p></details></article>{% endfor %}
 {% if not record.attachments %}<p>No verified PDF or screenshot is attached to this record.</p>{% endif %}</section>
+<section class="records-panel record-claims"><h2>CLAIMS2 evidence</h2><p class="scope-note">{{ claims.note }}</p>
+{% for match in claims.records %}{% for item in match.claims %}<article class="evidence-card">
+<p class="scope-note">{{ item.review_label }}</p><dl><dt>{{ item.nc_id }}</dt><dd>{{ item.nc_definition }}</dd>
+{% if item.sc_id %}<dt>{{ item.sc_id }}</dt><dd>{{ item.sc_definition or 'Definition unavailable in this published bundle.' }}</dd>
+{% else %}<dt>Superclaim mapping</dt><dd>No superclaim is mapped in this published taxonomy.</dd>{% endif %}</dl>
+<blockquote>{{ item.quote }}</blockquote><details><summary>Assignment provenance</summary><div class="record-reference">
+<span>Run {{ item.run_id }}</span><span>Taxonomy {{ item.taxonomy_version }}</span><span>Review {{ item.review_version }}</span>
+<span>Article version {{ item.version_id }}</span><span>Body SHA-256 {{ item.body_hash }}</span>
+<span>Original character range [{{ item.start }}, {{ item.end }})</span></div></details></article>{% endfor %}{% endfor %}</section>
 <section class="records-panel record-body-panel"><h2>{{ record.body_label }}</h2><p class="scope-note">{{ record.body_note }}</p>
 {% if record.quality_notes %}<ul>{% for note in record.quality_notes %}<li>{{ note }}</li>{% endfor %}</ul>{% endif %}
 {% if record.body %}<div class="stored-body">{{ record.body }}</div>{% else %}<p>No article text is available.</p>{% endif %}
@@ -39,7 +50,25 @@ TEMPLATE = """<!doctype html>
 </body></html>"""
 
 
-def register_record_page(server, details):
+def _record_claims(service, record):
+    if service is None or not hasattr(service, "claims_matches"):
+        return {"records": [], "note": "CLAIMS2 results are awaiting publication. " + COVERAGE}
+    try:
+        result = public_claims(service.claims_matches(
+            Filters(dataset=record["dataset"], record_ids=[record["record_id"]]), limit=1,
+        ), record=record)
+        if result["state"] == "empty":
+            result["note"] = "No published CLAIMS2 assignments are available for this article. " + COVERAGE
+        elif result["state"] == "ready":
+            result["note"] = MEANING + " " + COVERAGE
+        return result
+    except (TypeError, ValueError, KeyError):
+        return {"records": [], "note": "CLAIMS2 evidence could not be bound to this article version. Refresh this page to try again."}
+    except Exception:
+        return {"records": [], "note": "CLAIMS2 assignments are temporarily unavailable. The article text remains available below."}
+
+
+def register_record_page(server, details, *, service=None):
     @server.get("/records/<record_id>")
     def record_page(record_id):
         if details is None:
@@ -58,4 +87,5 @@ def register_record_page(server, details):
             record=record,
             sponsor=sponsor_display(record.get("sponsor")),
             sponsor_note=sponsor_metadata(record.get("sponsor"))["note"],
+            claims=_record_claims(service, record),
         )

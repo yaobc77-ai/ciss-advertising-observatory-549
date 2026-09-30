@@ -8,7 +8,7 @@ A dashboard for exploring fossil fuel advertising, built for Boston University's
 
 The original project description calls for a dashboard and retrieval-augmented generation (RAG) search across two datasets: fossil fuel native advertising and fossil fuel social media advertising.
 
-Native advertising data is connected. The social media view and importer are implemented, but the client dataset has not been loaded. CLAIMS integration is now scheduled client work; it is not connected yet. Animal agriculture remains future work.
+Native advertising data is connected. The social media view and importer are implemented, but the client dataset has not been loaded. CLAIMS2 import and read-only views are implemented; the 37 saved-result candidates remain on hold and no new real results have been published. Animal agriculture remains future work.
 
 ## Research questions and current features
 
@@ -17,7 +17,7 @@ Native advertising data is connected. The social media view and importer are imp
 | How many native ads appear by company and news outlet? | A company–outlet matrix with exact counts and CSV export. |
 | Which companies sponsor ads at each outlet? | An interactive relationship graph, named sponsor lists, distribution charts, and supporting articles. |
 | How do counts change across dates, outlets, and sponsors? | Shared filters and annual counts, with unknown dates reported separately. |
-| Which themes appear in the ads? | Exploration of historical labels and their articles. These labels have not been independently verified. |
+| Which themes appear in the ads? | Historical labels and a separate CLAIMS2 evidence view. Real CLAIMS2 results await reviewed publication. |
 | How can users explore social media advertising? | A separate collection view and configurable importer. Real-data analysis awaits the client export. |
 | How can RAG help users explore both datasets? | Database tools answer count questions; retrieved article passages support cited content answers. Cross-dataset use awaits social data. |
 
@@ -67,6 +67,6 @@ Database and paid API tests run separately. `Dockerfile` and `railway.json` prov
 
 ## Documentation and remaining work
 
-This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS source audit](docs/claims_source_audit.md) checks saved results against original articles. A [reviewed-result importer](docs/claims_result_import.md) preserves source evidence and review history; no new CLAIMS labels have been published. The [integration plan](docs/claims_integration_plan.md) describes the remaining website and processing work.
+This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS source audit](docs/claims_source_audit.md) checks saved results against original articles. A [reviewed-result importer](docs/claims_result_import.md) preserves source evidence and review history. The [read-only views](docs/claims_read_views.md) display published definitions and original evidence when results are available. Optional [source discovery](docs/claims_source_discovery.md) finds candidate article URLs for legacy inputs; its maintenance MCP tool is hidden by default and does not update records. The [integration plan](docs/claims_integration_plan.md) describes remaining processing work.
 
 Real social data, complete source/archive coverage, user acceptance testing, independent answer review, and final presentation materials remain part of project completion. Historical CLAIMS labels are not verified greenwashing findings.

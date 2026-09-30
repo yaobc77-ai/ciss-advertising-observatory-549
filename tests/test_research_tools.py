@@ -102,7 +102,7 @@ def make_catalog(base=None, *, links=True):
 def test_catalog_strict_transport_schemas_are_bounded_and_closed():
     catalog, _ = make_catalog()
     definitions = catalog.definitions()
-    assert len(definitions) == 7
+    assert len(definitions) == 8
 
     def verify(node):
         if isinstance(node, dict):

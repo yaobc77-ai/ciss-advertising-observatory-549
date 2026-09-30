@@ -4,6 +4,7 @@ import logging
 import re
 import time
 from collections import Counter
+from copy import deepcopy
 from urllib.parse import urlsplit
 
 from .budget import LimitReached, price
@@ -62,11 +63,58 @@ def summarize(rows):
 
 
 class Service:
-    def __init__(self, settings, db=None, rag=None, research_agent=None):
+    def __init__(self, settings, db=None, rag=None, research_agent=None, claims_store=None):
         self.settings = settings
         self.db = db or Database(settings.database_url)
         self.rag = rag or Rag(self.db, settings)
         self.research_agent = research_agent
+        self.claims_store = claims_store
+
+    def claims_matches(self, filters: Filters, *, nc_ids=None, sc_ids=None, taxonomy=None,
+                       review_state=None, offset=0, limit=20):
+        """Read published NC/SC assignments, independently of historical labels.
+
+        The store rechecks current source versions and exact quote positions in
+        one read-only snapshot. This adapter applies the public link policy and
+        preserves its positive-only coverage; no classification is run here.
+        """
+        from .claims_store import ClaimsStore
+
+        store = self.claims_store if self.claims_store is not None else ClaimsStore(self.db)
+        try:
+            result = deepcopy(store.matches(filters, nc_ids=nc_ids, sc_ids=sc_ids,
+                                            taxonomy=taxonomy, review_state=review_state,
+                                            offset=offset, limit=limit))
+        except ValueError:
+            raise
+        except Exception:
+            # Driver diagnostics may include credentials or source paths.
+            result = {"available": False, "claims_version": None, "total_records": 0,
+                      "total_matches": 0, "records": [], "offset": offset, "limit": limit}
+        result.setdefault("meaning", "Published taxonomy assignments; not independent fact checking.")
+        result.setdefault("coverage", "Records with published matches only; unmatched records are not classified negatives.")
+        result["filters"] = filters.model_dump(mode="json")
+        result["status"] = "ok" if result.get("available") else "unavailable"
+        result["model_calls"] = 0
+        result["claims_status"] = "published_assignments_only"
+        if not result.get("available"):
+            result["message"] = "Published CLAIMS2 results are unavailable. Unmatched records are not classified negatives."
+        refs = []
+        for record in result.get("records", []):
+            claims = record.get("claims", [])
+            for claim in claims:
+                for field in ("url", "archive_url"):
+                    claim[field] = safe_url(claim.get(field)) if self.settings.show_source_links else ""
+                refs.append({key: claim.get(key) for key in (
+                    "candidate_key", "record_id", "version_id", "body_hash", "dataset", "start", "end",
+                    "taxonomy_version", "review_version", "run_id",
+                )})
+            if claims:
+                record.update({key: claims[0].get(key) for key in (
+                    "title", "publisher", "sponsor", "dataset", "date", "url", "archive_url",
+                )})
+        result["source_refs"] = refs
+        return result
 
     def browse(self, filters):
         return self._public_rows(self.db.public_rows(filters))
@@ -110,7 +158,7 @@ class Service:
                 if detail and detail.get("version_id") == row["version_id"]:
                     attachments[row["record_id"]] = detail.get("attachments", [])
         graph = build_graph(page["rows"], links_enabled=self.settings.show_source_links,
-                            attachments_by_record=attachments)
+                            attachments_by_record=attachments, claims2=page.get("claims2"))
         graph["coverage"] = {
             "total_records": page["total"], "shown_records": len(page["rows"]),
             "offset": page["offset"], "limit": page["limit"],
@@ -289,6 +337,8 @@ class Service:
                     answer="Source records and relationships from the current collection are shown below.",
                     structured_result={"kind": run.route, **data},
                 )
+            elif run.route == "claims":
+                result = self._tool_claims_answer(data)
             elif run.route == "clarify":
                 result = Answer(status="insufficient_evidence", answer_mode="clarification",
                                 answer=data.get("message") or "Please clarify the collection, entity or date range.")
@@ -320,6 +370,22 @@ class Service:
         except Exception:
             log.warning("Tool research audit log unavailable")
         return result
+
+    @staticmethod
+    def _tool_claims_answer(data):
+        """Present stored assignments and exact quotes without prose generation."""
+        if data.get("status") != "ok" or not data.get("available"):
+            return Answer(status="service_unavailable", answer_mode="tools",
+                          answer="Published CLAIMS2 results are unavailable; this does not establish that advertisements contain no claims.",
+                          failure_reason="claims_results_unavailable")
+        total = data["total_records"]
+        matches = data["total_matches"]
+        message = (f"{total:,} stored records have {matches:,} published CLAIMS2 assignments within this selection. "
+                   "Definitions, review states and original evidence are shown below. "
+                   "These assignments are not independent fact checking or verified greenwashing findings. "
+                   "Unmatched records are not classified negatives.")
+        return Answer(status="answered", answer_mode="tools", answer=message,
+                      structured_result={"kind": "claims", **data})
 
     @staticmethod
     def _tool_statistics_answer(data):

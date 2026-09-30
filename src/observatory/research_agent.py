@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .budget import LimitReached, price
 from .models import Filters
 
-POLICY_VERSION = "research-tools-v1"
+POLICY_VERSION = "research-tools-v2"
 MAX_INPUT_BYTES = 60_000
 MAX_ARGUMENT_BYTES = 8_000
 MAX_INTERMEDIATE_BYTES = 16_000
@@ -44,6 +44,12 @@ the original user's question will be used for the separately grounded answer in 
 Use get_graph_schema then get_graph_neighborhood to inspect typed/provenance relationships.
 Use get_record_sources for the original materials behind an identified record and get_record
 for its bounded detail. Source citations establish provenance, not that claims are factually true.
+Use get_claims_matches for published CLAIMS2 taxonomy assignments, optionally narrowed by
+exact NC_/SC_ IDs, taxonomy fingerprint and review state. Its results carry definitions and
+original quote positions. Only published positive matches are counted; an unmatched record
+has no established negative classification. Human-supported means the assignment was
+reviewed against that taxonomy, not that greenwashing or the claim's factual truth is verified.
+Do not guess a category ID from a theme or conflate NC/SC categories with historical labels.
 
 Every tool is restricted to active_scope. Tool filters only narrow that scope. Never clear a
 current filter or switch to a dataset outside it. Explicit dates narrow current dates; omit
@@ -68,6 +74,7 @@ TERMINAL_ROUTES = {
     "get_graph_neighborhood": "graph",
     "get_record_sources": "sources",
     "get_record": "record",
+    "get_claims_matches": "claims",
 }
 INTERMEDIATE_TOOLS = {"resolve_entity", "get_graph_schema"}
 
@@ -99,7 +106,7 @@ class ResearchRun:
     """Only tool-derived data is promoted to a final research route."""
 
     route: Literal[
-        "statistics", "evidence", "graph", "sources", "record",
+        "statistics", "evidence", "graph", "sources", "record", "claims",
         "clarify", "unavailable", "limited",
     ]
     result: dict[str, Any] = field(default_factory=dict)
@@ -401,6 +408,7 @@ class ResearchAgent:
                 status=status,
                 effective_filters=result.get("filters"),
                 data_version=result.get("data_version"),
+                claims_version=result.get("claims_version"),
                 data_refs=_source_refs(result),
                 scope_notes=result.get("scope_notes", []),
                 result_sha256=_digest(encoded),

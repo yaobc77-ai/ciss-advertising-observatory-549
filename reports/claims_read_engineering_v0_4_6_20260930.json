@@ -1,0 +1,107 @@
+{
+  "checked_at_utc": "2026-09-30T23:42:36.728825+00:00",
+  "application_version": "0.4.6",
+  "scope": "engineering and one bounded source-search sample; not client semantic acceptance",
+  "wheel_sha256": "1e265f86e0598cdaf581c26e8c3dcc834f74cc8b614c34ecbf4be5e9c15ec71a",
+  "offline_installed_wheel_tests": {
+    "passed": 1589,
+    "skipped": 1,
+    "deselected": 87,
+    "seconds": 47.09,
+    "log_sha256": "5fef0b679b15d00118da2060285eb835db6c01b34b7cc91994c595596d3d4534"
+  },
+  "isolated_installed_wheel_database_tests": {
+    "passed": 33,
+    "skipped": 0,
+    "deselected": 0,
+    "seconds": 16.71,
+    "log_sha256": "2775a6687912d80bbd4a02549a5fa1f20c30adca215d7e0a4cc5510f786b70d3",
+    "authority": "explicit local obs_test database; random owned schemas cleaned after tests",
+    "cases": [
+      "published source evidence and review projection",
+      "same-snapshot article and claims reads",
+      "assignment-specific NC to SC provenance",
+      "current filtered page isolation",
+      "literal source locations and trusted scope",
+      "source updates and retractions"
+    ]
+  },
+  "independent_offline_reproduction": "current_release_offline_reproduction_v0_4_6_20260930.json",
+  "mcp_stdio": {
+    "status": "passed",
+    "real_subprocess": true,
+    "tools": [
+      "resolve_entity",
+      "record_statistics",
+      "search_records",
+      "get_record",
+      "get_record_sources",
+      "get_graph_schema",
+      "get_graph_neighborhood",
+      "get_claims_matches"
+    ],
+    "model_calls": 0,
+    "extra_sql_argument_rejected": true,
+    "maintenance_search_hidden": true
+  },
+  "local_application": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": null,
+      "features": {
+        "claims_read_view": true,
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.6"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "local_migration": {
+    "current_version": 3,
+    "pending": []
+  },
+  "local_browser": {
+    "scope": "local native Overview initial empty CLAIMS2 state",
+    "observed": "No published assignments; 263 records in scope; completion unknown"
+  },
+  "claims2_publication": {
+    "published_real_matches": 0,
+    "actual_saved_candidates": 37,
+    "review_state": "all held pending source and semantic review"
+  },
+  "legacy_source_lookup": {
+    "scope": "one real unchanged legacy excerpt selected before search",
+    "local_candidates": 0,
+    "model_calls": 1,
+    "search_actions": 1,
+    "model": "gpt-5.6-luna",
+    "usage": {
+      "input_tokens": 12785,
+      "output_tokens": 543,
+      "cached_tokens": 0,
+      "cache_write_tokens": 4424
+    },
+    "cost_usd": 0.0134298,
+    "accounting_state": "settled",
+    "provider_reference_urls": 5,
+    "original_article_identity_confirmed": false,
+    "outcome": "related or partial references; original article URL remains unresolved",
+    "source_collection_unchanged": true,
+    "source_associations_written": 0,
+    "classifications_published": 0,
+    "bulk_search": false,
+    "semantic_source_recovery_quality": "not evaluated"
+  },
+  "production_deployment": "not asserted by this preflight receipt",
+  "real_social_and_customer_review_materials": "deferred TODO",
+  "client_acceptance": "pending"
+}
