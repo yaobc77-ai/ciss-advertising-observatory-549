@@ -1,0 +1,57 @@
+{
+  "checked_at_utc": "2026-09-30T23:48:19.084040+00:00",
+  "scope": "actual local source archives after application commit",
+  "application_version": "0.4.6",
+  "archives": [
+    {
+      "archive_filename": "ciss-observatory-source-v0.4.6.zip",
+      "git_revision": "9538b47d46a74923448b2d761b26bca15d02e395",
+      "revision_state": "git_revision_snapshot",
+      "entries": 416,
+      "bytes": 3936544,
+      "sha256": "0c6181ec54766e66fb93ae5381e737649b9dbbdc088752e8691d2845ad12dbd9",
+      "required_deployment_and_claims_files_present": [
+        ".dockerignore",
+        ".github/workflows/ci.yml",
+        "Dockerfile",
+        "docs/claims_read_views.md",
+        "docs/claims_source_discovery.md",
+        "railway.json",
+        "src/observatory/claims_graph.py",
+        "src/observatory/claims_source_search.py",
+        "src/observatory/claims_ui.py",
+        "src/observatory/migrations/0003_claims2_results.sql"
+      ],
+      "all_content_hashes_verified": true,
+      "manifest_payload_hashes_verified": true,
+      "private_inputs_runtime_and_backups_included": false
+    },
+    {
+      "archive_filename": "ciss-observatory-549-source-v0.4.6.zip",
+      "git_revision": "69b8f11ef72e6b02fbcee930f2d6e725250ca610",
+      "revision_state": "git_revision_snapshot",
+      "entries": 208,
+      "bytes": 738112,
+      "sha256": "737986027e5298179894234ed318166abdb05b4d17e1610aa3e8673cc09a39fe",
+      "required_deployment_and_claims_files_present": [
+        ".dockerignore",
+        ".github/workflows/ci.yml",
+        "Dockerfile",
+        "docs/claims_read_views.md",
+        "docs/claims_source_discovery.md",
+        "railway.json",
+        "src/observatory/claims_graph.py",
+        "src/observatory/claims_source_search.py",
+        "src/observatory/claims_ui.py",
+        "src/observatory/migrations/0003_claims2_results.sql"
+      ],
+      "all_content_hashes_verified": true,
+      "manifest_payload_hashes_verified": true,
+      "private_inputs_runtime_and_backups_included": false
+    }
+  ],
+  "private_dataset_backup_and_config_transfer": "separate TODO",
+  "client_acceptance": "pending",
+  "model_calls": 0,
+  "note": "Archives bind the listed application commits; later documentation receipts do not change them."
+}

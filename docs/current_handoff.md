@@ -1,6 +1,6 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package: **0.4.6**. The latest verified hosted application before this update is **0.4.5**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_5_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.6**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_6_publication_20260930.json). Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -14,8 +14,11 @@ in Overview, article detail, Query and the article-provenance graph. Each select
 assignment keeps its own taxonomy and source evidence. [Legacy URL discovery](claims_source_discovery.md)
 checks exact local text first and can make one paid web search through an explicitly
 enabled maintenance MCP tool. Candidate URLs require review and do not update
-articles or classifications. The 0.4.6 release checks and any real search receipt
-must be recorded separately from the earlier evidence below.
+articles or classifications. The [engineering receipt](../reports/claims_read_engineering_v0_4_6_20260930.json)
+records 1,589 offline and 33 isolated database tests. One paid source-search sample
+cost $0.0134298 and did not establish its original article URL. Both repositories'
+CI passed; the hosted source collection and retrieval index remain unchanged.
+The [source archives](../reports/source_handoff_v0_4_6_20260930.json) bind the tested application commits.
 
 [Live dashboard](https://ciss-advertising-observatory-production.up.railway.app/data) · [Questions](https://ciss-advertising-observatory-production.up.railway.app/query) · [Project page](https://yaobc77-ai.github.io/ciss-advertising-observatory-549/) · [English repository](https://github.com/yaobc77-ai/ciss-advertising-observatory-549)
 
