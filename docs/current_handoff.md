@@ -1,6 +1,6 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package: **0.4.3**. The production graph workflows below were last checked on **0.4.2**; a new deployment must identify its actual commit and version.
+Updated 30 September 2026. Maintenance package and deployed application: **0.4.3**. The production health endpoint identifies the release commit and unchanged collection/index; the graph interaction checks below were performed on **0.4.2**. See the [publication receipt](../reports/release_v0_4_3_publication_20260930.json) for the scope of each check.
 
 [Live dashboard](https://ciss-advertising-observatory-production.up.railway.app/data) · [Questions](https://ciss-advertising-observatory-production.up.railway.app/query) · [Project page](https://yaobc77-ai.github.io/ciss-advertising-observatory-549/) · [English repository](https://github.com/yaobc77-ai/ciss-advertising-observatory-549)
 
@@ -184,7 +184,7 @@ Use the provided Dockerfile. Set `OBS_HOST=0.0.0.0`; Railway supplies `PORT`. Co
 
 The deployment contract uses `/app/.venv/bin/observatory migrate` before startup, `/healthz` with a 60-second timeout, and deployment after successful CI. Check the platform's applied settings and logs: the repository's `railway.json` alone does not demonstrate that a setting was adopted.
 
-The observed public health response on 30 September 2026 identified application 0.4.2 at commit `271c02d8b2f82bf8cc10c8b1278fae5c8ea1d6e2`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. Future releases must record their own observed version and commit. A healthy endpoint is not proof that every user workflow or attachment works.
+The latest observed public health response on 30 September 2026 identifies application **0.4.3** at commit `324691f5ef6c2d8ddeba8f50e6d71559c64cd43a`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. The source, data and index identifiers match the earlier 0.4.2 observation at `271c02d8b2f82bf8cc10c8b1278fae5c8ea1d6e2`. Both repository CI runs passed 1,057 offline engineering tests; the static project page returned HTTP 200. These checks are recorded in the [publication receipt](../reports/release_v0_4_3_publication_20260930.json). A healthy endpoint is not proof that every user workflow or attachment works.
 
 The example configuration specifies a $100 monthly application/API budget, 5 requests per visitor per minute, 30 per UTC day and 2 concurrent generations. The deployed values can differ; inspect the actual configuration and ledger before spending. Application/API controls are separate from Railway hosting charges. Failed or uncertain requests retain their recorded costs and reservations; do not clear the ledger to resume service.
 
