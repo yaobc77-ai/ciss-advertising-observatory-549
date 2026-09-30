@@ -10,6 +10,8 @@
 
 The social collection remains unavailable until its client dataset is imported. CLAIMS integration is scheduled separately. Historical labels record earlier annotations; they are not a new CLAIMS classification or a verified assessment of greenwashing.
 
+Maintainers can run a [read-only CLAIMS source audit](claims_source_audit.md) against the supplied saved results before importing classifications. This command does not publish new labels.
+
 ## Install and configure
 
 Follow the commands in the [README](../README.md). PostgreSQL must support pgvector. Keep `.env` and database backups private.

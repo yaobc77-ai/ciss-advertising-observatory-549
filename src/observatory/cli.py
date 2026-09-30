@@ -44,6 +44,12 @@ def main():
     records.add_argument("--mode", choices=["upsert", "snapshot"], default="upsert")
     records.add_argument("--dry-run", action="store_true", help="Validate every row without opening the database")
     records.add_argument("--out", default="outputs/records_import.json")
+    claims = sub.add_parser("claims-audit", help="Read saved CLAIMS outputs and original versions without publishing labels")
+    claims.add_argument("--bundle", type=Path, required=True, help="Upstream paragraph src/data directory")
+    claims.add_argument("--out", type=Path, required=True, help="New private output directory")
+    claims.add_argument("--dataset", choices=["native", "social"], default="native")
+    claims.add_argument("--projection", choices=["strict", "upstream-ascii-v1"], default="strict",
+                        help="Explicitly enable the versioned lossy upstream character projection")
     sub.add_parser("index")
     for command in ("index-prepare", "index-status", "index-activate"):
         p = sub.add_parser(command)
@@ -78,6 +84,11 @@ def main():
         from .budget import Budget
 
         emit(Budget(db, settings).summary())
+    elif args.command == "claims-audit":
+        from .claims_linkage import run_linkage_audit
+
+        emit(run_linkage_audit(db, args.bundle, args.out, dataset=args.dataset,
+                              projection=args.projection))
     elif args.command == "import-native":
         from .ingest import load_native
 

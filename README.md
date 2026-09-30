@@ -67,6 +67,6 @@ Database and paid API tests run separately. `Dockerfile` and `railway.json` prov
 
 ## Documentation and remaining work
 
-This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS integration plan](docs/claims_integration_plan.md) describes the next integration steps.
+This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS source audit](docs/claims_source_audit.md) checks saved results against original articles; the [integration plan](docs/claims_integration_plan.md) describes the remaining import and product work.
 
 Real social data, complete source/archive coverage, user acceptance testing, independent answer review, and final presentation materials remain part of project completion. Historical CLAIMS labels are not verified greenwashing findings.

@@ -1,6 +1,6 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package and deployed application: **0.4.3**. The production health endpoint identifies the release commit and unchanged collection/index; the graph interaction checks below were performed on **0.4.2**. See the [publication receipt](../reports/release_v0_4_3_publication_20260930.json) for the scope of each check.
+Updated 30 September 2026. Maintenance package: **0.4.4**. The previously verified hosted application is **0.4.3**; its health and CI checks are recorded in the [publication receipt](../reports/release_v0_4_3_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The new [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 [Live dashboard](https://ciss-advertising-observatory-production.up.railway.app/data) · [Questions](https://ciss-advertising-observatory-production.up.railway.app/query) · [Project page](https://yaobc77-ai.github.io/ciss-advertising-observatory-549/) · [English repository](https://github.com/yaobc77-ai/ciss-advertising-observatory-549)
 

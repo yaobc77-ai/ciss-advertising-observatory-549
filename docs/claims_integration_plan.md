@@ -1,7 +1,8 @@
 # CLAIMS integration plan
 
-Updated September 30, 2026. Status: planned integration; no CLAIMS 2 results have
-been imported, classified or published by this work.
+Updated September 30, 2026. Status: read-only source audit and candidate decoder
+implemented; database import and product integration remain scheduled. No
+CLAIMS 2 results have been newly classified, imported or published by this work.
 
 ## Current scope
 
@@ -146,8 +147,8 @@ analysis version; it does not overwrite the prior batch.
 
 | Stage | Work | Reviewable completion evidence |
 |---|---|---|
-| **1. Now: bundle and linkage audit** | Pin candidate bundles; read saved SQLite in read-only mode; trace source IDs through the supplied CSVs; find exact current/historical body and snippet matches | File manifest, category integrity report and a linkage table with successful, ambiguous, unmatched and changed-body counts; no database publication or paid calls |
-| **2. Result adapter and dry run** | Add a strict result schema, taxonomy reader and batch import dry run; keep unresolved results quarantined; preserve raw output pointers | Repeated import is idempotent; stale bodies, invalid IDs, wrong bundle edges and invented quotes are rejected |
+| **1. Implemented: bundle and linkage audit** | Read-only SQLite and original-text snapshots; exact input joins; retained paragraph order; strict and explicit versioned ASCII-projection comparisons | [Actual audit](claims_source_audit.md) and [receipt](../reports/claims_source_linkage_20260930.json); private source/evidence review files, zero database writes and model calls |
+| **2. Candidate adapter implemented; importer pending** | Strict taxonomy and original-response decoding, version/quote checks, stable candidate keys and review CSV; preserve unresolved and changed-definition states | Candidate dry runs completed. Published-result importer and repeat-import verification follow authoritative bundle/run and source-binding decisions |
 | **3. Read-only product integration** | Show published NC/SC definitions, run and review status in record details; add claim filters, coverage and count exports; add typed article-to-claim and NC-to-SC graph edges | Counts reconcile to distinct current records; each selection opens the matching articles and exact evidence, not just a total |
 | **4. Offline processing for remaining articles** | Reuse the upstream extractor through a narrow frozen-taxonomy adapter in an isolated run directory; reserve cost and log usage; classify new or changed eligible bodies only | Saved bounded-batch results, per-input failures, source checks and an explicit publication report; new taxonomy proposals stay separate |
 | **5. RAG and regression verification** | Add a read-only claims tool and optional taxonomy-aware retrieval; generate answers from original source quotes; compare retrieval with and without the new analysis filter | Counts and ordinary searches still work; unanalysed articles remain searchable; source location and semantic support are evaluated separately |
@@ -165,20 +166,36 @@ establish that a company statement is false or legally misleading.
 
 ## First actionable step and remaining TODOs
 
-The bundle inventory and backend/fallback inspection above are complete and
-recorded in the source-bundle receipt. Article-to-result linkage is not yet checked.
-The next implementation is a read-only source-linkage checker producing:
+The bundle inventory, backend/fallback inspection and first article-to-result
+linkage audit are complete. The implemented `claims-audit` command produces:
 
 - A selected-bundle manifest based on the existing inventory: full hashes,
   category counts and invalid mappings.
 - `claims_source_linkage_candidates.csv`: saved result IDs, exact input matches,
   candidate record/version IDs, quote positions and unresolved reasons.
-- `claims_integration_dry_run.json`: publishable versus quarantined counts,
+- `claims_integration_dry_run.json`: candidate and quarantine/review counts,
   with no production database changes.
 
-These outputs are planned artifacts; this document does not claim they have
-already been generated. Start with the paragraph bundle and its 806 saved
-results, keeping the March sentence run as a separately versioned candidate.
+These outputs and category-specific evidence review files have been generated
+privately for the paragraph bundle's 806 saved results. All input joins are
+valid. Strict matching finds one current retained-input article candidate,
+outside the accepted retrieval scope. The explicit recorded ASCII projection
+finds eight article candidates, 84 in-scope paragraph candidates and 37 classified
+occurrences with a unique current original quote and retained-input association.
+These are not approved source associations or verified classifications.
+
+The decoder preserves 762 indexed category occurrences and quarantines two
+multi-JSON-block responses. It separates snippets absent from the input, partial
+article matches, historical versions, NC/SC conflicts and definition drift.
+Four missing saved outputs remain unprocessed. See the [audit guide](claims_source_audit.md)
+for output meanings and the exact completion boundary. The March sentence run
+remains a separate candidate; its malformed mapping is not silently repaired.
+
+The next step is to review the available source bindings and authority/version
+choices, then implement a published-result importer and read-only product tools.
+Partial text evidence must not be promoted to a complete retained-input
+association. A domain review must separately decide whether a quote supports
+its classification.
 
 TODOs requiring customer or data-owner input are the authoritative taxonomy/run,
 any missing source-ID crosswalk, the intended meaning of a published CLAIMS
@@ -193,4 +210,5 @@ the relevant file-level provenance before redistributing adapted code.
 Sources: supplied archive and the inspected upstream paths above; earlier
 [offline/online design](https://github.com/yaobc77-ai/ciss-advertising-observatory/blob/main/docs/CLAIMS_OFFLINE_RAG_ONLINE_20260925.zh-CN.md) and
 [source review](https://github.com/yaobc77-ai/ciss-advertising-observatory/blob/main/reports/UPSTREAM_SOURCE_REVIEW_20260918.zh-CN.md) remain
-historical context. No taxonomy, label, source data or deployment was changed.
+historical context. Source inspection and audit did not change a taxonomy,
+label or source database; maintenance package publication is recorded separately.
