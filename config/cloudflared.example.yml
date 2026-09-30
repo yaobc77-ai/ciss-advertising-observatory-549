@@ -1,0 +1,9 @@
+# Fill with an existing named tunnel UUID, protected credentials path and owned hostname.
+# This file is a template and does not create a public deployment.
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: REPLACE_WITH_PRIVATE_CREDENTIALS_PATH
+ingress:
+  - hostname: REPLACE_WITH_OWNED_HOSTNAME
+    service: http://127.0.0.1:8050
+  - service: http_status:404
+

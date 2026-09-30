@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "review_id": "pdf265-text-continuation-20260916-v1",
+  "reviewer_type": "ai",
+  "source_path": "sources/FA25_SP26/final_dataset_cleaned.csv",
+  "source_sha256": "689f330321e42ea608070b2590fa24ee6c2bfb06dbc671941b1f0a927f4ceffa",
+  "decisions": [
+    {
+      "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+      "url": "https://www.cnbc.com/advertorial/2018/12/28/using-mollusks-to-monitor-industrial-sites.html",
+      "source_row": 80,
+      "previous_body_sha256": "fdd9c9ffd4d1934e15e74c3be0a3bf687ccb7a1989b109e226dba4bc28e35ff7",
+      "source_pdf_path": "sources/pdf_archive_20260915/pdfs/summer_2025_run/CNBC/2018-12-28T10_21_52-0500_Usingmolluskstomonitorindustrialsites.pdf",
+      "source_pdf_sha256": "20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c",
+      "extracted_text_path": "sources/recovered_native/PDF-265.pypdf-6.10.0.txt",
+      "extracted_text_sha256": "28110347b8b96cd32ac4b7bcac41d1f3b80c67798e220f9043382eb40a622b67",
+      "extraction_method": "pypdf 6.10.0 page.extract_text; UTF-8; page terminator U+000C; no normalization",
+      "pages": [
+        {
+          "page": 1,
+          "start": 0,
+          "end": 929
+        },
+        {
+          "page": 2,
+          "start": 929,
+          "end": 2213
+        },
+        {
+          "page": 3,
+          "start": 2213,
+          "end": 3737
+        },
+        {
+          "page": 4,
+          "start": 3737,
+          "end": 5287
+        },
+        {
+          "page": 5,
+          "start": 5287,
+          "end": 6348
+        },
+        {
+          "page": 6,
+          "start": 6348,
+          "end": 7098
+        }
+      ],
+      "retained_ranges": [
+        [
+          0,
+          823
+        ],
+        [
+          929,
+          2099
+        ],
+        [
+          2339,
+          3557
+        ],
+        [
+          3737,
+          5012
+        ],
+        [
+          5429,
+          5663
+        ],
+        [
+          5733,
+          5780
+        ]
+      ],
+      "identity_basis": "Original acquisition ZIP filename and exact PDF SHA-256 match uniquely generated publisher/date/title path from URL-bearing source rows, corroborated by multiple distinctive text anchors. Local content identity reviewed; online canonical URL not verified.",
+      "evidence_refs": [
+        "reports/pdf265_identity_review.md",
+        "reports/pdf265_body_recovery.md"
+      ],
+      "limitations": [
+        "Partial text-layer recovery, not a complete article or a verified current online version.",
+        "Fixed navigation obscures page-edge text in the rendered PDF; some linked words are white/invisible. Extraction retains their original PDF text layer, with layout limitations recorded.",
+        "The page 5 infographic is an image and is not transcribed or used for numerical answers.",
+        "Cross-page fragments of the Our aim quotation and cost-comparison sentence are excluded from retrieval; no quotation is synthesized across page/navigation gaps.",
+        "Related-story links, sharing links, paid disclosure and site navigation remain in the raw extraction but are outside retained retrieval ranges.",
+        "Local source manifest plus matching content confirms the article association; the current online canonical page was not readable in this review."
+      ]
+    }
+  ]
+}

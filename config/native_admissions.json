@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "review_id": "native-additions-20260916-v1",
+  "reviewer_type": "ai",
+  "scope_note": "AI 工程采纳记录，依据现有本地审核及原始合并 CSV；不是人工批准，也不是语义质量或线上页面验证。维持当前化石燃料及动物农业广告项目边界，并继续覆盖既有 CERAWeek 行业活动付费内容；付款方未知单独标示。7 条 include 中 5 条允许 CSV 正文处理、2 条仅元数据；4 条 exclude、1 条 pending 不作为纳入记录。所有 PDF 关联仍是 candidate_unverified，不以标题匹配证明完整性，不自动回填 PDF 正文。source_row 是含表头的 CSV 逻辑记录号，body_sha256 是原 article 字符串 UTF-8 字节的 SHA-256；非覆盖字段沿用 source，不表示字段已获独立确认。本配置只记录工程决策，尚不表示数据库已应用。",
+  "source_path": "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv",
+  "source_sha256": "a677a6de6a8c10a4f872456263af72f0f99be4c3c561bf8b7449bce9b892dd57",
+  "decisions": [
+    {
+      "review_id": "add-01",
+      "url": "https://www.cnbc.com/advertorial/2015/05/05/how-much-co2-is-emitted-when-you-travel.html",
+      "source_row": 21,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decision": "include",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "本地审核中的 CNBC 付费披露及 Total 身份支持当前化石燃料原生广告范围。CSV 正文为空，仅纳入元数据，不启用正文检索；PDF 关联仍是基于标题的候选，不能直接替换正文。保留源发布日期，不以更新日或归档日替代。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:50",
+        "reports/additional_url_review.csv:logical_record_including_header=2",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=21",
+        "analysis/pdf_archive/text/PDF-254.txt:3",
+        "analysis/pdf_archive/text/PDF-254.txt:10",
+        "analysis/pdf_archive/text/PDF-254.txt:37"
+      ]
+    },
+    {
+      "review_id": "add-02",
+      "url": "https://partners.wsj.com/ceraweek/connection/darren-woods-chairman-ceo-exxonmobil-speaks-daniel-yergin-vice-chairman-ihs-markit/ceraweek_darrenwoods_video_fb/",
+      "source_row": 145,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decision": "exclude",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "本地同名 JPG 资源线索、附件路径与基准中已有的精确父文章 URL 相互支持，应排除独立文章计数。CSV 正文为空；访谈嘉宾 ExxonMobil 身份不能证明付款方，候选 PDF 不作完整文章确认证据。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:63",
+        "reports/additional_url_review.csv:logical_record_including_header=3",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=145",
+        "analysis/pdf_archive/text/PDF-036.txt:2",
+        "analysis/pdf_archive/text/PDF-036.txt:4"
+      ]
+    },
+    {
+      "review_id": "add-03",
+      "url": "https://partners.wsj.com/api/a-road-map-for-bipartisan-energy-progress/",
+      "source_row": 272,
+      "body_sha256": "58ae04f64720d89398ebc3680c68db6968cefce3fde51fa62e49dec0495bdb81",
+      "decision": "include",
+      "body_mode": "text",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "CSV 有连续正文、Mike Sommers/API 署名、油气政策内容与 WSJ 广告部门披露，对应 JSONL 的 URL 和正文一致，纳入正文和统计。CSV 标题与候选 PDF 可见标题不同，保留来源差异，不静默覆盖，也不将广告论证当成外部事实验证。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:77",
+        "reports/additional_url_review.csv:logical_record_including_header=4",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=272",
+        "analysis/pdf_archive/text/PDF-149.txt:2",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The Wall Street Journal_dataset_2025-11-07.jsonl:1"
+      ]
+    },
+    {
+      "review_id": "add-04",
+      "url": "https://partners.wsj.com/ceraweek/connection/sustainable-u-s-oil-gas-revolution/",
+      "source_row": 273,
+      "body_sha256": "ec26712743c70803f4d5e4140a4b53bea0df60c4ab2a656c6a9ae88b0155c46b",
+      "decision": "include",
+      "body_mode": "text",
+      "sponsor_policy": "unknown",
+      "date_policy": "source",
+      "reason": "继续采用现有包含 CERAWeek 行业活动付费内容的范围：CSV 有油气与压裂分析及付费/广告部门说明，纳入正文和统计。原 sponsor 错填文章标题，规范赞助方置 unknown；作者 IHS Markit、关键词或活动名不能代替付款方证据。若未来收窄为必须确认化石燃料公司付款方，应重新审查此决定。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:91",
+        "reports/additional_url_review.csv:logical_record_including_header=5",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=273",
+        "analysis/pdf_archive/text/PDF-010.txt (archive_id=PDF-010; candidate_unverified)",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The Wall Street Journal_dataset_2025-11-07.jsonl:2"
+      ]
+    },
+    {
+      "review_id": "add-05",
+      "url": "https://partners.wsj.com/ceraweek/connection/will-u-s-become-swing-producer-global-gas-market/ceraweek_article1_hero/",
+      "source_row": 274,
+      "body_sha256": "56e5c6211447ddec7b44c10351c27e7cebde7f65ad315cdb1d380b320f423d33",
+      "decision": "exclude",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "URL 是已存在父文章下的 Hero 附件页，本地同名 JPG 线索支持资源身份；CSV 374 字符只有通用 WSJ 披露，没有主体。排除独立广告计数和正文检索，不由非空文本或错误 sponsor 标题推断完整文章。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:105",
+        "reports/additional_url_review.csv:logical_record_including_header=6",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=274",
+        "analysis/pdf_archive/text/PDF-003.txt:4",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The Wall Street Journal_dataset_2025-11-07.jsonl:3"
+      ]
+    },
+    {
+      "review_id": "add-06",
+      "url": "https://www.washingtonpost.com/creativegroup/southern-company/powering-progress-how-southern-company-is-ensuring-americas-energy-future/",
+      "source_row": 275,
+      "body_sha256": "687df7f618bc40768c71eacc179d7c342e30463cf61b745bf923639ed81e8cd1",
+      "decision": "include",
+      "body_mode": "text",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "CSV 有 Southern Company CEO 问答、公司身份与能源组合/天然气/CCS 内容，对应 JSONL 的 URL 和正文一致，纳入正文和统计。正文署名日期与源日期一致；候选 PDF 抽取残缺单独保留为质量局限，不以它覆盖可用 CSV 正文。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:120",
+        "reports/additional_url_review.csv:logical_record_including_header=7",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=275",
+        "analysis/pdf_archive/text/PDF-033.txt:8",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The Washington Post_dataset_2025-11-07.jsonl:17"
+      ]
+    },
+    {
+      "review_id": "add-07",
+      "url": "https://www.washingtonpost.com/creativegroup/southern-company/responsibly-green/",
+      "source_row": 276,
+      "body_sha256": "38d3e343be9b60887a6ec8ca9707ef5a0ceb9f0087d47d7b32103483302cb503",
+      "decision": "include",
+      "body_mode": "text",
+      "sponsor_policy": "source",
+      "date_policy": "unknown",
+      "reason": "Southern Company 付费内容及连续能源组合/减排正文符合范围，纳入正文和统计。CSV/JSONL 日期 2023-06-02 与正文署名和候选 PDF 可见 June 5, 2023 冲突，规范日期置 unknown，保留两种原始来源，不静默择一。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:134",
+        "reports/additional_url_review.csv:logical_record_including_header=8",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=276",
+        "analysis/pdf_archive/text/PDF-084.txt:6",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The Washington Post_dataset_2025-11-07.jsonl:18"
+      ]
+    },
+    {
+      "review_id": "add-08",
+      "url": "https://www.cnbc.com/advertorial/2023/03/09/who-will-power-the-power-of-tomorrow-.html",
+      "source_row": 277,
+      "body_sha256": "d0ebef7d5885b4aca567195e7c7547418752e9da9d065204d144ed62b3c14a3a",
+      "decision": "include",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "本地审核中的 Williams 付费标题、CEO 署名与付款披露支持商业身份及化石燃料范围，仅纳入元数据。CSV 449 字符只有 CNBC 页脚，对应 JSONL 也是同一页脚，不能用于正文检索；候选 PDF 的混杂导航文本未经恢复，不自动替换正文。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:148",
+        "reports/additional_url_review.csv:logical_record_including_header=9",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=277",
+        "analysis/pdf_archive/text/PDF-014.txt:4",
+        "analysis/pdf_archive/text/PDF-014.txt:15",
+        "analysis/pdf_archive/text/PDF-014.txt:103",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/CNBC_dataset_2025-11-07.jsonl:3"
+      ]
+    },
+    {
+      "review_id": "add-09",
+      "url": "https://www.theatlantic.com/sponsored/bayer-2024/demystifying-menopause/3935/?sr_source=facebook&sr_lift=true",
+      "source_row": 278,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decision": "pending",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "保留待核：CSV 缺标题、正文、赞助方及日期，无本地匹配归档或 JSONL 证据。URL 中 Bayer/menopause 和 keyword=PTT 都不足以确认实际内容、付款方或项目范围；不根据 URL 年份填日期，不计入已纳入记录。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:162",
+        "reports/additional_url_review.csv:logical_record_including_header=10",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=278"
+      ]
+    },
+    {
+      "review_id": "add-10",
+      "url": "https://www.businessinsider.com/sc/mobile-technology-helps-businesses-connect-with-consumers",
+      "source_row": 279,
+      "body_sha256": "a6a771105a0505ea5502adc9771c0fa11663b27a205212d0d1ee907580ded311",
+      "decision": "exclude",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "CSV 及本地审核有 Synchrony Financial 直接赞助披露，正文是金融及移动商业推广，排除当前化石燃料与动物农业广告范围。keyword=TotalEnergies 与披露冲突，不能据此归为该公司；原文开头缺失和重复图片说明也仍是质量局限。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:175",
+        "reports/additional_url_review.csv:logical_record_including_header=11",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=279",
+        "analysis/pdf_archive/text/PDF-184.txt:104",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/Business Insider_dataset_2025-11-07.jsonl:1"
+      ]
+    },
+    {
+      "review_id": "add-11",
+      "url": "https://www.nytimes.com/paidpost/chevron/meet-the-problem-solvers.html",
+      "source_row": 280,
+      "body_sha256": "6763c58fb7dc1fb321841970e9befe0dcf112a630c39a8352158ad2baf569b16",
+      "decision": "include",
+      "body_mode": "text",
+      "sponsor_policy": "source",
+      "date_policy": "unknown",
+      "reason": "NYT paidpost/chevron URL、付费标题及 CSV 公司/员工正文相互支持，内容涉及油气与减排，纳入正文和统计。CSV 日期 1970-08-23 与 URL/正文一致的 JSONL 原值 20250613 不一致，后者发布日期语义未独立确认，规范日期置 unknown。候选 PDF 抽取不足不能替换可读 CSV。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:189",
+        "reports/additional_url_review.csv:logical_record_including_header=12",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=280",
+        "analysis/pdf_archive/text/PDF-093.txt (archive_id=PDF-093; candidate_unverified)",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The New York Times_dataset_2025-11-06.jsonl:5"
+      ]
+    },
+    {
+      "review_id": "add-12",
+      "url": "https://ad-assets.nytimes.com/paidpost/shell/sky/assets/Shell-LP-Sky-Legal-Disclaimer.pdf",
+      "source_row": 281,
+      "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decision": "exclude",
+      "body_mode": "metadata_only",
+      "sponsor_policy": "source",
+      "date_policy": "source",
+      "reason": "URL 明确指向 Shell-LP-Sky-Legal-Disclaimer.pdf 法律资源，排除独立广告计数。CSV 正文为空、JSONL article 为 null，均为缺失但不是逐字相同；Unknown Title 与零文本候选 PDF 不足以确认完整文章或特定父文章关联。",
+      "evidence_refs": [
+        "reports/additional_url_review.md:203",
+        "reports/additional_url_review.csv:logical_record_including_header=13",
+        "sources/pdf_archive_20260915/nested_unique/native-ads-download/combined_ads_12-4-25.csv:logical_record_including_header=281",
+        "analysis/pdf_archive/text/PDF-079.txt (archive_id=PDF-079; candidate_unverified)",
+        "sources/pdf_archive_20260915/pdfs/fall_2025_run/jsonl/The New York Times_dataset_2025-11-06.jsonl:9"
+      ]
+    }
+  ]
+}

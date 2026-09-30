@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.7"
+          python-version: "3.12"
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install locked dependencies
+        run: uv sync --frozen --extra test --extra mcp
+      - name: Lint Python and check browser JavaScript
+        run: |
+          uv run --no-sync ruff check src tests
+          for file in src/observatory/assets/*.js; do
+            node --check "$file"
+          done
+      - name: Build and install the release wheel
+        run: |
+          uv build --wheel --out-dir dist
+          uv pip install --no-deps --force-reinstall dist/*.whl
+      - name: Test the installed artifact without databases or paid models
+        env:
+          OBS_RELEASE_WHEEL: "dist/*.whl"
+        run: uv run --no-sync pytest -q -m "not integration and not live"

@@ -1,0 +1,42 @@
+{
+  "source_run_id": "6c250056841b47feab178ffcc95bf2bd",
+  "purpose": "Regression for layout line breaks; source text is not normalized.",
+  "evidence": [
+    {
+      "evidence_id": "b0fb95cc8e7dbf2363ebd0dfb7255b78dc6e2c808e38bf86f88a5f76307421a1",
+      "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+      "version_id": "4a3327449b00061b4be47ef667a3a106d284af36ebd4f88685942bcc60ccf949",
+      "dataset": "native",
+      "title": "Using mollusks to monitor industrial sites",
+      "publisher": "CNBC",
+      "sponsor": "totalenergies",
+      "url": "https://www.cnbc.com/advertorial/2018/12/28/using-mollusks-to-monitor-industrial-sites.html",
+      "archive_url": "",
+      "text": "Sixteen small mollusks,millions of data\nThe principle of high-frequency,\nnon-invasive (HFNI) valvometry\ninvolves observing the mollusks’\nnatural gaping cycle — or valve\nopening and closing — and noting\nwhen this cycle is disturbed, for\nexample if it stops or speeds up.\nTo do this, electromagnets are\nattached to both parts of the shell\n(valves) so that the quantity and\nquality of gaping activity can be\nrecorded. The data collected is\nthen analyzed. “Quite simple in\ntheory, but in practice we had to\nsolve a few technological\nchallenges,” notes Laurent Cazes.\n“For example, we had to make\nsure the electromagnet didn’t\ndisturb them. Studies showed that\nit didn’t; the mollusks continued\nto reproduce, for instance. We\nminiaturized the electromagnets\nand made them lighter so that we\ncould avoid bothering them.” Just\nsixteen mollusks in a net less than\na meter long can generate and\nsend more than 2.5 million data\ndaily over long periods — at least\ntwo or three years — and\ncontinuously. Because bivalves\nare extremely sensitive to\nhydrocarbons, even the slightest\ndisturbance to their environment\ncauses a reaction. “Ultimately, the\naim is to limit human intervention\nand automate everything,” adds\nLaurent Cazes.",
+      "start": 2339,
+      "end": 3557,
+      "paragraph_ids": [
+        "p1"
+      ],
+      "score": 0.03200204813108039
+    },
+    {
+      "evidence_id": "d9dddff0d7ab065f22b323c56403fbc6c39c764a436dd6f939ad1c3b89c38be2",
+      "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+      "version_id": "4a3327449b00061b4be47ef667a3a106d284af36ebd4f88685942bcc60ccf949",
+      "dataset": "native",
+      "title": "Using mollusks to monitor industrial sites",
+      "publisher": "CNBC",
+      "sponsor": "totalenergies",
+      "url": "https://www.cnbc.com/advertorial/2018/12/28/using-mollusks-to-monitor-industrial-sites.html",
+      "archive_url": "",
+      "text": "Biomonitoring also breaks with\nthe traditional ways of\napproaching measurement. In the\npast, to evaluate adverse changes\nto the environment, you had to\nlook for a specific substance,\nmeasure its concentration and\ncompare it to the applicable\nstandards. Using bivalves means\nthe overall quality of an\nenvironment can be assessed by\ndetermining whether its\necosystem is healthy. “Total aims\nto be a responsible operator and\nback up its claims. With this tool,\nwe can do that in real time, and in\na verifiable manner,” says Laurent\nCazes.\nBivalves can be used in extremely\nharsh environments. In Russia,\nvalvometers were submerged in\nthe Barents Sea, an extremely cold\nenvironment where companies\navoids sending personnel to\nconduct maintenance. In the\nUnited Arab Emirates, a\ncompletely different, very hot\nclimate, pearl oysters — an\nemblematic local species — were\nused for over a year to monitor\nwater quality around one of Total\nABK’s offshore platforms. There’s\nno need to import potentially\ninvasive species; local species\nalready adapted to the\nenvironment can be used. “We’ve\nshown that valvometry works in\nwarm waters, cold waters,\nfreshwater and saltwater,” says\nLaurent Cazes. “We now need to\nsee if it is effective in estuaries,\nwhere saltwater and freshwater\nmix.”",
+      "start": 3737,
+      "end": 5012,
+      "paragraph_ids": [
+        "p1"
+      ],
+      "score": 0.03278688524590164
+    }
+  ]
+}

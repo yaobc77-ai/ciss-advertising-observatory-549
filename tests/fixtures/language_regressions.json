@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "purpose": "Offline language-guard regressions from observed historical failures; not a semantic gold standard or a performance sample. Original questions, answers, citations and cited evidence are preserved. Uncited retrieved evidence is omitted.",
+  "source_path": "outputs/development_reviewed_paid_final_20260916.json",
+  "source_sha256": "dec0d5d4355a021d9e82076a42a0fb26709a400b271e181175b53d39254319ea",
+  "source_run_id": "532453a7c43740ecbe5f4954d3522f41",
+  "source_created_at": "2026-09-16T18:27:47.823266+00:00",
+  "source_data_version": "c5ad20ac2938e619e11fe1f8bfc26b97",
+  "cases": [
+    {
+      "id": "dev-03",
+      "question": "What caveat does the Statoil-commissioned Forbes technology article acknowledge about carbon capture deployment?",
+      "answer": "El artículo reconoce que, aunque la captura de carbono parece viable desde el punto de vista tecnológico, hasta la fecha ha tenido muy poco despliegue exitoso. [1]",
+      "expected_question_language": "en",
+      "observed_answer_language": "es",
+      "citations": [
+        {
+          "evidence_id": "5d7fcc01e5f4640df12ff0a636fcdbc92d8e6d33a587f137720066ce1ca072c3",
+          "quote": "\"There is a lot of talk around carbon capture,\" comments Michel Di Capua of Bloomberg New Energy Finance. \"In some respects, especially from a technology perspective, it appears workable, but to date it has had very little successful deployment.\" Delivery and transport of energy is not left out of the new-tech equation."
+        }
+      ],
+      "cited_evidence": [
+        {
+          "evidence_id": "5d7fcc01e5f4640df12ff0a636fcdbc92d8e6d33a587f137720066ce1ca072c3",
+          "record_id": "11cb9509-d4c7-5bbe-bd19-ad24d914e43e",
+          "version_id": "8bccf73894f2cbf7e0de049b4e3d8d861950166dc034008dcc9922245b77a9c8",
+          "dataset": "native",
+          "title": "The Technology Behind Energy Innovation",
+          "publisher": "Forbes",
+          "sponsor": "statoil",
+          "url": "https://www.forbes.com/sites/statoil/2015/03/05/the-technology-behind-energy-innovation/",
+          "archive_url": "",
+          "text": "By Bloomberg Custom Content, An Energy Realities Partner In a 12-story modernist building at the University of Oklahoma, there is a research lab with a wonky name: the Integrated Core Characterization Center. It's where the pores in samples of subterranean limestone and shale get magnified millions of times by a dual-beam electron microscope so that their microstructures can be scrutinized by teams of scientists. Hydraulic fracturing technology for \"tight gas\" extraction took a leap forward a dozen years ago thanks to a combination of two new techniques—horizontal drilling and light-sand injection—but ongoing technological advancement is required to elevate its recovery rates and keep pace with future natural gas demand. According to Bruce Tocher, Manager for Shale Oil and Gas Research at Statoil, \"The desire to constantly improve and optimize every aspect of the process to tap into these challenging resources has resulted in a surge in innovative research involving academic institutes, the service industry, and oil and gas operators. Each year millions of dollars are invested to better understand the geology to target the subsurface sweet spots of reservoirs, the engineering techniques which can improve oil and gas production through more efficient drilling and completions, and sustainability issues focused on reducing emissions and water usage. Working in close collaboration with our operating assets, as well as universities and the service industry, Statoil's Shale Oil and Gas R&D group in Houston is developing innovative technologies for the onshore shale oil and gas industry, and supporting both new technology developments and the training of future generations of scientists and engineers.\" In addition, energy service companies have been producing innovations that can border on reinvention, even when it comes to drilling. Traditionally the business end of an energy producer's drill was a simple part that bored straight ahead until it broke or wore out. The modern version can change its path to find and follow narrow seams in the rock. It's also equipped with a cluster of sensors that gather data about the rock and subterranean fluids. Fiber-optic cables transmit this information to site engineers, who feed it into supercomputers that create real-time reports, allaying the need for guesswork. Some solutions considered promising are currently under-delivering. Carbon capture and storage (CCS) is vital for the goal of meeting future energy demand while remaining on a low-carbon path, but it still faces economic challenges despite the existence of proven technology. CCS is especially prized for its potential to allow the use of coal, which is abundant, as a carbon-free fuel. \"There is a lot of talk around carbon capture,\" comments Michel Di Capua of Bloomberg New Energy Finance. \"In some respects, especially from a technology perspective, it appears workable, but to date it has had very little successful deployment.\" Delivery and transport of energy is not left out of the new-tech equation. Recently, a return to an old idea, direct current (DC) for long-distance transmission, has generated enthusiasm. A Swiss manufacturer recently debuted a",
+          "start": 0,
+          "end": 3199,
+          "paragraph_ids": [
+            "p1"
+          ],
+          "score": 0.03252247488101534
+        }
+      ],
+      "reported_answer_cost_usd": 0.00022488
+    },
+    {
+      "id": "dev-04",
+      "question": "Why does AFPM's Politico plastics advertisement describe limits to mechanical recycling?",
+      "answer": "L’AFPM décrit ces limites parce que le broyage et la fusion des déchets plastiques affaiblissent progressivement le plastique, ce qui limite la quantité de matière recyclée postconsommation pouvant être incorporée dans un sac ou un gobelet sans compromettre sa résistance. [1]\n\nElle ajoute que les produits recyclés mécaniquement sont souvent bruns ou gris, car il est difficile d’en retirer la couleur. [2]",
+      "expected_question_language": "en",
+      "observed_answer_language": "fr",
+      "citations": [
+        {
+          "evidence_id": "220356629a5e67ab9420ba4b88a6abf88563d951315311aa42f445b53579cf7b",
+          "quote": "But by simply shredding and melting post-consumer waste into new pellets, its scale is limited — the process weakens the plastic over time, and therefore restricts how much postconsumer recycled content can be put in a plastic bag or cup without compromising strength."
+        },
+        {
+          "evidence_id": "220356629a5e67ab9420ba4b88a6abf88563d951315311aa42f445b53579cf7b",
+          "quote": "Another issue is many mechanically recycled products are brown or gray because it is hard to strip out the color. Petrochemical manufacturers have worked for years alongside their customers to tweak and perfect formulas for recycled and virgin plastics, but to create more products that contain primarily recycled material will require the adoption of chemical recycling."
+        }
+      ],
+      "cited_evidence": [
+        {
+          "evidence_id": "220356629a5e67ab9420ba4b88a6abf88563d951315311aa42f445b53579cf7b",
+          "record_id": "efb2878e-efea-5821-a9c1-20851779c77a",
+          "version_id": "f4cd4434854b6676f9802fb9029d631471e5803e90c742e0c6ffb9112072568e",
+          "dataset": "native",
+          "title": "Petrochemical manufacturers use chemistry to make plastic more sustainable and recyclable - POLITICO",
+          "publisher": "Politico",
+          "sponsor": "afpm",
+          "url": "https://www.politico.com/sponsor-content/2019/03/petrochemical-manufacturers",
+          "archive_url": "",
+          "text": "Sponsored Content By American Fuel & Petrochemical Manufacturers Plastic (HDPE) flakes are processed at Quality Circular Polymers' recycling facility in the Netherlands. An engineer scoops a handful of tiny pellets out of a stainless-steel canister at a manufacturing plant in the Netherlands and rolls them around in his hand. The BB-sized pellets made atQuality Circular Polymers(QCP) could hold the key to changing how the world thinks about plastics. Made of polymers repurposed from plastic waste, the pellets represent the successful reuse of thousands of bottles, bags, packaging and other materials that typically would be destined for the landfill. In 2018, LyondellBasell and waste recovery company SUEZ launched a recycling partnership, through Quality Circular Polymers (QCP), that aims to turn more used plastic into high-quality recycled polymers. Each year, consumers around the world throw away approximately 150 million tons of plastic — roughly half of all the plastic produced globally, according to researchers. Dealing with that waste has become a top priority for the plastics industry and its main supplier, the petrochemical industry, and their efforts are turning the traditional plastics manufacturing and recycling process on its head. As chemists, material scientists and engineers, they're now applying their ingenuity to the plastic waste problem — turning the waste into a resource with promising results: An employee works at Chevron Phillips Chemical's Research & Technology Center in Bartlesville, Okla., the company's largest research center and home to the world-renowned Plastics Technical Center, which specializes in plastics innovation. \"Our view is that we are among the best polymer chemists in the world. We discovered a key family of catalysts that make high-density polyethylene many years ago. We have some of the strongest technical teams in the world. We are going to have to do something more creative,\" said Jim Becker, vice president of polymers and sustainability for Chevron Phillips Chemical. \"The combination of different types of recycling is going to be the answer. We think there is a home for all these products outside of landfills and plastics are too valuable to waste. They are really a resource for circular solutions.\" Their focus: Adapt years of chemistry and engineering to develop plastics that can be broken down and reused without compromising the properties that made plastics appealing and in high demand by customers in the first place. Mechanical recycling has long been used to recycle plastics. But by simply shredding and melting post-consumer waste into new pellets, its scale is limited — the process weakens the plastic over time, and therefore restricts how much postconsumer recycled content can be put in a plastic bag or cup without compromising strength. Another issue is many mechanically recycled products are brown or gray because it is hard to strip out the color. Petrochemical manufacturers have worked for years alongside their customers to tweak and perfect formulas for recycled and virgin plastics, but to create more products that contain primarily recycled material will require the adoption of chemical recycling.",
+          "start": 0,
+          "end": 3211,
+          "paragraph_ids": [
+            "p1"
+          ],
+          "score": 0.03278688524590164
+        }
+      ],
+      "reported_answer_cost_usd": 0.00023786
+    },
+    {
+      "id": "dev-05",
+      "question": "How does Total connect bacteria and microalgae in water treatment with CO2 emissions, biogas and biofuels?",
+      "answer": "Dans l’article sur l’eau plus propre, Total indique que ses équipes développent de la biomasse à partir de bactéries et de microalgues pour contribuer à compenser les émissions de CO2, tout en étudiant l’utilisation des microalgues pour produire du biogaz et des biocarburants. [1]",
+      "expected_question_language": "en",
+      "observed_answer_language": "fr",
+      "citations": [
+        {
+          "evidence_id": "f3544aa5fb7e1a6451d37a06551ce9e3a01f86b4dd8632ffbe608bd2ba79fd37",
+          "quote": "\" His R&D team is pioneering ways of creating biomass using bacteria and microalgae, which will help offset CO2 emissions, as well as looking at microalgae to produce biogas and biofuels. Ways of working will change as Total realizes its ambition to become the responsible energy major, BIOMEM will be a part of that change, \"We often work in partnership"
+        }
+      ],
+      "cited_evidence": [
+        {
+          "evidence_id": "f3544aa5fb7e1a6451d37a06551ce9e3a01f86b4dd8632ffbe608bd2ba79fd37",
+          "record_id": "42114981-e507-5753-9b3a-62c09a7624a2",
+          "version_id": "7fe1c03545486246ec78dc5c70e0b3f53587d96cab6c23f787852e377c84166f",
+          "dataset": "native",
+          "title": "Total: Using biomimicry for cleaner water",
+          "publisher": "CNBC",
+          "sponsor": "totalenergies",
+          "url": "https://www.cnbc.com/advertorial/total-using-biomimicry-for-cleaner-water/",
+          "archive_url": "",
+          "text": " the R&D team, we can start looking at how things might work when we scale-up and industrialize the process,\" he continues. Pipe blockages, power cuts and mechanical failures are part of the day-to-day running of a large oil facility anywhere in the world. In the face of some unexpected outages, including the failure of the aerator, BIOMEM performed better than expected in Gabon. \"The fact it was a biofilm meant it held better, even in less-than-ideal conditions. Once the aerator problem was solved the process really took off again, quickly and more efficiently than we had imagined,\" reveals Jacob from his base back in France. There is broad agreement, the first results from Gabon are encouraging. \"It's time to take it to other sites, both offshore and potentially onshore, which means we can really democratize usage,\" he says, \"I think in 4-5 years we'll have it in wide circulation. We're working on lots of different techniques in relation to produced water, and this one has really delivered.\" Scaling up biotech solutions. The environmental performance of all of Total's projects, including in oil and gas, now plays a critical role in how the company moves forward. Environmental performance is a key performance indicator and often a requirement for obtaining permission for exploration or production. Small-footprint facilities will be the way of the future. Water remains a vital resource for oil and gas operations as well as in the development of renewable energies. BIOMEM could be a process taken into several other branches of the group, with potential uses already identified in the refining process. \"These sorts of ideas are the backbone of Total's environmental goals,\" says Baldoni-Andrey, \"We are working on other processes for all sorts of different issues. Take the reinjection of water into reservoirs, if we could do that easily and immediately, we could say that we don't have any discharges from the process. That's certainly a point we'd like to reach.\" His R&D team is pioneering ways of creating biomass using bacteria and microalgae, which will help offset CO2 emissions, as well as looking at microalgae to produce biogas and biofuels. Ways of working will change as Total realizes its ambition to become the responsible energy major, BIOMEM will be a part of that change, \"We often work in partnership with other large companies so I think it'll be used widely and will improve practices overall rather than be a source of competition,\" Baldoni-Andrey explains, \"It will help us all move forward in this sector and not just to cut costs. With BIOMEM, we have broken what I describe as a 'lock', in a technical sense, which means we can all benefit.\"",
+          "start": 5004,
+          "end": 7696,
+          "paragraph_ids": [
+            "p1"
+          ],
+          "score": 0.029386529386529386
+        }
+      ],
+      "reported_answer_cost_usd": 0.00027426
+    }
+  ]
+}

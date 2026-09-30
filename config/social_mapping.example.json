@@ -1,0 +1,13 @@
+{
+  "description": "Example mapping only. Replace source column names with names from the supplied real export; this file contains no social-media data.",
+  "columns": {
+    "url": "post_url",
+    "body": "post_text",
+    "platform": "platform",
+    "account": "account_handle",
+    "published_at": "created_at",
+    "archive_url": "archive_url"
+  },
+  "constants": {},
+  "date_format": "%Y-%m-%dT%H:%M:%S%z"
+}
