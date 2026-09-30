@@ -1,6 +1,6 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.4**. Its health and CI checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The new [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.5**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_5_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -186,6 +186,15 @@ The 0.4.2 publication receipt records 982 passed and 62 deselected engineering t
 
 The 0.4.4 installed wheel passed 1,258 tests, with one Windows symlink test skipped and 62 integration/live tests deselected. Both repository CI runs also passed 1,258 tests, with one private-bundle case skipped. Its [offline package reproduction](../reports/current_release_offline_reproduction_v0_4_4_20260930.json) separately verifies installed modules, packaged assets/SQL and the canonical import dry run. No model request was made; these checks do not replace the full local restore or client review.
 
+The 0.4.5 installed wheel passed 1,406 offline tests (one Windows symlink skip,
+79 integration/live deselections) and 22 isolated database tests. Both repository
+CI runs passed 1,406 tests, with one private-bundle case skipped. Local migration
+and the observed production predeploy log reached version 3. The [engineering
+receipt](../reports/claims_import_engineering_v0_4_5_20260930.json) and
+[source archive receipt](../reports/source_handoff_v0_4_5_20260930.json) bind those
+checks and the two clean source archives. No new classification or real review
+approval is inferred from them.
+
 The evaluation files contain 20 development questions and 20 acceptance **drafts**. Customer review materials remain a tracked TODO. When available, obtain reviewed questions and known supporting records, freeze the acceptance set, and collect independent human judgments of attribution, sufficiency and completeness. Keep unavailable social cases pending. Report native, social, cross-collection, no-evidence, latency and cost results with their own denominators. Citation character matching establishes location; it does not establish that the quote supports the generated answer.
 
 Format-2 review packets can now bind native, social or cross-collection inputs to
@@ -203,6 +212,13 @@ Use the provided Dockerfile. Set `OBS_HOST=0.0.0.0`; Railway supplies `PORT`. Co
 The deployment contract uses `/app/.venv/bin/observatory migrate` before startup, `/healthz` with a 60-second timeout, and deployment after successful CI. Check the platform's applied settings and logs: the repository's `railway.json` alone does not demonstrate that a setting was adopted.
 
 The observed public health response for this publication on 30 September 2026 identifies application **0.4.4** at commit `e01edc9e7767f37691686d1a999c8423a0a2ceb4`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. The source, data and index identifiers match the earlier 0.4.3 observation. Both repository CI runs passed; the query/data routes and static project page returned HTTP 200. These checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json), which binds the tested application commits before a documentation-only follow-up. A healthy endpoint is not proof that every user workflow or attachment works.
+
+The latest 0.4.5 observation identifies commit `f2c9142e9274dc4f694c5ac0e6a61270997d753c`.
+Its successful deployment and migration-3 log were checked in the existing
+Railway project. Native 275, 556 passages, source/data/index identities and the
+three feature flags are unchanged. Query/Data and the static page returned 200.
+The [0.4.5 receipt](../reports/release_v0_4_5_publication_20260930.json) records this
+scope; product graph flows were not repeated for this maintenance update.
 
 The example configuration specifies a $100 monthly application/API budget, 5 requests per visitor per minute, 30 per UTC day and 2 concurrent generations. The deployed values can differ; inspect the actual configuration and ledger before spending. Application/API controls are separate from Railway hosting charges. Failed or uncertain requests retain their recorded costs and reservations; do not clear the ledger to resume service.
 

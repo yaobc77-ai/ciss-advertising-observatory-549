@@ -65,3 +65,13 @@ remain TODOs. Website record/graph displays and the read-only CLAIMS2 MCP tool
 are the next integration stage. Real social data and independent client/answer
 review remain deferred TODOs. Hosted publication is documented separately from
 these local engineering checks.
+
+## Publication and archive evidence
+
+Both repositories passed CI for the bound code commits. The [publication
+receipt](release_v0_4_5_publication_20260930.json) records production 0.4.5,
+successful deployment and observed migration 3, unchanged collection/index
+identities and HTTP-200 routes. It does not assert a new product-flow or semantic
+acceptance check. The [source archive receipt](source_handoff_v0_4_5_20260930.json)
+records both actual clean-commit archives and their checked deployment files,
+manifest, payload and ZIP hashes. Private materials remain a separate transfer.

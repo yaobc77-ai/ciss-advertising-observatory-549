@@ -1,0 +1,127 @@
+{
+  "checked_at_utc": "2026-09-30T22:51:20.260629+00:00",
+  "application_version": "0.4.5",
+  "scope": "committed_maintenance_release_ci_deployment_migration_health_and_routes",
+  "source_commit": "f2c9142e9274dc4f694c5ac0e6a61270997d753c",
+  "english_commit": "180d1c5321cce838ae473f39b02fc04985184f3d",
+  "ci": [
+    {
+      "repository": "yaobc77-ai/ciss-advertising-observatory",
+      "conclusion": "success",
+      "headSha": "f2c9142e9274dc4f694c5ac0e6a61270997d753c",
+      "status": "completed",
+      "url": "https://github.com/yaobc77-ai/ciss-advertising-observatory/actions/runs/36787392624",
+      "tests": {
+        "passed": 1406,
+        "skipped": 1,
+        "deselected": 79,
+        "warnings": 3,
+        "seconds": 79.23
+      }
+    },
+    {
+      "repository": "yaobc77-ai/ciss-advertising-observatory-549",
+      "conclusion": "success",
+      "headSha": "180d1c5321cce838ae473f39b02fc04985184f3d",
+      "status": "completed",
+      "url": "https://github.com/yaobc77-ai/ciss-advertising-observatory-549/actions/runs/36787392872",
+      "tests": {
+        "passed": 1406,
+        "skipped": 1,
+        "deselected": 79,
+        "warnings": 3,
+        "seconds": 69.51
+      }
+    }
+  ],
+  "engineering_receipt": "claims_import_engineering_v0_4_5_20260930.json",
+  "source_archives_receipt": "source_handoff_v0_4_5_20260930.json",
+  "railway_deployment": {
+    "deployment_id": "4035460c-8acc-4fe3-92e9-e9602331b704",
+    "observed_status": "Active; Deployment successful",
+    "observed_via": "existing authenticated Railway deployment UI, read-only",
+    "url": "https://railway.com/project/35d3bf5a-3d9f-429d-aa9e-56ea889c654e/service/83cba0e3-3984-4ef1-b889-204eaf9571f2?environmentId=5e38f486-c5e2-440b-9c3d-b0fc0080cb02&id=4035460c-8acc-4fe3-92e9-e9602331b704#deploy",
+    "observed_predeploy_log": {
+      "initialized": true,
+      "current_version": 3,
+      "pending": [],
+      "migration": "0003_claims2_results.sql",
+      "status": "applied",
+      "checksum": "9b3e68e18ef364868f56c3a461f05857e91c979874220efe5a8f33c706d953f2"
+    }
+  },
+  "production_health": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": "f2c9142e9274dc4f694c5ac0e6a61270997d753c",
+      "features": {
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.5"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "local_health": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": null,
+      "features": {
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.5"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "source_and_index_unchanged_from_v0_4_4": true,
+  "route_availability": [
+    {
+      "url": "http://127.0.0.1:8050/query",
+      "http_status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8050/data",
+      "http_status": 200
+    },
+    {
+      "url": "https://ciss-advertising-observatory-production.up.railway.app/query",
+      "http_status": 200
+    },
+    {
+      "url": "https://ciss-advertising-observatory-production.up.railway.app/data",
+      "http_status": 200
+    }
+  ],
+  "static_project_page": {
+    "url": "https://yaobc77-ai.github.io/ciss-advertising-observatory-549/",
+    "http_status": 200,
+    "content_changed": false,
+    "claims_not_connected_text_present": true
+  },
+  "real_claims2_results_imported": 0,
+  "real_claims2_labels_published": 0,
+  "model_calls_in_this_work": 0,
+  "claims2_website_and_mcp_integration": "next stage; maintenance importer/store implemented",
+  "social_client_data_and_review": "deferred TODO",
+  "semantic_and_client_acceptance": "pending",
+  "production_claims_table_counts": "not independently queried; no import was executed by this work",
+  "graph_user_flow": "previous 0.4.2 evidence, not repeated in this maintenance release",
+  "note": "Binds tested application commits. Documentation-only followups may publish receipts without changing application code."
+}
