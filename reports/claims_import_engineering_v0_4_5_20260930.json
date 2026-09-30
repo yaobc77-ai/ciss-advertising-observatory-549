@@ -1,0 +1,164 @@
+{
+  "checked_at_utc": "2026-09-30T22:42:45.236194+00:00",
+  "application_version": "0.4.5",
+  "scope": "installed_wheel_offline_and_isolated_synthetic_database_engineering",
+  "wheel_sha256": "a78660dec8cad10ac5e017c4f12ca21453ca2e9e253d0372584e74ef9a314311",
+  "offline_installed_wheel_tests": {
+    "passed": 1406,
+    "skipped": 1,
+    "deselected": 79,
+    "seconds": 47.72,
+    "log_sha256": "8da66515a5b4738ec123966165934d905ac90e6110d26bfc71b45225c043e827"
+  },
+  "isolated_installed_wheel_database_tests": {
+    "passed": 22,
+    "skipped": 0,
+    "deselected": 0,
+    "seconds": 11.68,
+    "log_sha256": "8d0f2c5b422ac1cc6d0fba62ba3d3affe77753479a4fe23d0d03b4d217641088",
+    "authority": "explicit obs_test database; new owned schemas removed after tests",
+    "cases": [
+      "atomic source checks",
+      "repeat import",
+      "incremental approvals",
+      "human review revisions",
+      "no review downgrade",
+      "retraction remains effective",
+      "hold/reject is not retraction",
+      "stale or changed or excluded body",
+      "distinct record counts and label matches",
+      "filter and pagination scope",
+      "public evidence projection",
+      "immutable identities",
+      "composite record/version foreign key",
+      "ordered migration adoption and rollback"
+    ]
+  },
+  "independent_offline_reproduction": "current_release_offline_reproduction_v0_4_5_20260930.json",
+  "local_migration": {
+    "scope": "local_additive_migration_and_empty_claims2_read",
+    "migration_status": {
+      "current_version": 3,
+      "pending": [],
+      "migrations": [
+        {
+          "version": 1,
+          "name": "0001_baseline.sql",
+          "checksum": "c9983b6e73c316979011babd053c2b699f7d31a50e8a129437322c905a5b980e",
+          "status": "applied"
+        },
+        {
+          "version": 2,
+          "name": "0002_dashboard_indexes.sql",
+          "checksum": "75aa9c636624b0cdcfd639876239ca535f277677287c122f4d807e8aeb404ec7",
+          "status": "applied"
+        },
+        {
+          "version": 3,
+          "name": "0003_claims2_results.sql",
+          "checksum": "9b3e68e18ef364868f56c3a461f05857e91c979874220efe5a8f33c706d953f2",
+          "status": "applied"
+        }
+      ]
+    },
+    "before_health": {
+      "status": "ok",
+      "record_counts": {
+        "native": 275
+      },
+      "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+      "active_profile": "sentence600-v1",
+      "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+      "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+      "chunks": 556
+    },
+    "after_health": {
+      "status": "ok",
+      "record_counts": {
+        "native": 275
+      },
+      "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+      "active_profile": "sentence600-v1",
+      "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+      "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+      "chunks": 556
+    },
+    "source_and_index_unchanged": true,
+    "claims2_table_counts": {
+      "claims2_taxonomies": 0,
+      "claims2_runs": 0,
+      "claims2_imports": 0,
+      "claims2_results": 0,
+      "claims2_reviews": 0,
+      "claims2_retractions": 0
+    },
+    "published_matches": {
+      "available": true,
+      "claims_version": "efb83c026c1d5889a6af108d288447052ebde06c0179aaf8b5926decfd5db592",
+      "total_records": 0,
+      "total_matches": 0,
+      "records": [],
+      "offset": 0,
+      "limit": 20,
+      "meaning": "Published taxonomy assignments; not independent fact checking.",
+      "coverage": "Records with published matches only; unmatched records are not classified negatives."
+    },
+    "local_pre_migration_backup_sha256": "4b1f1617b10cdec75806785fe0241164cf8dd2ce4c34fa871bd30aca2d023c91",
+    "model_calls": 0,
+    "real_classification_results_imported": 0,
+    "semantic_acceptance": "pending",
+    "database_restore": "not_repeated"
+  },
+  "real_saved_results": {
+    "schema_version": 1,
+    "run_id": "saved-claims2:d3d047a6bbdd437555be5eff03760e5c5fa0ebf100c623f5e90e7af29bb7d218",
+    "dataset": "native",
+    "taxonomy_bundle_fingerprint": "0c5a03a549abc3c9221c51570eb554afc69f50b66c0e1f17c80d0a85e6114564",
+    "audit_manifest_sha256": "2c4413316eca7a4e0945303a6cdf8e3b8ad804f3fb65a1a7630372b69cd4c038",
+    "audit_report_sha256": "4c1bbe45ad80c6609999d545c635d89b355a1fc685fdda63780d94ddade1c9ff",
+    "review_manifest_sha256": "d71382f4983a2f7b10f0f5a4f121ee195fe175de1fb314ec032f7f229382daa9",
+    "prepared_publications": 0,
+    "held_count": 37,
+    "rejected_count": 0,
+    "review_states": {},
+    "publication_applied": false,
+    "negative_labels_created": 0,
+    "unprocessed_results_are_negative": false,
+    "whole_article_classification": false,
+    "reviewer_identity": "asserted_in_review_file_not_independently_verified",
+    "dry_run": true,
+    "inserted": 0,
+    "unchanged": 0,
+    "model_calls": 0,
+    "reviewer_and_authority_approval": "pending",
+    "artifact_scope": "private saved-result audit and pending template; no new classification"
+  },
+  "frozen_evaluation": {
+    "format_version": 2,
+    "scope": [
+      "native",
+      "social",
+      "cross"
+    ],
+    "source_and_review_bindings_checked": true,
+    "strict_json_csv_and_pending_case_guards": true,
+    "verified_by": "synthetic offline tests",
+    "real_customer_inputs_frozen": false,
+    "paid_evaluation_run": false,
+    "semantic_acceptance": "pending",
+    "overall_pass": null
+  },
+  "handoff_builder": {
+    "deploy_configs_required": true,
+    "tracked_public_allowlist": true,
+    "private_runtime_source_backups_excluded": true,
+    "git_revision_and_file_hashes": true,
+    "actual_archive": "separate post-commit receipt"
+  },
+  "model_calls_in_this_work": 0,
+  "real_claims2_labels_published": 0,
+  "website_and_mcp_claims2_views": "next integration stage",
+  "client_social_export_mapping_and_review": "deferred TODO",
+  "client_acceptance": "pending",
+  "production_deployment": "not asserted by this preflight receipt"
+}

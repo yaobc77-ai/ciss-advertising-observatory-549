@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
+import io
 import json
+import math
+import re
 import time
 from collections import Counter
 from datetime import datetime, timezone
@@ -94,9 +99,272 @@ class EvaluationInvalid(RuntimeError):
     pass
 
 
+FROZEN_FORMAT_VERSION = 2
+FROZEN_INPUT_FILES = {"review_plan.json", "questions.jsonl", "article_groups.csv", "reviewed_supports.json"}
+SNAPSHOT_FIELDS = ("data_version", "source_data_version", "index_version", "active_profile")
+
+
+def strict_json_loads(data):
+    """Reject contradictory keys and nonfinite values in review authority files."""
+    def unique_keys(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise EvaluationInvalid("Duplicate JSON key in reviewed or frozen input")
+            result[key] = value
+        return result
+
+    def invalid_constant(value):
+        raise EvaluationInvalid("Nonfinite JSON value in reviewed or frozen input")
+
+    def finite_float(value):
+        parsed = float(value)
+        if not math.isfinite(parsed):
+            raise EvaluationInvalid("Nonfinite JSON value in reviewed or frozen input")
+        return parsed
+
+    text = data.decode("utf-8-sig") if isinstance(data, bytes) else data
+    return json.loads(text, object_pairs_hook=unique_keys, parse_constant=invalid_constant, parse_float=finite_float)
+
+
+def reviewed_group_rows(payload):
+    """Read the documented CSV columns without DictReader's silent overwrites."""
+    try:
+        reader = csv.reader(io.StringIO(payload.decode("utf-8-sig"), newline=""), strict=True)
+        header = next(reader, [])
+        required = {"record_id", "article_group_id", "split"}
+        if (len(header) != len(set(header)) or not required.issubset(header)
+                or set(header) - required - {"review_note"}):
+            raise EvaluationInvalid("Reviewed article-group CSV has missing, duplicate or unknown columns")
+        rows = []
+        for cells in reader:
+            if not cells:
+                continue
+            if len(cells) != len(header):
+                raise EvaluationInvalid("Reviewed article-group CSV has missing or extra cells")
+            rows.append(dict(zip(header, cells)))
+        return rows
+    except (csv.Error, UnicodeError) as exc:
+        raise EvaluationInvalid("Reviewed article-group CSV is malformed") from exc
+
+
+def file_digest(data):
+    """Hash original file bytes, without newline or encoding normalization."""
+    return hashlib.sha256(data).hexdigest()
+
+
+def canonical_digest(value):
+    return digest(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+
+
+def review_plan_blockers(plan):
+    """Record manual review declarations; these are not semantic acceptance."""
+    errors = []
+    if not isinstance(plan.get("scope"), str) or plan["scope"] not in {"native", "social", "cross"}:
+        errors.append("invalid_dataset_scope")
+    for name in ("reviewer", "approval_record", "question_source_note", "acceptance_criteria"):
+        if not isinstance(plan.get(name), str) or not plan[name].strip():
+            errors.append(f"missing_review:{name}")
+    for name in ("representative_tasks_approved", "not_used_for_tuning", "article_groups_reviewed"):
+        if plan.get(name) is not True:
+            errors.append(f"unconfirmed:{name}")
+    if not re.fullmatch(r"[0-9a-f]{64}", str(plan.get("expected_data_version", ""))):
+        errors.append("missing_or_invalid_expected_data_version")
+    return errors
+
+
+def scope_allows_case(scope, case):
+    return (case.suite == "acceptance_draft" and isinstance(scope, str) and scope in {"native", "social", "cross"}
+            and (scope == "cross" or case.dataset == scope))
+
+
+def snapshot_identity(health):
+    """Freeze collection and index identities rather than only a display count."""
+    identity = {name: health.get(name) for name in SNAPSHOT_FIELDS}
+    if any(not isinstance(value, str) or not value.strip() or value == "unavailable"
+           for value in identity.values()):
+        raise EvaluationInvalid("Frozen evaluation requires complete source/index/profile identity")
+    if not re.fullmatch(r"[0-9a-f]{64}", identity["data_version"]):
+        raise EvaluationInvalid("Frozen evaluation requires an exact data version")
+    return identity
+
+
+def frozen_supports(cases, snapshot, filtered_rows, located, identity):
+    """Bind reviewed supports, full filtered count sets and original versions.
+
+    No source text is invented and no reviewer verdict is inferred. Pending
+    collection cases retain empty bindings and never become ready here.
+    """
+    return {
+        "format_version": 1,
+        "snapshot_identity": identity,
+        "source_records": {
+            rid: {"dataset": record["dataset"], "version_id": record["version_id"],
+                  "body_sha256": digest(record["body"]),
+                  "payload_sha256": canonical_digest(record["payload"])}
+            for rid, record in sorted(snapshot.items())
+        },
+        "cases": [
+            {"case_id": case.id, "dataset": case.dataset, "status": case.status,
+             "case_type": case.case_type, "expected_count": case.expected_count,
+             "required_record_ids": case.required_record_ids,
+             "selected_record_ids": sorted({row["record_id"] for row in filtered_rows.get(case.id, [])}),
+             "gold_spans": located.get(case.id, []),
+             "reviewed_release": case.reviewed_release.model_dump(mode="json") if case.reviewed_release else None}
+            for case in cases
+        ],
+    }
+
+
+def _frozen_groups(payload):
+    groups = {}
+    for row in reviewed_group_rows(payload):
+        rid, group, split = ((row.get(key) or "").strip() for key in ("record_id", "article_group_id", "split"))
+        if not rid or not group or rid in groups or split not in {"development", "holdout"}:
+            raise EvaluationInvalid("Frozen article groups have invalid or duplicate rows")
+        groups[rid] = {"group": group, "split": split}
+    if ({row["group"] for row in groups.values() if row["split"] == "development"}
+            & {row["group"] for row in groups.values() if row["split"] == "holdout"}):
+        raise EvaluationInvalid("Frozen article groups leak across development and holdout")
+    return groups
+
+
+def _validate_frozen_supports(supports, cases, identity):
+    if (not isinstance(supports, dict) or set(supports) != {"format_version", "snapshot_identity", "source_records", "cases"}
+            or supports["format_version"] != 1 or supports["snapshot_identity"] != identity
+            or not isinstance(supports["source_records"], dict) or not isinstance(supports["cases"], list)
+            or len(supports["cases"]) != len(cases)):
+        raise EvaluationInvalid("Frozen support snapshot or case coverage is incomplete")
+    sources = supports["source_records"]
+    for rid, source in sources.items():
+        if (not isinstance(rid, str) or not rid or not isinstance(source, dict)
+                or set(source) != {"dataset", "version_id", "body_sha256", "payload_sha256"}
+                or source["dataset"] not in {"native", "social"}
+                or not isinstance(source["version_id"], str) or not source["version_id"]
+                or any(not isinstance(source[name], str) or not re.fullmatch(r"[0-9a-f]{64}", source[name])
+                       for name in ("body_sha256", "payload_sha256"))):
+            raise EvaluationInvalid("Frozen support source binding is malformed")
+    for case, binding in zip(cases, supports["cases"]):
+        expected = {"case_id": case.id, "dataset": case.dataset, "status": case.status,
+                    "case_type": case.case_type, "expected_count": case.expected_count,
+                    "required_record_ids": case.required_record_ids,
+                    "reviewed_release": case.reviewed_release.model_dump(mode="json") if case.reviewed_release else None}
+        if (not isinstance(binding, dict) or set(binding) != set(expected) | {"selected_record_ids", "gold_spans"}
+                or any(binding[name] != value for name, value in expected.items())):
+            raise EvaluationInvalid("Frozen question/count/support/review binding differs from its case")
+        if case.reviewed_release and case.reviewed_release.data_version != identity["data_version"]:
+            raise EvaluationInvalid("Frozen reviewed dataset release belongs to a different version")
+        selected, spans = binding["selected_record_ids"], binding["gold_spans"]
+        datasets = {"native", "social"} if case.dataset == "cross" else {case.dataset}
+        if (not isinstance(selected, list) or any(not isinstance(rid, str) for rid in selected)
+                or selected != sorted(set(selected)) or not set(case.required_record_ids).issubset(selected)
+                or any(rid not in sources or sources[rid]["dataset"] not in datasets for rid in selected)
+                or not isinstance(spans, list) or len(spans) != len(case.support_quote)):
+            raise EvaluationInvalid("Frozen support records or dataset scope differ from its case")
+        if case.status == "pending_social" and (selected or spans):
+            raise EvaluationInvalid("Pending collection case cannot contain frozen gold")
+        if case.status == "ready" and case.case_type == "count" and len(selected) != case.expected_count:
+            raise EvaluationInvalid("Frozen count gold does not cover its complete filtered set")
+        for gold, span in zip(case.support_quote, spans):
+            if (not isinstance(span, dict) or set(span) != {"record_id", "version_id", "start", "end", "quote"}
+                    or span["record_id"] != gold.record_id or span["quote"] != gold.quote
+                    or gold.record_id not in selected or span["version_id"] != sources[gold.record_id]["version_id"]
+                    or type(span["start"]) is not int or span["start"] < 0 or type(span["end"]) is not int
+                    or span["end"] != span["start"] + len(gold.quote)):
+                raise EvaluationInvalid("Frozen support quote or original locator differs from its case")
+
+
+def load_frozen_manifest(path, case_file, cases):
+    """Verify every frozen local input before connecting to the evaluation service.
+
+    A format-1 handoff cannot satisfy this contract because it did not bind a
+    complete source/index identity or a separately hashed support artifact.
+    """
+    path, case_file = Path(path), Path(case_file)
+    try:
+        manifest_bytes = path.read_bytes()
+        manifest = strict_json_loads(manifest_bytes)
+        if not isinstance(manifest, dict) or manifest.get("format_version") != FROZEN_FORMAT_VERSION:
+            raise EvaluationInvalid("Unsupported frozen manifest format; prepare a format-2 packet")
+        if (manifest.get("status") != "inputs_frozen_awaiting_execution_and_human_review"
+                or manifest.get("semantic_acceptance") != "pending_human_review"
+                or manifest.get("overall_pass") is not None):
+            raise EvaluationInvalid("Frozen manifest must not declare acceptance or a semantic pass")
+        hashes, seen_files = manifest.get("input_sha256"), manifest.get("seen_case_files")
+        if not isinstance(hashes, dict) or not isinstance(seen_files, dict):
+            raise EvaluationInvalid("Frozen manifest is missing exact input hashes")
+        if any(not re.fullmatch(r"previously_used_cases/[0-9]{4}\.jsonl", name) for name in seen_files):
+            raise EvaluationInvalid("Frozen manifest contains an invalid input path")
+        if set(hashes) != FROZEN_INPUT_FILES | set(seen_files):
+            raise EvaluationInvalid("Frozen manifest input set is incomplete or unexpected")
+        payloads = {}
+        for name, expected in hashes.items():
+            if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+                raise EvaluationInvalid("Frozen manifest contains an invalid input hash")
+            payloads[name] = (path.parent / name).read_bytes()
+            if file_digest(payloads[name]) != expected:
+                raise EvaluationInvalid(f"Frozen input changed: {name}")
+        if case_file.read_bytes() != payloads["questions.jsonl"]:
+            raise EvaluationInvalid("Question file differs from the frozen question file")
+        bound_cases = [EvaluationCase.model_validate(strict_json_loads(line))
+                       for line in payloads["questions.jsonl"].decode("utf-8-sig").splitlines() if line.strip()]
+        serialized = [case.model_dump(mode="json") for case in cases]
+        if (not cases or serialized != [case.model_dump(mode="json") for case in bound_cases]
+                or manifest.get("case_ids") != [case.id for case in cases]
+                or manifest.get("cases_sha256") != canonical_digest(serialized)):
+            raise EvaluationInvalid("Frozen case identity, order or question/count/support content differs")
+        if len({case.id for case in cases}) != len(cases):
+            raise EvaluationInvalid("Frozen cases have duplicate IDs")
+        plan = strict_json_loads(payloads["review_plan.json"])
+        if not isinstance(plan, dict) or review_plan_blockers(plan):
+            raise EvaluationInvalid("Frozen manual review prerequisites are not confirmed")
+        if (manifest.get("scope") != plan["scope"] or manifest.get("reviewer") != plan["reviewer"]
+                or manifest.get("approval_record") != plan["approval_record"]
+                or any(not scope_allows_case(plan["scope"], case) for case in cases)):
+            raise EvaluationInvalid("Frozen review declaration or dataset scope differs")
+        if any(not case.question.strip() or not case.selection_note.strip() or any(not item.strip() for item in case.rubric)
+               for case in cases):
+            raise EvaluationInvalid("Frozen cases lack reviewed task context")
+        identity = snapshot_identity(manifest.get("snapshot_identity", {}))
+        if manifest.get("data_version") != identity["data_version"] or plan["expected_data_version"] != identity["data_version"]:
+            raise EvaluationInvalid("Frozen review and source/index versions differ")
+        groups = _frozen_groups(payloads["article_groups.csv"])
+        if manifest.get("article_groups") != groups:
+            raise EvaluationInvalid("Frozen article group manifest differs from its bound file")
+        seen_cases = [EvaluationCase.model_validate(strict_json_loads(line)) for name in seen_files
+                      for line in payloads[name].decode("utf-8-sig").splitlines() if line.strip()]
+        previous_hashes = {original: hashes[name] for name, original in seen_files.items()}
+        if len(previous_hashes) != len(seen_files) or manifest.get("previously_used_case_sha256") != previous_hashes:
+            raise EvaluationInvalid("Frozen previously used case identities differ")
+        def normalized(text):
+            return " ".join(text.casefold().split())
+        questions = [normalized(case.question) for case in cases]
+        if len(set(questions)) != len(questions) or set(questions) & {normalized(case.question) for case in seen_cases}:
+            raise EvaluationInvalid("Frozen questions duplicate a held-out or previously used question")
+        seen_records = ({rid for case in seen_cases for rid in case.required_record_ids}
+                        | {quote.record_id for case in seen_cases for quote in case.support_quote})
+        candidate_records = ({rid for case in cases for rid in case.required_record_ids}
+                             | {quote.record_id for case in cases for quote in case.support_quote})
+        if (not (seen_records | candidate_records).issubset(groups)
+                or any(groups[rid]["split"] != "development" for rid in seen_records)
+                or any(groups[rid]["split"] != "holdout" for rid in candidate_records)):
+            raise EvaluationInvalid("Frozen required records violate reviewed article splits")
+        supports = strict_json_loads(payloads["reviewed_supports.json"])
+        _validate_frozen_supports(supports, cases, identity)
+        spans = {row["case_id"]: row["gold_spans"] for row in supports["cases"] if row["status"] == "ready"}
+        if manifest.get("gold_spans") != spans:
+            raise EvaluationInvalid("Frozen support locators differ from the manifest")
+    except EvaluationInvalid:
+        raise
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        raise EvaluationInvalid(f"Invalid frozen inputs: {type(exc).__name__}") from exc
+    return {"manifest": manifest, "supports": supports, "manifest_sha256": file_digest(manifest_bytes),
+            "path": path, "case_file": case_file}
+
+
 def load_cases(path: Path) -> list[EvaluationCase]:
     cases = []
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
         if line.strip():
             try:
                 cases.append(EvaluationCase.model_validate_json(line))
@@ -191,10 +459,13 @@ def ledger_usage(db, visitor):
     }
 
 
-def check_version(service, expected):
-    current = service.db.health().get("data_version")
+def check_version(service, expected, frozen_identity=None):
+    health = service.db.health()
+    current = health.get("data_version")
     if not current or current == "unavailable" or current != expected:
         raise EvaluationInvalid("Data changed during evaluation; this run is invalid and must not be scored")
+    if frozen_identity is not None and snapshot_identity(health) != frozen_identity:
+        raise EvaluationInvalid("Source/index/profile changed during frozen evaluation; this run is invalid")
 
 
 def summarize_results(rows, paid):
@@ -271,9 +542,15 @@ def count_answer_checks(result, case, expected_collections):
             "answer_collection_counts": returned}
 
 
-def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_data_version=None):
+def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_data_version=None,
+                   frozen_manifest=None, case_file=None):
     if answer_counts and not paid:
         raise EvaluationInvalid("Service.answer count evaluation requires explicit --paid authorization")
+    frozen = None
+    if frozen_manifest is not None:
+        case_file = Path(case_file) if case_file is not None else Path(frozen_manifest).parent / "questions.jsonl"
+        frozen = load_frozen_manifest(frozen_manifest, case_file, cases)
+    identity = frozen["manifest"]["snapshot_identity"] if frozen else None
     run_id = uuid4().hex
     # Capture the implementation before requests run; do not label a historical
     # result with whatever source happens to exist when the report is read later.
@@ -284,15 +561,20 @@ def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_
             for path in sorted(Path(__file__).parent.glob("*.py"))
         },
     }
-    version = service.db.health().get("data_version")
+    health = service.db.health()
+    version = health.get("data_version")
     if not version or version == "unavailable":
         raise EvaluationInvalid("A current database version is required")
     if expected_data_version and expected_data_version != version:
         raise EvaluationInvalid("Database version differs from --expected-data-version")
+    if identity is not None and snapshot_identity(health) != identity:
+        raise EvaluationInvalid("Current collection or retrieval index differs from the frozen snapshot")
     snapshot = load_snapshot(service.db)
     filtered = {case.id: service.browse(case.filters) for case in cases if case.status == "ready"}
     located = validate_gold(cases, snapshot, filtered, data_version=version)
-    check_version(service, version)
+    if frozen and frozen_supports(cases, snapshot, filtered, located, identity) != frozen["supports"]:
+        raise EvaluationInvalid("Frozen source versions, filtered counts or support locators differ from current records")
+    check_version(service, version, identity)
     rows = []
     for case in cases:
         row = {
@@ -313,7 +595,11 @@ def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_
         if case.status == "pending_social":
             rows.append(row)
             continue
-        check_version(service, version)
+        check_version(service, version, identity)
+        if frozen:
+            current = load_frozen_manifest(frozen_manifest, case_file, cases)
+            if current["manifest_sha256"] != frozen["manifest_sha256"]:
+                raise EvaluationInvalid("Frozen manifest changed during evaluation")
         visitor = f"evaluation:{run_id}:{case.id}"
         start = time.perf_counter()
         result = None
@@ -391,15 +677,23 @@ def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_
                 row["cost"] = ledger_usage(service.db, visitor)
             except Exception:
                 row["cost"] = {"status": "unavailable", "settled_usd": 0.0, "unresolved_reserved_usd": 0.0}
-        check_version(service, version)
+        check_version(service, version, identity)
         rows.append(row)
-    check_version(service, version)
+    check_version(service, version, identity)
+    if frozen:
+        current = load_frozen_manifest(frozen_manifest, case_file, cases)
+        if current["manifest_sha256"] != frozen["manifest_sha256"]:
+            raise EvaluationInvalid("Frozen manifest changed during evaluation")
     return {
         "run_id": run_id, "created_at": datetime.now(timezone.utc).isoformat(),
-        "suite": cases[0].suite, "gold_status": "draft_not_frozen", "mode": "paid" if paid else "lexical",
+        "suite": cases[0].suite, "gold_status": "frozen_inputs_verified" if frozen else "draft_not_frozen", "mode": "paid" if paid else "lexical",
         "count_evaluation_mode": "service_answer" if answer_counts else "database_only",
         "research_agent_enabled": bool(getattr(service.settings, "research_agent_enabled", False)),
         "data_version": version, "data_version_status": "stable_during_run",
+        "frozen_inputs": {"manifest_sha256": frozen["manifest_sha256"], "scope": frozen["manifest"]["scope"],
+                          "snapshot_identity": identity, "input_sha256": frozen["manifest"]["input_sha256"],
+                          "reviewer": frozen["manifest"]["reviewer"], "approval_record": frozen["manifest"]["approval_record"],
+                          "semantic_acceptance": "pending_human_review", "overall_pass": None} if frozen else None,
         "generation_model": service.settings.generation_model if paid else None,
         "embedding_model": service.settings.embedding_model if paid else None,
         "max_quote_words": MAX_QUOTE_WORDS,
@@ -408,22 +702,27 @@ def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_
     }
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cases", type=Path, default=Path("eval/development.jsonl"))
+    parser.add_argument("--cases", type=Path, help="Question file; defaults to frozen questions when --frozen-manifest is used, otherwise eval/development.jsonl")
+    parser.add_argument("--frozen-manifest", type=Path, help="Verify a format-2 frozen review manifest and all bound files before evaluation")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--paid", action="store_true", help="Explicitly allow paid Service.answer requests; count cases require --answer-counts too")
     parser.add_argument("--answer-counts", action="store_true", help="Also evaluate count questions through Service.answer; requires --paid")
     parser.add_argument("--expected-data-version", help="Optionally require a previously recorded exact dataset version")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.answer_counts and not args.paid:
         parser.error("--answer-counts requires --paid")
-    cases = load_cases(args.cases)
+    case_file = args.cases or (args.frozen_manifest.parent / "questions.jsonl" if args.frozen_manifest else Path("eval/development.jsonl"))
+    cases = load_cases(case_file)
+    if args.frozen_manifest:
+        # Refuse modified/malformed inputs before even constructing a service.
+        load_frozen_manifest(args.frozen_manifest, case_file, cases)
     result = run_evaluation(cases, Service(Settings.from_env()), paid=args.paid, answer_counts=args.answer_counts,
-                            expected_data_version=args.expected_data_version)
-    result["case_file"] = args.cases.as_posix()
-    import hashlib
-    result["case_file_sha256"] = hashlib.sha256(args.cases.read_bytes()).hexdigest()
+                            expected_data_version=args.expected_data_version,
+                            frozen_manifest=args.frozen_manifest, case_file=case_file)
+    result["case_file"] = case_file.as_posix()
+    result["case_file_sha256"] = file_digest(case_file.read_bytes())
     output = args.output or Path("outputs") / f"evaluation-{result['suite']}-{result['run_id']}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("x", encoding="utf-8") as stream:

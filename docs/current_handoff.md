@@ -2,6 +2,13 @@
 
 Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.4**. Its health and CI checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json). Graph interaction checks were performed on **0.4.2**. The new [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
+The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
+[frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
+CLAIMS2 evidence and review revisions use independent tables and a separate `claims_version`;
+article versions, retrieval profiles and historical twelve-label annotations are unchanged.
+The 37 located candidates remain held in a private pending review file. No real labels,
+customer approvals, frozen acceptance run or model calls were added by this update.
+
 [Live dashboard](https://ciss-advertising-observatory-production.up.railway.app/data) · [Questions](https://ciss-advertising-observatory-production.up.railway.app/query) · [Project page](https://yaobc77-ai.github.io/ciss-advertising-observatory-549/) · [English repository](https://github.com/yaobc77-ai/ciss-advertising-observatory-549)
 
 This guide describes the current application. Earlier reports and presentation files retain the results of their own versions. They are not the final project acceptance record.
@@ -38,6 +45,11 @@ Selecting a company, outlet, connection, distribution row or article shows that 
 | Optional tool access | MCP Python SDK; the same constrained read-only tools used by the application |
 
 The database stores records, immutable text versions, annotations, passages, retrieval profiles and publication state, embeddings, import reports, saved answers, model outputs and the usage ledger. Keep the ledger and previous versions when upgrading.
+
+Migration 3 adds six CLAIMS2 tables for taxonomies, runs, import manifests, immutable
+evidence assignments, review revisions and retractions. Applying it creates storage;
+it does not approve or import classifications. The importer is a maintenance CLI.
+The new CLAIMS2 website and MCP read-only views remain the next integration stage.
 
 Dashboard browsing and keyword search do not call a model. With `OBS_RESEARCH_AGENT_ENABLED=true`, **Generate answer** first uses the configured model to interpret the question and choose constrained tools. This includes count questions: counting uses database records, but model interpretation has an API cost. Content generation also uses the API budget. Turning the flag off retains the earlier fixed-pattern statistics route.
 
@@ -176,6 +188,12 @@ The 0.4.4 installed wheel passed 1,258 tests, with one Windows symlink test skip
 
 The evaluation files contain 20 development questions and 20 acceptance **drafts**. Customer review materials remain a tracked TODO. When available, obtain reviewed questions and known supporting records, freeze the acceptance set, and collect independent human judgments of attribution, sufficiency and completeness. Keep unavailable social cases pending. Report native, social, cross-collection, no-evidence, latency and cost results with their own denominators. Citation character matching establishes location; it does not establish that the quote supports the generated answer.
 
+Format-2 review packets can now bind native, social or cross-collection inputs to
+review files, the complete selected record/version/body set and the source/index snapshot.
+Evaluation accepts these only with `--frozen-manifest`; draft mode remains unchanged.
+See the [frozen evaluation guide](frozen_evaluation.md). A verified input manifest
+does not establish semantic accuracy or customer acceptance.
+
 ## 7. Hosted deployment and operating limits
 
 Railway serves the application; GitHub Pages serves a static project description. Pages does not host PostgreSQL or run RAG. Cloudflare configuration is an optional alternative and is not required by the existing Railway deployment.
@@ -191,6 +209,19 @@ The example configuration specifies a $100 monthly application/API budget, 5 req
 After deployment, verify filters, the matrix, entity selection, exact article drilldown, record and count exports, source details, keyword search, and a separately authorized generated answer. Test public access from another network, restart persistence and failure/limit behavior. These remain distinct from CI and human client acceptance.
 
 ## 8. Handoff completion checklist
+
+Build the source archive from a reviewed clean commit, using a new output name:
+
+```sh
+python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.5.zip
+```
+
+The builder includes tracked public code, documents, assets, `Dockerfile`,
+`.dockerignore`, `railway.json` and CI configuration. `HANDOFF_MANIFEST.json`
+records the commit, package version and file hashes; `CONTENTS.sha256` checks
+the payload and manifest, and a separate sidecar checks the ZIP. A changed
+working tree is recorded explicitly. Runtime outputs, source datasets, private
+configuration and backups require their separate private transfer.
 
 - Identify the delivered commits, dependency lock, installed package and target database snapshot.
 - Transfer approved source inputs, complete database backup, attachment files and private configuration through the agreed private channel.

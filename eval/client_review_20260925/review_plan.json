@@ -1,0 +1,11 @@
+{
+  "scope": "native",
+  "reviewer": null,
+  "approval_record": null,
+  "question_source_note": null,
+  "representative_tasks_approved": false,
+  "not_used_for_tuning": false,
+  "article_groups_reviewed": false,
+  "acceptance_criteria": null,
+  "expected_data_version": null
+}

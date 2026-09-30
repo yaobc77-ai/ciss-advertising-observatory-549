@@ -50,6 +50,33 @@ def main():
     claims.add_argument("--dataset", choices=["native", "social"], default="native")
     claims.add_argument("--projection", choices=["strict", "upstream-ascii-v1"], default="strict",
                         help="Explicitly enable the versioned lossy upstream character projection")
+    review = sub.add_parser("claims-review-template", help="Create a pending review file from a completed private audit")
+    review.add_argument("--audit", type=Path, required=True)
+    review.add_argument("--out", type=Path, required=True, help="New private JSON file; never overwritten")
+    claim_import = sub.add_parser("claims-import", help="Validate reviewed CLAIMS results; writing requires --apply")
+    claim_import.add_argument("--audit", type=Path, required=True)
+    claim_import.add_argument("--bundle", type=Path, required=True)
+    claim_import.add_argument("--review", type=Path, required=True)
+    claim_import.add_argument("--apply", action="store_true", help="Commit source-checked published assignments")
+    claim_import.add_argument("--out")
+    claim_query = sub.add_parser("claims-matches", help="List published taxonomy assignments and their original quotes")
+    claim_query.add_argument("--dataset", choices=["native", "social", "all"], default="native")
+    claim_query.add_argument("--nc-id", action="append", default=[])
+    claim_query.add_argument("--sc-id", action="append", default=[])
+    claim_query.add_argument("--record-id", action="append", default=[])
+    claim_query.add_argument("--publisher", action="append", default=[])
+    claim_query.add_argument("--sponsor", action="append", default=[])
+    claim_query.add_argument("--taxonomy")
+    claim_query.add_argument("--review-state", choices=["automatic_unverified", "human_supported"])
+    claim_query.add_argument("--offset", type=int, default=0)
+    claim_query.add_argument("--limit", type=int, default=20)
+    claim_query.add_argument("--out")
+    retract = sub.add_parser("claims-retract", help="Withdraw a published assignment while retaining its audit history")
+    retract.add_argument("candidate_key")
+    retract.add_argument("--reviewer", required=True)
+    retract.add_argument("--reason", required=True)
+    retract.add_argument("--reviewed-at", required=True, help="ISO timestamp with timezone")
+    retract.add_argument("--out")
     sub.add_parser("index")
     for command in ("index-prepare", "index-status", "index-activate"):
         p = sub.add_parser(command)
@@ -89,6 +116,29 @@ def main():
 
         emit(run_linkage_audit(db, args.bundle, args.out, dataset=args.dataset,
                               projection=args.projection))
+    elif args.command == "claims-review-template":
+        from .claims_publication import write_review_template
+
+        emit(write_review_template(args.audit, args.out))
+    elif args.command == "claims-import":
+        from .claims_publication import prepare_claims_import
+        from .claims_store import ClaimsStore
+
+        prepared = prepare_claims_import(args.audit, args.bundle, args.review)
+        emit(ClaimsStore(db).import_prepared(prepared, apply=args.apply), args.out)
+    elif args.command == "claims-matches":
+        from .claims_store import ClaimsStore
+
+        filters = Filters(dataset=args.dataset, record_ids=args.record_id,
+                          publishers=args.publisher, sponsors=args.sponsor)
+        emit(ClaimsStore(db).matches(filters, nc_ids=args.nc_id, sc_ids=args.sc_id,
+                                    taxonomy=args.taxonomy, review_state=args.review_state,
+                                    offset=args.offset, limit=args.limit), args.out)
+    elif args.command == "claims-retract":
+        from .claims_store import ClaimsStore
+
+        emit(ClaimsStore(db).retract(args.candidate_key, reviewer=args.reviewer,
+                                   reason=args.reason, reviewed_at=args.reviewed_at), args.out)
     elif args.command == "import-native":
         from .ingest import load_native
 

@@ -74,7 +74,7 @@ def test_migrations_adopt_existing_data_then_are_idempotent(db, tmp_path):
     with db.connect() as conn:
         # Simulate the pre-migration installation: schema and corpus already exist.
         conn.execute("DELETE FROM schema_migrations")
-        assert run_migrations(conn)["applied"] == [1, 2]
+        assert run_migrations(conn)["applied"] == [1, 2, 3]
     db.initialize()
     with db.connect() as conn:
         assert run_migrations(conn)["applied"] == []
@@ -91,13 +91,13 @@ def test_migration_tamper_blocks_before_applying_new_sql(db, tmp_path):
         with db.connect() as conn:
             run_migrations(conn, tmp_path)
     with db.connect() as conn:
-        assert migration_status(conn)["current_version"] == 2
+        assert migration_status(conn)["current_version"] == 3
 
 
 def test_failed_migration_rolls_back_sql_and_tracker(db, tmp_path):
     for file in MIGRATION_DIRECTORY.glob("*.sql"):
         (tmp_path / file.name).write_bytes(file.read_bytes())
-    (tmp_path / "0003_failure.sql").write_text(
+    (tmp_path / "0004_failure.sql").write_text(
         "CREATE TABLE prototype_rollback_probe(id integer); SELECT 1/0;", encoding="utf-8",
     )
     with pytest.raises(psycopg.errors.DivisionByZero):
@@ -105,4 +105,4 @@ def test_failed_migration_rolls_back_sql_and_tracker(db, tmp_path):
             run_migrations(conn, tmp_path)
     with db.connect() as conn:
         assert conn.execute("SELECT to_regclass('prototype_rollback_probe') AS name").fetchone()["name"] is None
-        assert migration_status(conn)["current_version"] == 2
+        assert migration_status(conn)["current_version"] == 3

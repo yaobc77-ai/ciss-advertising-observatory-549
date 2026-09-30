@@ -2,6 +2,12 @@
 
 Updated: 25 September 2026. This is a runnable preparation path, not a claim of client acceptance.
 
+**0.4.5 update:** the [format-2 frozen input guide](frozen_evaluation.md) is the
+current freeze/runner contract for native, social and cross-collection scopes.
+It binds review files, complete selected records, original supports and the
+source/index snapshot. Missing social cases remain pending. Earlier descriptions
+below retain their dated scope; no real acceptance packet was frozen by this update.
+
 ## September 30 evaluation interface update
 
 Default count cases still measure database reconciliation without calling a model. To additionally
@@ -46,7 +52,7 @@ client questions and completed semantic reviews are still missing.
 
 ## Prepare an independent native review
 
-Start with the blank [client intake packet](https://github.com/yaobc77-ai/ciss-advertising-observatory/blob/main/eval/client_review_20260925/README.md).
+Start with the blank [client intake packet](../eval/client_review_20260925/README.md).
 The team collects real tasks, maps original records and quotes, prepares grouped holdouts and
 obtains an actual reviewer decision before recording approval in `review_plan.json`.
 
@@ -116,7 +122,7 @@ Free and paid modes measure different paths; they are not an isolated embedding 
 | Social/cross collection | Adapter tests using explicit fixtures | Formal released data and schema, scoped gold and evaluator support |
 | Speed and scale | Measured workload, latency, failures and cost | Expected data size, concurrency and acceptable waiting time |
 
-Use [answer_review.csv](https://github.com/yaobc77-ai/ciss-advertising-observatory/blob/main/eval/client_review_20260925/answer_review.csv) to tie semantic review to
+Use [answer_review.csv](../eval/client_review_20260925/answer_review.csv) to tie semantic review to
 the exact run and case. Report reviewed, failed, missing and not-run cases separately. No default
 accuracy threshold is invented here. Graph/interface and scale acceptance remain separate from
 RAG quality; a successful page load or a fast synthetic fixture does not settle those questions.

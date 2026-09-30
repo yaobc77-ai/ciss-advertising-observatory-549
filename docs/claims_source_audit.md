@@ -110,5 +110,8 @@ Resolve source associations, choose the authoritative taxonomy/run and define
 what the public label means before importing published results. A located quote
 does not prove that it supports the category or that its statement is false.
 The website still uses historical annotations; new CLAIMS results are not live.
-See the [integration plan](claims_integration_plan.md) for import, product, batch
+The [result importer](claims_result_import.md) now validates private review files,
+rechecks the current original source, and preserves publication/review history.
+The 37 projected candidates have a pending review template; all remain held.
+See the [integration plan](claims_integration_plan.md) for product, batch
 and read-only MCP work. Social data and customer acceptance remain TODOs.
