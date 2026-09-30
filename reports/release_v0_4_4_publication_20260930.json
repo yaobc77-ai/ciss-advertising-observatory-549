@@ -1,0 +1,124 @@
+{
+  "checked_at_utc": "2026-09-30T22:00:18.340710+00:00",
+  "scope": "maintenance_release_ci_health_and_route_availability",
+  "application_version": "0.4.4",
+  "source_commit": "e01edc9e7767f37691686d1a999c8423a0a2ceb4",
+  "english_commit": "257080254789c3538f3fc61949beb63d2f61641a",
+  "original_ci": {
+    "conclusion": "success",
+    "headSha": "e01edc9e7767f37691686d1a999c8423a0a2ceb4",
+    "status": "completed",
+    "url": "https://github.com/yaobc77-ai/ciss-advertising-observatory/actions/runs/36782551077"
+  },
+  "english_ci": {
+    "conclusion": "success",
+    "headSha": "257080254789c3538f3fc61949beb63d2f61641a",
+    "status": "completed",
+    "url": "https://github.com/yaobc77-ai/ciss-advertising-observatory-549/actions/runs/36782554324"
+  },
+  "installed_artifact_tests": {
+    "windows": {
+      "passed": 1258,
+      "skipped": 1,
+      "deselected": 62,
+      "seconds": 42.62
+    },
+    "original_linux_ci": {
+      "passed": 1258,
+      "skipped": 1,
+      "deselected": 62,
+      "warnings": 3,
+      "seconds": 58.79
+    },
+    "english_linux_ci": {
+      "passed": 1258,
+      "skipped": 1,
+      "deselected": 62,
+      "warnings": 3,
+      "seconds": 61.08
+    },
+    "scope": "offline_engineering; integration_and_live_tests_not_run"
+  },
+  "wheel_sha256": "30e0f13dfb4e5645177fb3fe148a912f6945bccf5dfc0d0f78b02b678020eb2b",
+  "production_health": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": "e01edc9e7767f37691686d1a999c8423a0a2ceb4",
+      "features": {
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.4"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "local_health": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": null,
+      "features": {
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.4"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "local_matches_production_collection_and_index": true,
+  "collection_and_index_changed_from_v0_4_3": false,
+  "route_availability": [
+    {
+      "url": "http://127.0.0.1:8050/query",
+      "http_status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8050/data",
+      "http_status": 200
+    },
+    {
+      "url": "https://ciss-advertising-observatory-production.up.railway.app/query",
+      "http_status": 200
+    },
+    {
+      "url": "https://ciss-advertising-observatory-production.up.railway.app/data",
+      "http_status": 200
+    }
+  ],
+  "static_project_page": {
+    "url": "https://yaobc77-ai.github.io/ciss-advertising-observatory-549/",
+    "http_status": 200,
+    "claims_scheduled_text_present": true,
+    "content_changed_in_this_release": false
+  },
+  "model_calls_in_this_work": 0,
+  "claims": {
+    "status": "read_only_source_audit_and_candidate_adapter_implemented; product_import_pending",
+    "source_linkage_receipt": "claims_source_linkage_20260930.json",
+    "source_associations_approved": 0,
+    "new_results_imported": false,
+    "new_results_published": false,
+    "classification_semantics_validated": false,
+    "next_step": "review_source_bindings_and_taxonomy_authority; implement_versioned_import_and_read_only_product_tools"
+  },
+  "social": "client_export_and_mapping_deferred_todo",
+  "acceptance": "independent_semantic_and_client_usability_review_pending",
+  "graph_interaction_check": "previous_v0_4_2_receipt; not_repeated_in_this_maintenance_release",
+  "database_restore": "separate_full_local_snapshot_restore_receipt; not_repeated_in_this_release",
+  "publication_note": "This receipt binds the tested application commits. A documentation-only follow-up may publish it without changing those application files."
+}
