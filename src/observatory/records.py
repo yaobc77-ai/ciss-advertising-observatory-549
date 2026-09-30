@@ -1,20 +1,26 @@
 """Public record details and reviewed local snapshots, without changing source data.
 
 The historical PDF index is a candidate index, not an attachment registry. Only
-the reviewed body-recovery manifest binds a local PDF to a record here. Local
-snapshots never fill ``archive_url`` or imply that an online archive exists.
+the reviewed body-recovery manifest, or an explicitly mounted curated bundle,
+binds a local PDF to a record here. Snapshots never fill ``archive_url`` or imply
+that an online archive exists.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from flask import abort, jsonify, request, send_file
+
+from observatory.asset_bundle import PDF_MAGIC, PNG_MAGIC, load_bundle, verified_bytes
+
+_LOGGER = logging.getLogger(__name__)
 
 _PUBLIC_FIELDS = (
     "record_id", "version_id", "dataset", "title", "publisher", "sponsor",
@@ -59,7 +65,7 @@ def _json(path, fallback):
 
 
 class RecordDetails:
-    """Read-only detail service; ``root`` is the private project source directory.
+    """Read-only details backed by a private project root or curated asset root.
 
     ``get`` and ``summaries`` return only public fields. ``attachment`` returns
     hash-checked bytes, never a user-controlled path. A missing or changed source
@@ -69,12 +75,24 @@ class RecordDetails:
     def __init__(self, db, settings, root=None):
         self.db = db
         self.settings = settings
-        self.root = Path(root or Path.cwd()).resolve()
-        self._pdf_root = (self.root / "sources/pdf_archive_20260915/pdfs").resolve()
-        self._preview_root = (self.root / "sources/recovered_native/previews").resolve()
-        manifest = _json(self.root / "config/native_body_recoveries.json", {})
+        configured_root = getattr(settings, "record_asset_root", "")
+        self._bundled = bool(configured_root)
+        self.root = Path(root or configured_root or Path.cwd()).resolve()
+        self._pdf_root = (self.root / ("pdfs" if self._bundled else "sources/pdf_archive_20260915/pdfs")).resolve()
+        self._preview_root = (self.root / ("previews" if self._bundled else "sources/recovered_native/previews")).resolve()
+        self.asset_status = "local_workspace"
+        if self._bundled:
+            try:
+                decisions = load_bundle(self.root, getattr(settings, "record_asset_manifest_sha256", ""))
+                self.asset_status = "bundle_verified"
+            except (OSError, ValueError):
+                decisions = []
+                self.asset_status = "bundle_unavailable"
+                _LOGGER.warning("Configured record-asset bundle failed validation; attachments are disabled")
+        else:
+            manifest = _json(self.root / "config/native_body_recoveries.json", {})
+            decisions = manifest.get("decisions", []) if isinstance(manifest, dict) else []
         self._reviewed = {}
-        decisions = manifest.get("decisions", []) if isinstance(manifest, dict) else []
         for item in decisions if isinstance(decisions, list) else []:
             if not isinstance(item, dict):
                 continue
@@ -93,7 +111,7 @@ class RecordDetails:
                 {**item, "asset_id": asset_id}
             )
         self._candidates = {}
-        index = _json(self.root / "analysis/pdf_archive/source_index.json", [])
+        index = [] if self._bundled else _json(self.root / "analysis/pdf_archive/source_index.json", [])
         for item in index if isinstance(index, list) else []:
             if not isinstance(item, dict) or not isinstance(item.get("source_urls"), list):
                 continue
@@ -125,6 +143,8 @@ class RecordDetails:
         # Check both containment in the project and in the one approved archive
         # root. resolve() also prevents symlink/junction traversal out of it.
         try:
+            if self._bundled:
+                return verified_bytes(self.root, item["source_pdf_path"], item["source_pdf_sha256"], PDF_MAGIC, "pdfs")
             if Path(item["source_pdf_path"]).is_absolute():
                 return None
             path = (self.root / item["source_pdf_path"]).resolve(strict=True)
@@ -148,6 +168,10 @@ class RecordDetails:
         """Use a hash-bound maintenance artifact; never render in a web request."""
         pdf_hash = item["source_pdf_sha256"]
         try:
+            if self._bundled:
+                if not item.get("preview_path"):
+                    return None
+                return verified_bytes(self.root, item["preview_path"], item["preview_sha256"], PNG_MAGIC, "previews")
             image_path = (self._preview_root / f"{pdf_hash}.page1.png").resolve(strict=True)
             receipt_path = (self._preview_root / f"{pdf_hash}.page1.json").resolve(strict=True)
             if any(not path.is_relative_to(self.root) or not path.is_relative_to(self._preview_root)
@@ -216,6 +240,7 @@ class RecordDetails:
                 "Local PDF snapshot available" if attachments else "No verified archived copy linked"
             ),
             "archive_note": "Local PDFs and public online archives are separate. Candidate files matched by title remain unverified and are not linked as this record's source.",
+            "record_asset_status": self.asset_status,
             "detail_url": f"/records/{row['record_id']}",
         }
 

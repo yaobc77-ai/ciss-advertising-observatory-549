@@ -26,6 +26,9 @@ class Settings:
     trusted_proxy: str = ""
     # Explicit opt-in preserves the deterministic baseline for reproducible checks.
     research_agent_enabled: bool = False
+    # Private curated attachments can be mounted independently of application code.
+    record_asset_root: str = field(default="", repr=False)
+    record_asset_manifest_sha256: str = field(default="", repr=False)
 
     @classmethod
     def from_env(cls):
@@ -47,4 +50,6 @@ class Settings:
             secure_cookies=os.getenv("OBS_SECURE_COOKIES", "false").lower() == "true",
             trusted_proxy=os.getenv("OBS_TRUSTED_PROXY", ""),
             research_agent_enabled=os.getenv("OBS_RESEARCH_AGENT_ENABLED", "false").lower() == "true",
+            record_asset_root=os.getenv("OBS_RECORD_ASSET_ROOT", ""),
+            record_asset_manifest_sha256=os.getenv("OBS_RECORD_ASSET_MANIFEST_SHA256", ""),
         )

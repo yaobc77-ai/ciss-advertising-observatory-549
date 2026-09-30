@@ -8,7 +8,7 @@
 - Use **Records** to open article details, stored text, and available original or archived sources. Export the selected records or grouped counts as CSV.
 - Open **Query** for keyword search or generated answers. Generated answers can use database tools for statistics and retrieved passages for content questions. Check the cited sources when interpreting an advertising claim.
 
-The social collection remains unavailable until its client dataset is imported. Historical labels record earlier annotations; they are not a new CLAIMS classification or a verified assessment of greenwashing.
+The social collection remains unavailable until its client dataset is imported. CLAIMS integration is scheduled separately. Historical labels record earlier annotations; they are not a new CLAIMS classification or a verified assessment of greenwashing.
 
 ## Install and configure
 
@@ -49,5 +49,7 @@ The graph contains articles, source-listed sponsor names, publishers, and their 
 Build the provided Docker image or connect the repository to Railway. Configure the database URL, cookie secret, and optional API key through the platform's variables. Use `OBS_HOST=0.0.0.0`; Railway supplies `PORT`. For HTTPS hosting, set `OBS_SECURE_COOKIES=true` and configure the trusted proxy for the deployment.
 
 Apply migrations with `observatory migrate` before serving the application. Use `/healthz` to check availability and the application version. Back up the database before upgrades and retain source inputs separately. Import and indexing commands can be repeated when data changes.
+
+Reviewed PDFs and previews are deployed separately using a [private record asset bundle](record_assets.md). [Current handoff instructions](current_handoff.md) cover complete database recovery, source inputs, and remaining acceptance work.
 
 The GitHub Pages workflow publishes only `site/`. It provides the static project description and links to the running application; it does not contain the database or execute RAG.

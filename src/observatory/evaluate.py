@@ -33,6 +33,21 @@ class GoldQuote(BaseModel):
         return self
 
 
+class ReviewedDatasetRelease(BaseModel):
+    """Recorded human approval of a corpus version; not proof of that approval."""
+
+    model_config = ConfigDict(extra="forbid")
+    data_version: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reviewer: str = Field(min_length=1)
+    approval_record: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def reject_blank_review(self):
+        if not self.reviewer.strip() or not self.approval_record.strip():
+            raise ValueError("Reviewed releases require a reviewer and approval record")
+        return self
+
+
 class EvaluationCase(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str
@@ -47,6 +62,7 @@ class EvaluationCase(BaseModel):
     expected_count: int | None = Field(default=None, ge=0)
     rubric: list[str] = Field(min_length=1)
     selection_note: str
+    reviewed_release: ReviewedDatasetRelease | None = None
 
     @model_validator(mode="after")
     def check_case(self):
@@ -55,11 +71,13 @@ class EvaluationCase(BaseModel):
         if len(self.required_record_ids) != len(set(self.required_record_ids)):
             raise ValueError("Duplicate required record IDs")
         if self.status == "pending_social":
-            if self.dataset == "native" or self.required_record_ids or self.support_quote or self.expected_count is not None:
+            if (self.dataset == "native" or self.required_record_ids or self.support_quote
+                    or self.expected_count is not None or self.reviewed_release is not None):
                 raise ValueError("Pending social/cross cases must not contain invented gold")
-        elif self.dataset != "native":
+            return self
+        if self.dataset != "native" and self.reviewed_release is None:
             raise ValueError("Social/cross readiness requires a separately reviewed dataset release")
-        elif self.case_type == "retrieval":
+        if self.case_type == "retrieval":
             if not self.required_record_ids:
                 raise ValueError("Ready retrieval cases require source records")
             if not set(self.required_record_ids).issubset({q.record_id for q in self.support_quote}):
@@ -95,26 +113,37 @@ def load_snapshot(db):
     with db.connect() as conn:
         rows = conn.execute(
             "SELECT r.record_id,r.dataset,v.version_id,v.body,v.payload "
-            "FROM records r JOIN record_versions v ON r.current_version=v.version_id"
+            "FROM records r JOIN record_versions v ON r.current_version=v.version_id WHERE r.active"
         ).fetchall()
     return {row["record_id"]: row for row in rows}
 
 
-def validate_gold(cases, snapshot, filtered_rows):
+def validate_gold(cases, snapshot, filtered_rows, *, data_version=None):
     """Validate source ownership before any retrieval or paid request is made."""
     located = {}
+    connected_datasets = {record["dataset"] for record in snapshot.values()}
     for case in cases:
         if case.status != "ready":
             continue
+        if case.reviewed_release and case.reviewed_release.data_version != data_version:
+            raise EvaluationInvalid(f"{case.id}: reviewed dataset release differs from the current data version")
+        datasets = {"native", "social"} if case.dataset == "cross" else {case.dataset}
+        if case.dataset != "native" and not datasets.issubset(connected_datasets):
+            raise EvaluationInvalid(f"{case.id}: a required collection has no active records in the reviewed snapshot")
         selected = {row["record_id"] for row in filtered_rows[case.id]}
+        if any(rid not in snapshot or snapshot[rid]["dataset"] not in datasets for rid in selected):
+            raise EvaluationInvalid(f"{case.id}: filtered records belong to a missing or out-of-scope dataset")
         if not set(case.required_record_ids).issubset(selected):
             raise EvaluationInvalid(f"{case.id}: required records are missing or excluded by filters")
         if case.case_type == "count" and selected != set(case.required_record_ids):
             raise EvaluationInvalid(f"{case.id}: count gold is stale; re-enumerate the whole filtered corpus")
+        if (case.dataset == "cross" and case.case_type == "retrieval"
+                and {snapshot[rid]["dataset"] for rid in case.required_record_ids} != datasets):
+            raise EvaluationInvalid(f"{case.id}: cross-collection retrieval gold must include both datasets")
         spans = []
         for gold in case.support_quote:
             record = snapshot.get(gold.record_id)
-            if not record or gold.record_id not in selected or record["dataset"] != "native":
+            if not record or gold.record_id not in selected or record["dataset"] not in datasets:
                 raise EvaluationInvalid(f"{case.id}: support quote belongs to a missing or out-of-scope record")
             if gold.quote not in record["body"]:
                 raise EvaluationInvalid(f"{case.id}: exact support quote is absent from the current original body")
@@ -175,6 +204,7 @@ def summarize_results(rows, paid):
         ready = [row for row in group if row["case_status"] == "ready"]
         retrieval = [row for row in ready if row["case_type"] == "retrieval"]
         counts = [row for row in ready if row["case_type"] == "count"]
+        count_answers = [row for row in counts if row.get("count_answer_evaluated")]
         abstention = [row for row in ready if row["case_type"] == "no_evidence"] if paid else []
         citations = [row["citation_locator_valid"] for row in ready]
         locators = [row["evidence_locator_valid"] for row in ready]
@@ -189,6 +219,9 @@ def summarize_results(rows, paid):
             "hit_at_5": ratio(sum(row["hit_at_5"] is True for row in retrieval), len(retrieval)),
             "support_passage_coverage": ratio(sum(m["numerator"] for m in passages), sum(m["denominator"] for m in passages)),
             "count_exact": ratio(sum(row["count_exact"] is True for row in counts), len(counts)),
+            "answer_count_exact": ratio(sum(row.get("answer_count_exact") is True for row in count_answers), len(count_answers)),
+            "answer_count_scope_valid": ratio(sum(row.get("answer_count_scope_valid") is True for row in count_answers), len(count_answers)),
+            "count_answer_status": "measured" if count_answers else "not_run_database_only",
             "evidence_locator_valid": ratio(sum(m["numerator"] for m in locators), sum(m["denominator"] for m in locators)),
             "citation_locator_valid": ratio(sum(m["numerator"] for m in citations), sum(m["denominator"] for m in citations)),
             "abstention_on_no_evidence": ratio(sum(row["abstained"] is True for row in abstention), len(abstention)),
@@ -209,7 +242,38 @@ def summarize_results(rows, paid):
     return summaries
 
 
-def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
+def count_answer_checks(result, case, expected_collections):
+    """Score structured database totals and scope, never model-written numbers."""
+    data = result.structured_result or {}
+    returned = {}
+    try:
+        actual_filters = Filters.model_validate(data["filters"]).model_dump(mode="json")
+        expected_filters = case.filters.model_dump(mode="json")
+        scope_valid = all(
+            set(value) == set(expected_filters[key]) if isinstance(value, list)
+            else value == expected_filters[key]
+            for key, value in actual_filters.items()
+        )
+    except (KeyError, TypeError, ValueError):
+        scope_valid = False
+    try:
+        for collection in data["collections"]:
+            dataset, total = collection["dataset"], collection["total"]
+            if dataset in returned or type(total) is not int or total < 0:
+                raise ValueError("Malformed collection totals")
+            returned[dataset] = total
+    except (KeyError, TypeError, ValueError):
+        returned = {}
+    route_valid = (result.status == "answered" and result.answer_mode == "statistics"
+                   and data.get("method") == "database")
+    return {"answer_count_exact": route_valid and scope_valid and returned == expected_collections,
+            "answer_count_scope_valid": scope_valid, "answer_count_route_valid": route_valid,
+            "answer_collection_counts": returned}
+
+
+def run_evaluation(cases, service, *, paid=False, answer_counts=False, expected_data_version=None):
+    if answer_counts and not paid:
+        raise EvaluationInvalid("Service.answer count evaluation requires explicit --paid authorization")
     run_id = uuid4().hex
     # Capture the implementation before requests run; do not label a historical
     # result with whatever source happens to exist when the report is read later.
@@ -227,7 +291,7 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
         raise EvaluationInvalid("Database version differs from --expected-data-version")
     snapshot = load_snapshot(service.db)
     filtered = {case.id: service.browse(case.filters) for case in cases if case.status == "ready"}
-    located = validate_gold(cases, snapshot, filtered)
+    located = validate_gold(cases, snapshot, filtered, data_version=version)
     check_version(service, version)
     rows = []
     for case in cases:
@@ -236,9 +300,12 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
             "case_status": case.status, "execution_status": "pending_social",
             "question": case.question, "filters": case.filters.model_dump(mode="json"),
             "required_record_ids": case.required_record_ids, "gold_spans": located.get(case.id, []),
+            "reviewed_release": case.reviewed_release.model_dump() if case.reviewed_release else None,
             "hit_at_5": False if case.status == "ready" and case.case_type == "retrieval" else None,
             "support_passage_coverage": ratio(0, len(case.support_quote) if case.status == "ready" and case.case_type == "retrieval" else 0),
             "count_exact": None, "abstained": None,
+            "count_answer_evaluated": answer_counts and case.status == "ready" and case.case_type == "count",
+            "answer_count_exact": None, "answer_count_scope_valid": None,
             "citation_locator_valid": ratio(0, 0), "evidence_locator_valid": ratio(0, 0),
             "semantic_support": "pending_human_review", "latency_ms": 0,
             "cost": {"status": "not_dispatched", "settled_usd": 0.0, "unresolved_reserved_usd": 0.0},
@@ -253,9 +320,23 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
         evidence = []
         try:
             if case.case_type == "count":
-                actual = service.statistics(case.filters)["total"]
+                datasets = ["native", "social"] if case.dataset == "cross" else [case.dataset]
+                expected_collections = {dataset: sum(snapshot[rid]["dataset"] == dataset
+                                                   for rid in case.required_record_ids)
+                                        for dataset in datasets}
+                actual_collections = {dataset: service.statistics(case.filters.model_copy(update={"dataset": dataset}))["total"]
+                                      for dataset in datasets}
+                actual = sum(actual_collections.values())
                 row.update(actual_count=actual, expected_count=case.expected_count,
-                           count_exact=actual == case.expected_count, execution_status="count_only")
+                           actual_collection_counts=actual_collections, expected_collection_counts=expected_collections,
+                           count_exact=actual_collections == expected_collections, execution_status="count_only")
+                if answer_counts:
+                    result = service.answer(case.question, case.filters, visitor)
+                    row.update(answer_status=result.status, answer=result.answer,
+                               answer_mode=result.answer_mode, failure_reason=result.failure_reason,
+                               structured_result=result.structured_result, research_trace=result.research_trace,
+                               reported_answer_cost_usd=result.cost_usd, execution_status=result.status)
+                    row.update(count_answer_checks(result, case, expected_collections))
             else:
                 if paid:
                     result = service.answer(case.question, case.filters, visitor)
@@ -263,6 +344,8 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
                     row.update(answer_status=result.status, answer=result.answer,
                                failure_reason=result.failure_reason,
                                language_check=result.language_check,
+                               answer_mode=result.answer_mode, structured_result=result.structured_result,
+                               research_trace=result.research_trace,
                                citations=[c.model_dump() for c in result.citations],
                                reported_answer_cost_usd=result.cost_usd,
                                abstained=result.status == "insufficient_evidence", execution_status=result.status)
@@ -273,8 +356,11 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
                 row["top_five_distinct_record_ids"] = top_five_record_ids
                 if case.case_type == "retrieval":
                     row["hit_at_5"] = set(case.required_record_ids).issubset(top_five_record_ids)
+                selected_ids = {item["record_id"] for item in filtered[case.id]}
                 valid = {e.evidence_id: service.db.validate_evidence(e) and
-                         e.record_id in snapshot and snapshot[e.record_id]["version_id"] == e.version_id
+                         e.record_id in selected_ids and e.record_id in snapshot
+                         and snapshot[e.record_id]["version_id"] == e.version_id
+                         and snapshot[e.record_id]["dataset"] == e.dataset
                          for e in evidence}
                 row["evidence_locator_valid"] = ratio(sum(valid.values()), len(evidence))
                 row["retrieved_record_ids"] = [e.record_id for e in evidence]
@@ -300,7 +386,7 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
             row.update(execution_status="error", error_type=type(exc).__name__)
         finally:
             row["latency_ms"] = round((time.perf_counter() - start) * 1000, 3)
-        if paid and case.case_type != "count":
+        if paid and (case.case_type != "count" or answer_counts):
             try:
                 row["cost"] = ledger_usage(service.db, visitor)
             except Exception:
@@ -311,6 +397,8 @@ def run_evaluation(cases, service, *, paid=False, expected_data_version=None):
     return {
         "run_id": run_id, "created_at": datetime.now(timezone.utc).isoformat(),
         "suite": cases[0].suite, "gold_status": "draft_not_frozen", "mode": "paid" if paid else "lexical",
+        "count_evaluation_mode": "service_answer" if answer_counts else "database_only",
+        "research_agent_enabled": bool(getattr(service.settings, "research_agent_enabled", False)),
         "data_version": version, "data_version_status": "stable_during_run",
         "generation_model": service.settings.generation_model if paid else None,
         "embedding_model": service.settings.embedding_model if paid else None,
@@ -324,11 +412,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cases", type=Path, default=Path("eval/development.jsonl"))
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--paid", action="store_true", help="Explicitly allow paid Service.answer requests for ready non-count cases")
+    parser.add_argument("--paid", action="store_true", help="Explicitly allow paid Service.answer requests; count cases require --answer-counts too")
+    parser.add_argument("--answer-counts", action="store_true", help="Also evaluate count questions through Service.answer; requires --paid")
     parser.add_argument("--expected-data-version", help="Optionally require a previously recorded exact dataset version")
     args = parser.parse_args()
+    if args.answer_counts and not args.paid:
+        parser.error("--answer-counts requires --paid")
     cases = load_cases(args.cases)
-    result = run_evaluation(cases, Service(Settings.from_env()), paid=args.paid,
+    result = run_evaluation(cases, Service(Settings.from_env()), paid=args.paid, answer_counts=args.answer_counts,
                             expected_data_version=args.expected_data_version)
     result["case_file"] = args.cases.as_posix()
     import hashlib

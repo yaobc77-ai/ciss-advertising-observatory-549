@@ -35,3 +35,22 @@ def test_hosted_cookie_and_proxy_settings(monkeypatch):
     settings = Settings.from_env()
     assert settings.secure_cookies is True
     assert settings.trusted_proxy == "*"
+
+
+def test_private_record_asset_configuration_is_server_only(monkeypatch):
+    _clear(monkeypatch)
+    monkeypatch.setenv("OBS_RECORD_ASSET_ROOT", "/private/mounted-assets")
+    monkeypatch.setenv("OBS_RECORD_ASSET_MANIFEST_SHA256", "a" * 64)
+    settings = Settings.from_env()
+    assert settings.record_asset_root == "/private/mounted-assets"
+    assert settings.record_asset_manifest_sha256 == "a" * 64
+    assert "/private/mounted-assets" not in repr(settings)
+
+
+def test_private_record_assets_are_optional_by_default(monkeypatch):
+    _clear(monkeypatch)
+    monkeypatch.delenv("OBS_RECORD_ASSET_ROOT", raising=False)
+    monkeypatch.delenv("OBS_RECORD_ASSET_MANIFEST_SHA256", raising=False)
+    settings = Settings.from_env()
+    assert settings.record_asset_root == ""
+    assert settings.record_asset_manifest_sha256 == ""

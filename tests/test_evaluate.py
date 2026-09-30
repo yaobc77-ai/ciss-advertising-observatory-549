@@ -21,8 +21,8 @@ def case(case_id="case-1", **changes):
     return evaluate.EvaluationCase.model_validate(values)
 
 
-def record(rid="r1", body="The facility is proposed."):
-    return {"record_id": rid, "dataset": "native", "version_id": "v1",
+def record(rid="r1", body="The facility is proposed.", dataset="native"):
+    return {"record_id": rid, "dataset": dataset, "version_id": "v1",
             "body": body, "payload": {"retrievable": True}}
 
 
@@ -47,10 +47,12 @@ class FakeService:
         )
 
     def browse(self, filters):
-        return [{"record_id": rid} for rid in self.records]
+        return [{"record_id": rid} for rid, source in self.records.items()
+                if filters.dataset in {"all", source["dataset"]}
+                and (not filters.record_ids or rid in filters.record_ids)]
 
     def statistics(self, filters):
-        return {"total": len(self.records)}
+        return {"total": len(self.browse(filters))}
 
     def search(self, *args, **kwargs):
         self.search_calls += 1
@@ -289,3 +291,230 @@ def test_real_case_files_preserve_scope_and_draft_status(filename, suite):
     assert sum(c.dataset == "native" and c.case_type == "no_evidence" for c in cases) == 3
     assert sum(c.dataset == "social" and c.status == "pending_social" for c in cases) == 4
     assert sum(c.dataset == "cross" and c.status == "pending_social" for c in cases) == 3
+
+
+REVIEWED_FIXTURE_RELEASE = {
+    "data_version": "a" * 64, "reviewer": "Synthetic unit-test reviewer",
+    "approval_record": "Synthetic unit fixture; no real customer approval",
+}
+
+
+def test_ready_social_requires_an_explicit_reviewed_release():
+    with pytest.raises(ValidationError, match="separately reviewed dataset release"):
+        case(dataset="social", filters={"dataset": "social"})
+
+
+@pytest.mark.parametrize("field", ["reviewer", "approval_record"])
+def test_reviewed_release_cannot_have_blank_human_reference(field):
+    release = {**REVIEWED_FIXTURE_RELEASE, field: " "}
+    with pytest.raises(ValidationError, match="reviewer and approval record"):
+        case(dataset="social", filters={"dataset": "social"}, reviewed_release=release)
+
+
+def test_social_gold_validates_its_own_dataset_and_release():
+    social = case(dataset="social", filters={"dataset": "social"},
+                  reviewed_release=REVIEWED_FIXTURE_RELEASE)
+    source = record(dataset="social")
+    located = evaluate.validate_gold([social], {"r1": source},
+                                    {"case-1": [{"record_id": "r1"}]}, data_version="a" * 64)
+    assert located["case-1"][0]["quote"] == source["body"]
+    with pytest.raises(evaluate.EvaluationInvalid, match="out-of-scope dataset"):
+        evaluate.validate_gold([social], {"r1": record(), "r2": record("r2", dataset="social")},
+                               {"case-1": [{"record_id": "r1"}]}, data_version="a" * 64)
+
+
+def test_native_gold_rejects_a_social_source_even_if_quote_and_id_match():
+    with pytest.raises(evaluate.EvaluationInvalid, match="out-of-scope dataset"):
+        evaluate.validate_gold([case()], {"r1": record(dataset="social")},
+                               {"case-1": [{"record_id": "r1"}]})
+
+
+def test_cross_gold_requires_both_reviewed_collections():
+    cross = case(dataset="cross", filters={"dataset": "all"},
+                 reviewed_release=REVIEWED_FIXTURE_RELEASE, required_record_ids=["r1", "r2"],
+                 support_quote=[{"record_id": rid, "quote": "The facility is proposed."}
+                                for rid in ("r1", "r2")])
+    sources = {"r1": record(), "r2": record("r2", dataset="social")}
+    rows = {"case-1": [{"record_id": rid} for rid in sources]}
+    assert len(evaluate.validate_gold([cross], sources, rows, data_version="a" * 64)["case-1"]) == 2
+    sources["r2"] = record("r2")
+    sources["r3"] = record("r3", dataset="social")
+    with pytest.raises(evaluate.EvaluationInvalid, match="must include both datasets"):
+        evaluate.validate_gold([cross], sources, rows, data_version="a" * 64)
+
+
+def test_reviewed_social_version_mismatch_blocks_search_and_answer(monkeypatch):
+    service = FakeService(records={"r1": record(dataset="social")})
+    bind(monkeypatch, service)
+    social = case(dataset="social", filters={"dataset": "social"},
+                  reviewed_release=REVIEWED_FIXTURE_RELEASE)
+    with pytest.raises(evaluate.EvaluationInvalid, match="reviewed dataset release"):
+        evaluate.run_evaluation([social], service, paid=True)
+    assert service.answer_calls == service.search_calls == 0
+
+
+def test_reviewed_social_case_can_run_scoped_fixture_retrieval(monkeypatch):
+    service = FakeService(records={"r1": record(dataset="social")},
+                          evidence_rows=[evidence().model_copy(update={"dataset": "social"})])
+    service.version = "a" * 64
+    bind(monkeypatch, service)
+    social = case(dataset="social", filters={"dataset": "social"},
+                  reviewed_release=REVIEWED_FIXTURE_RELEASE)
+    result = evaluate.run_evaluation([social], service)
+    assert result["summary"]["social"]["ready_cases"] == 1
+    assert result["summary"]["social"]["evidence_locator_valid"]["rate"] == 1
+    assert result["cases"][0]["reviewed_release"] == REVIEWED_FIXTURE_RELEASE
+    assert service.answer_calls == 0
+
+
+def test_evidence_from_wrong_collection_does_not_pass_locator_checks(monkeypatch):
+    service = FakeService(records={"r1": record(), "r2": record("r2", dataset="social")},
+                          evidence_rows=[evidence("r2").model_copy(update={"dataset": "social"})])
+    bind(monkeypatch, service)
+    row = evaluate.run_evaluation([case()], service)["cases"][0]
+    assert row["evidence_locator_valid"] == {"numerator": 0, "denominator": 1, "rate": 0}
+
+
+def statistics_result(filters=None, total=1, dataset="native", **changes):
+    values = {
+        "status": "answered", "answer_mode": "statistics", "answer": "A database result.",
+        "structured_result": {"method": "database", "kind": "count", "filters": filters or {"dataset": dataset},
+                              "collections": [{"dataset": dataset, "total": total}]},
+        "research_trace": {"route": "statistics", "fixture": True},
+    }
+    values.update(changes)
+    return Answer(**values)
+
+
+def test_count_baseline_keeps_database_only_even_with_paid_flag(monkeypatch):
+    service = FakeService()
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    result = evaluate.run_evaluation([count], service, paid=True)
+    assert service.answer_calls == service.search_calls == 0
+    assert result["cases"][0]["execution_status"] == "count_only"
+    assert result["cases"][0]["count_exact"] is True
+    assert result["count_evaluation_mode"] == "database_only"
+    assert result["summary"]["native"]["answer_count_exact"]["denominator"] == 0
+
+
+def test_count_answer_opt_in_requires_paid_before_dispatch(monkeypatch):
+    service = FakeService()
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    with pytest.raises(evaluate.EvaluationInvalid, match="explicit --paid"):
+        evaluate.run_evaluation([count], service, answer_counts=True)
+    assert service.answer_calls == service.search_calls == 0
+
+
+def test_count_answer_measures_actual_service_path_and_keeps_ledger(monkeypatch):
+    service = FakeService(result=statistics_result())
+    service.settings.research_agent_enabled = True
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    result = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)
+    row = result["cases"][0]
+    assert service.answer_calls == 1 and service.search_calls == 0
+    assert row["count_exact"] is True and row["answer_count_exact"] is True
+    assert row["research_trace"] == {"route": "statistics", "fixture": True}
+    assert row["expected_collection_counts"] == row["answer_collection_counts"] == {"native": 1}
+    assert result["count_evaluation_mode"] == "service_answer" and result["research_agent_enabled"] is True
+    assert result["summary"]["native"]["answer_count_exact"] == {"numerator": 1, "denominator": 1, "rate": 1}
+    assert result["summary"]["native"]["settled_cost_usd"] == 0.016
+    assert result["summary"]["native"]["semantic_support"]["status"] == "pending_human_review"
+
+
+def test_count_answer_equal_number_with_wrong_scope_does_not_pass(monkeypatch):
+    service = FakeService(result=statistics_result(filters={"dataset": "native", "sponsors": ["unrequested"]}))
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    row = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["count_exact"] is True
+    assert row["answer_count_scope_valid"] is False and row["answer_count_exact"] is False
+
+
+@pytest.mark.parametrize("answer", [
+    statistics_result(total=2),
+    statistics_result(dataset="social"),
+    Answer(status="answered", answer="There is 1 ad.", answer_mode="rag"),
+    statistics_result(status="service_unavailable", failure_reason="research_agent_unavailable"),
+])
+def test_bad_count_answer_retains_failure_in_the_denominator(monkeypatch, answer):
+    service = FakeService(result=answer)
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    result = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)
+    assert result["summary"]["native"]["answer_count_exact"] == {"numerator": 0, "denominator": 1, "rate": 0}
+    assert service.answer_calls == 1
+    assert result["cases"][0]["count_exact"] is True
+
+
+def test_cross_count_keeps_native_and_social_totals_separate(monkeypatch):
+    sources = {"r1": record(), "r2": record("r2", dataset="social")}
+    answer = statistics_result(filters={"dataset": "all"})
+    answer.structured_result["collections"] = [{"dataset": "native", "total": 1}, {"dataset": "social", "total": 1}]
+    service = FakeService(records=sources, result=answer)
+    service.version = "a" * 64
+    bind(monkeypatch, service)
+    cross = case(case_type="count", dataset="cross", filters={"dataset": "all"},
+                 reviewed_release=REVIEWED_FIXTURE_RELEASE, required_record_ids=["r1", "r2"],
+                 support_quote=[], expected_count=2)
+    row = evaluate.run_evaluation([cross], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["count_exact"] is True and row["answer_count_exact"] is True
+    assert row["actual_collection_counts"] == {"native": 1, "social": 1}
+    assert row["expected_collection_counts"] == {"native": 1, "social": 1}
+    # Swapping equal combined totals between units must still fail.
+    answer.structured_result["collections"] = [{"dataset": "native", "total": 2}, {"dataset": "social", "total": 0}]
+    row = evaluate.run_evaluation([cross], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["answer_count_exact"] is False
+
+
+def test_cli_count_answer_flag_without_paid_is_rejected(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["observatory.evaluate", "--answer-counts"])
+    with pytest.raises(SystemExit) as exc:
+        evaluate.main()
+    assert exc.value.code == 2
+
+
+@pytest.mark.parametrize("dataset,available", [
+    ("social", {"r1": record()}),
+    ("social", {}),
+    ("cross", {"r1": record()}),
+    ("cross", {"r1": record(dataset="social")}),
+])
+@pytest.mark.parametrize("case_type", ["count", "no_evidence"])
+def test_missing_active_collection_cannot_pass_as_a_reviewed_empty_result(monkeypatch, dataset, available, case_type):
+    service = FakeService()
+    service.records = available
+    service.version = "a" * 64
+    bind(monkeypatch, service)
+    empty_case = case(case_type=case_type, dataset=dataset,
+                      filters={"dataset": "all" if dataset == "cross" else dataset,
+                               "record_ids": ["not-selected"]},
+                      reviewed_release=REVIEWED_FIXTURE_RELEASE, required_record_ids=[], support_quote=[],
+                      expected_count=0 if case_type == "count" else None)
+    with pytest.raises(evaluate.EvaluationInvalid, match="no active records"):
+        evaluate.run_evaluation([empty_case], service, paid=True, answer_counts=True)
+    assert service.answer_calls == service.search_calls == 0
+
+
+@pytest.mark.parametrize("dataset", ["social", "cross"])
+@pytest.mark.parametrize("case_type", ["count", "no_evidence"])
+def test_connected_collections_allow_legitimately_empty_filtered_scope(monkeypatch, dataset, case_type):
+    sources = {"r1": record(), "r2": record("r2", dataset="social")}
+    service = FakeService(records=sources, evidence_rows=[])
+    service.version = "a" * 64
+    bind(monkeypatch, service)
+    empty_case = case(case_type=case_type, dataset=dataset,
+                      filters={"dataset": "all" if dataset == "cross" else dataset,
+                               "record_ids": ["not-selected"]},
+                      reviewed_release=REVIEWED_FIXTURE_RELEASE, required_record_ids=[], support_quote=[],
+                      expected_count=0 if case_type == "count" else None)
+    row = evaluate.run_evaluation([empty_case], service)["cases"][0]
+    if case_type == "count":
+        assert row["count_exact"] is True
+        assert row["actual_collection_counts"] == ({"social": 0} if dataset == "social" else {"native": 0, "social": 0})
+    else:
+        assert row["execution_status"] == "retrieval_only"
+        assert row["evidence"] == []
+    assert service.answer_calls == 0

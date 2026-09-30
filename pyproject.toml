@@ -1,6 +1,6 @@
 [project]
 name = "ciss-observatory"
-version = "0.4.2"
+version = "0.4.3"
 description = "Evidence-linked fossil fuel advertising observatory"
 requires-python = ">=3.12,<3.14"
 dependencies = [

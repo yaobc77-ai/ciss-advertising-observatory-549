@@ -8,7 +8,7 @@ A dashboard for exploring fossil fuel advertising, built for Boston University's
 
 The original project description calls for a dashboard and retrieval-augmented generation (RAG) search across two datasets: fossil fuel native advertising and fossil fuel social media advertising.
 
-Native advertising data is connected. The social media view and importer are implemented, but the client dataset has not been loaded. CLAIMS backend integration and animal agriculture datasets are future work in the project description.
+Native advertising data is connected. The social media view and importer are implemented, but the client dataset has not been loaded. CLAIMS integration is now scheduled client work; it is not connected yet. Animal agriculture remains future work.
 
 ## Research questions and current features
 
@@ -67,6 +67,6 @@ Database and paid API tests run separately. `Dockerfile` and `railway.json` prov
 
 ## Documentation and remaining work
 
-This repository includes application code, tests, deployment configuration, and a [setup and user guide](docs/guide.md).
+This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS integration plan](docs/claims_integration_plan.md) describes the next integration steps.
 
 Real social data, complete source/archive coverage, user acceptance testing, independent answer review, and final presentation materials remain part of project completion. Historical CLAIMS labels are not verified greenwashing findings.
