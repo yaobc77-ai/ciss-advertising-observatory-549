@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-01T06:12:55.762897+00:00",
+  "status": "passed_for_selected_same_implementer_runtime_rehearsal",
+  "scope": "Fresh installed wheel outside the checkout, existing verified restored database, copied selected PDF bundle",
+  "preparation": {
+    "source_revision": "c949b797ece83d7e31b586e2b9082b62ffa290d2",
+    "archive_sha256": "96f4630f3a80bcf25f62f8d6fede685c4fe2715d759e6f12baf7e7bac4bdb8b7",
+    "archive_entries": 458,
+    "archive_all_checksums_and_safe_paths_verified": true,
+    "wheel_sha256": "1de41b46eda3dbfed74fb7d3115a1f8696d6d93d2d30df16ff01bc7d741c39cd",
+    "dependencies_sha256": "8645f6fa931549d02cc0ff8e4fffc47e684a3d93cfec421a564c5fbd22b0c5f9",
+    "offline_dependencies_installed": true,
+    "asset_manifest_sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9",
+    "asset_inventory": {
+      "pdfs/20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c.pdf": {
+        "bytes": 2770692,
+        "sha256": "20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c"
+      },
+      "previews/20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c.page1.png": {
+        "bytes": 108680,
+        "sha256": "0a5f9e1282ea5f97bc16694d06bd7bad6a3b5654f56b947a262e29edb6759030"
+      },
+      "record_assets.json": {
+        "bytes": 1952,
+        "sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9"
+      }
+    }
+  },
+  "installed_package_version": "0.4.10",
+  "installed_from_wheel_outside_checkout": true,
+  "server_starts": [
+    {
+      "stage": "start_1",
+      "at_utc": "2026-10-01T05:55:45.177230+00:00",
+      "pid": 47992,
+      "health": {
+        "active_profile": "sentence600-v1",
+        "application": {
+          "commit": null,
+          "features": {
+            "claims_read_view": true,
+            "collection_graph": true,
+            "graph_breakdowns": true,
+            "research_agent": false
+          },
+          "version": "0.4.10"
+        },
+        "chunks": 556,
+        "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+        "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+        "record_counts": {
+          "native": 275
+        },
+        "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+        "status": "ok"
+      },
+      "health_sha256": "aa05b24406c955048db555a240acf48e230ae2da71cc320f8cd2898188ca0d01",
+      "api_key_present": false,
+      "database_default_transaction_read_only": true,
+      "monthly_budget_usd": "0"
+    },
+    {
+      "stage": "start_2",
+      "at_utc": "2026-10-01T06:04:52.475345+00:00",
+      "pid": 2568,
+      "health": {
+        "active_profile": "sentence600-v1",
+        "application": {
+          "commit": null,
+          "features": {
+            "claims_read_view": true,
+            "collection_graph": true,
+            "graph_breakdowns": true,
+            "research_agent": false
+          },
+          "version": "0.4.10"
+        },
+        "chunks": 556,
+        "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+        "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+        "record_counts": {
+          "native": 275
+        },
+        "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+        "status": "ok"
+      },
+      "health_sha256": "aa05b24406c955048db555a240acf48e230ae2da71cc320f8cd2898188ca0d01",
+      "api_key_present": false,
+      "database_default_transaction_read_only": true,
+      "monthly_budget_usd": "0"
+    }
+  ],
+  "server_stops": [
+    {
+      "stage": "stop_1",
+      "at_utc": "2026-10-01T06:04:45.124672+00:00",
+      "pid": 47992,
+      "exit_code": 1,
+      "own_child_was_alive": true,
+      "port_closed_after_stop": true
+    },
+    {
+      "stage": "stop_2",
+      "at_utc": "2026-10-01T06:06:12.275138+00:00",
+      "pid": 2568,
+      "exit_code": 1,
+      "own_child_was_alive": true,
+      "port_closed_after_stop": true
+    }
+  ],
+  "shutdown_method": "Harness terminated only its own Windows child process; exit code 1 is retained and is not graceful-shutdown evidence",
+  "restored_database": {
+    "tables": 21,
+    "inventory_sha256": "1533d159bc20c22e954862196523591a32b568e8623eb7b6bad18eefba2d60a9",
+    "inventory_observations": 4,
+    "all_snapshot_inventories_equal": true,
+    "rows": {
+      "public.annotations": 1608,
+      "public.answer_runs": 121,
+      "public.chunk_profile_membership": 1114,
+      "public.chunks": 2071,
+      "public.claims2_imports": 0,
+      "public.claims2_results": 0,
+      "public.claims2_retractions": 0,
+      "public.claims2_reviews": 0,
+      "public.claims2_runs": 0,
+      "public.claims2_taxonomies": 0,
+      "public.embeddings": 1051,
+      "public.generation_outputs": 110,
+      "public.imports": 13,
+      "public.record_versions": 828,
+      "public.records": 275,
+      "public.retrieval_preparations": 2,
+      "public.retrieval_profiles": 2,
+      "public.retrieval_publications": 1,
+      "public.retrieval_state": 1,
+      "public.schema_migrations": 3,
+      "public.usage_ledger": 177
+    },
+    "migration_current_version": 3,
+    "pending_migrations": []
+  },
+  "checks": [
+    {
+      "start": 1,
+      "graph_api": {
+        "records": 5,
+        "nodes": 46,
+        "edges": 101,
+        "scope": "Article-version and historical-annotation inspector; distinct from the collection graph"
+      },
+      "browser_relationship": {
+        "sponsor": "ExxonMobil",
+        "outlet": "The Washington Post",
+        "supporting_record_ids": [
+          "2ca410b6-ac69-500a-8a03-5751d3942321",
+          "49fb0b44-15e5-533f-a0de-99929c0d29c5",
+          "8b8f9f05-b60b-509c-bcc0-959b601f7215",
+          "9815c667-a404-597b-aaac-ad616c9b7a7c",
+          "fbf3adb3-b68a-59cc-9237-75aafbf1e5ee"
+        ],
+        "records": 5,
+        "sponsor_parent_records": 15,
+        "outlet_parent_records": 18
+      },
+      "browser_keyword_search": {
+        "question": "biogas",
+        "passages": 3,
+        "record_ids": [
+          "01374b51-3fae-5fe7-8c60-b4bffa2b7ba0",
+          "42114981-e507-5753-9b3a-62c09a7624a2",
+          "cb579bb8-1bc3-54a5-bed3-ce6967bdb9c8"
+        ],
+        "paid_model_calls": 0
+      },
+      "browser_record": {
+        "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+        "preview_rendered": true,
+        "pdf_pages": 6
+      },
+      "http_assets_status": "passed_for_selected_http_assets",
+      "proofs": [
+        {
+          "filename": "graph-start1.json",
+          "bytes": 133884,
+          "sha256": "68c11e88859e3ffabb5d59084b1e90658c34f21a8917114ca344a07e9111bdaf"
+        },
+        {
+          "filename": "record-assets-start1.json",
+          "bytes": 3270,
+          "sha256": "ee3e1f6d3d286bdf3e11402ab48cd98480e99f6ea3d29905c1b66850f523c398"
+        },
+        {
+          "filename": "browser-relationship-start1.txt",
+          "bytes": 12138,
+          "sha256": "9a9798396094ecd88357334ecf742eb1523d626d6ff7bad74c7ba721b1e6dab3"
+        },
+        {
+          "filename": "browser-keyword-start1.txt",
+          "bytes": 6635,
+          "sha256": "c85dad9e7587320b24c00727765547affa3bbb6957c805c3bec5cf46c563cae1"
+        },
+        {
+          "filename": "browser-record-start1.txt",
+          "bytes": 11105,
+          "sha256": "137fd27b938136af9eced48582a49f99fe282e40fff115419e12f7529ab5fb30"
+        },
+        {
+          "filename": "browser-record-start1.jpg",
+          "bytes": 83778,
+          "sha256": "884203036d251423b3dea882ad48d81442ecb366337b6c0c13841335b0bcde0a"
+        }
+      ]
+    },
+    {
+      "start": 2,
+      "graph_api": {
+        "records": 5,
+        "nodes": 46,
+        "edges": 101,
+        "scope": "Article-version and historical-annotation inspector; distinct from the collection graph"
+      },
+      "browser_relationship": {
+        "sponsor": "ExxonMobil",
+        "outlet": "The Washington Post",
+        "supporting_record_ids": [
+          "2ca410b6-ac69-500a-8a03-5751d3942321",
+          "49fb0b44-15e5-533f-a0de-99929c0d29c5",
+          "8b8f9f05-b60b-509c-bcc0-959b601f7215",
+          "9815c667-a404-597b-aaac-ad616c9b7a7c",
+          "fbf3adb3-b68a-59cc-9237-75aafbf1e5ee"
+        ],
+        "records": 5,
+        "sponsor_parent_records": 15,
+        "outlet_parent_records": 18
+      },
+      "browser_keyword_search": {
+        "question": "biogas",
+        "passages": 3,
+        "record_ids": [
+          "01374b51-3fae-5fe7-8c60-b4bffa2b7ba0",
+          "42114981-e507-5753-9b3a-62c09a7624a2",
+          "cb579bb8-1bc3-54a5-bed3-ce6967bdb9c8"
+        ],
+        "paid_model_calls": 0
+      },
+      "browser_record": {
+        "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+        "preview_rendered": true,
+        "pdf_pages": 6
+      },
+      "http_assets_status": "passed_for_selected_http_assets",
+      "proofs": [
+        {
+          "filename": "graph-start2.json",
+          "bytes": 101435,
+          "sha256": "e024c0e5a0b2d10330ed97ddb81bb235227ac17cc08ca86bee69fbd9d0478404"
+        },
+        {
+          "filename": "record-assets-start2.json",
+          "bytes": 3270,
+          "sha256": "cc8a1335d0ecfe46dc124a90e9895eaeb53063fc9a8ff94bcd40435adc8df3cf"
+        },
+        {
+          "filename": "browser-relationship-start2.txt",
+          "bytes": 12140,
+          "sha256": "111f4d24a2a9b134949e3277734f21de433ac48a3aa7888600c9ac8f0b57a8be"
+        },
+        {
+          "filename": "browser-keyword-start2.txt",
+          "bytes": 6637,
+          "sha256": "9b90b847203b673d3a9a387006a6b346b0a7b157fef46a1db3b14e86fe6929e8"
+        },
+        {
+          "filename": "browser-record-start2.txt",
+          "bytes": 11106,
+          "sha256": "74d6a2903933dda6ba976030a31d852c9e9a68835e18096dfc776e6611a8cb2b"
+        },
+        {
+          "filename": "browser-record-start2.jpg",
+          "bytes": 83778,
+          "sha256": "884203036d251423b3dea882ad48d81442ecb366337b6c0c13841335b0bcde0a"
+        }
+      ]
+    }
+  ],
+  "graph_api_responses_equal_across_restart": true,
+  "graph_api_comparison": "Parsed JSON equality; wire bytes differ in formatting",
+  "health_equal_across_restart": true,
+  "all_owned_children_stopped": true,
+  "owned_port_closed_after_final_stop": true,
+  "private_configuration_unchanged": true,
+  "paid_model_calls": 0,
+  "database_writes": 0,
+  "lifecycle_receipt": {
+    "filename": "20261001T055532484628Z-runtime-lifecycle.json",
+    "sha256": "1818fd4bd379135bf6f048d952f34f6002993bc412f8abb3ce9efa749a838569"
+  },
+  "boundaries": [
+    "Same implementer and same machine; no independent handoff or other-machine disaster recovery.",
+    "Existing restored database was reused; no fresh import, restore, indexing or paid generation in this rehearsal.",
+    "Only the reviewed PDF-265 bundle was copied and checked; complete archive recovery remains pending.",
+    "No browser PDF download was retried; the separate hosted Edge ERR_BLOCKED_BY_CLIENT remains unresolved.",
+    "No real social data, approved CLAIMS publication, independent semantic review or final client acceptance."
+  ]
+}

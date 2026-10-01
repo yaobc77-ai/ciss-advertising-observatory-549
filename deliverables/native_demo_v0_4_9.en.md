@@ -1,8 +1,10 @@
-# Native advertising demonstration — 0.4.9
+# Native advertising demonstration — current 0.4.10 review
 
 Published 0.4.10: [CI, installed artifact, live version and selected attachment checks](../reports/citation_v0_4_10_publication_20261001.json). The application code and tests now match across the two repositories. These engineering checks do not complete independent or dual-dataset acceptance.
 
 Latest follow-up: [matrix, labels, article graph and two live content answers](../reports/NATIVE_DEMO_FOLLOWUP_20261001.en.md). The 0.4.10 display correction makes each Citation number visible beside every quoted passage. These later observations supplement the original check boundaries below; the PDF browser download was blocked by Edge and remains unresolved.
+
+The [latest export and runtime check](../reports/NATIVE_EXPORT_AND_RUNTIME_HANDOFF_20261001.en.md) records actual Records CSV and cross-tab downloads, the combined-filter matrix drilldown, and a fresh installed runtime with its restored database and selected attachment before and after restart. These are team checks; independent review remains pending.
 
 Prepared: 1 October 2026. **Draft for native-data review. This is not final project acceptance or the final demonstration of both datasets.**
 
@@ -12,7 +14,7 @@ The full sequence remains incomplete. Selected steps were checked on the hosted 
 
 - **Current native UI walkthrough:** full native scope, both organization distributions, the ExxonMobil–Washington Post relationship and the combined 2022 filter in Knowledge graph and Overview. See the [current walkthrough report](../reports/NATIVE_HANDOFF_20261001.en.md). This is a team check, not independent client acceptance.
 - **0.4.9 publication checks:** hosted NYT record pagination, CNBC percentage pagination, and HTTP access to one selected PDF and preview. See the [publication receipt](../reports/query_v0_4_9_publication_20261001.json).
-- **Remaining session checks:** matrix-cell clicks, other export modes, the article-mode/Fit sequence, complete live CCS/biogas semantic review and independent client tasks. The selected relationship CSV was subsequently [found and checked](../reports/native_demo_export_20261001.json). Earlier [0.4.2 material](native_demo_v0_4_2.en.md) remains historical; use the current observations below for sponsor counts. A known development question or an engineering check does not establish semantic accuracy or customer approval.
+- **Subsequent team checks:** matrix-cell clicks, the selected article-mode/Fit sequence and two paid development answers are recorded in the follow-up above. Records CSV and cross-tab contents are recorded in the latest export check. The selected relationship CSV was also [found and checked](../reports/native_demo_export_20261001.json). Independent semantic and client tasks remain pending. Earlier [0.4.2 material](native_demo_v0_4_2.en.md) remains historical; a known development question or an engineering check does not establish semantic accuracy or customer approval.
 
 ## Before the session
 
@@ -31,7 +33,7 @@ Client question: **How can users compare the volume of fossil fuel native advert
 2. Select a cell. Check that the matching record list names that company and outlet, rather than displaying only a collection total.
 3. Download the counts and compare the selected row with the displayed count. Explain that the counting unit is currently eligible source records. A source-noted NYT/BP duplicate candidate is awaiting a decision on records versus distinct articles/landing pages; no merge has been applied.
 
-**Current check boundary:** the filtered matrix value was inspected in Q3 below. Clicking a matrix cell and verifying the resulting scope have not been checked in this round. The selected graph relationship CSV was downloaded and checked; the matrix count export remains a separate session check.
+**Current check boundary:** subsequent team checks clicked the full-scope ExxonMobil–Washington Post cell and inspected five specific articles. The [export receipt](../reports/native_export_reconciliation_20261001.json) reconciles all 160 full-scope cells to the 263-record CSV and the combined 2022 selection to three record IDs in the matrix drilldown. This does not mean all cells were individually clicked or that the counting policy has client approval.
 
 Then open **Query**, restore the full native scope, and submit:
 
@@ -66,7 +68,7 @@ The following distribution was observed in the **current 0.4.9 hosted UI** with 
 
 Selecting **ExxonMobil → The Washington Post** showed five supporting article IDs. The panel reported **5 / 15 = 33.3%** of ExxonMobil's records and **5 / 18 = 27.8%** of The Washington Post's records. The parent distribution retained its denominator of 15. Repeat this selection and inspect the actual titles.
 
-**Download selected counts** displayed **Prepared 1 categories for 5 records; parent denominator 15** in this round. The browser download notification timed out after ten seconds, but the resulting file was subsequently found in Downloads and [checked](../reports/native_demo_export_20261001.json): one Washington Post row, 5 records, denominator 15 and share 1/3. Repeat this during the client session; other export modes have not been confirmed here.
+**Download selected counts** displayed **Prepared 1 categories for 5 records; parent denominator 15** in this round. The browser download notification timed out after ten seconds, but the resulting file was subsequently found in Downloads and [checked](../reports/native_demo_export_20261001.json): one Washington Post row, 5 records, denominator 15 and share 1/3. Records CSV and cross-tab downloads were subsequently reconciled in the latest 0.4.10 check. This does not cover every other export mode; repeat the client's actual tasks during review.
 
 Next select **Washington Post → sponsors**. The current UI showed **18 records, including two with unknown dates**, with this complete distribution:
 
@@ -82,7 +84,7 @@ Next select **Washington Post → sponsors**. The current UI showed **18 records
 
 These are current observations; do not substitute sponsor values from an earlier script or receipt. Select ExxonMobil to inspect the five supporting records.
 
-The following article-mode sequence remains a **historical 0.4.2 procedure to recheck**. Open **Articles** and select **Capturing carbon around the world**. Inspect its named, directed relationships:
+The following article-mode sequence was subsequently checked for **Capturing carbon around the world** and **Fit** in the native follow-up. Independent reviewers should still attempt the task themselves. Open **Articles** and select **Capturing carbon around the world**. Inspect its named, directed relationships:
 
 - **Article → Source lists sponsor → ExxonMobil**
 - **Article → Published in → The Washington Post**
@@ -103,7 +105,7 @@ Client question: **How do advertisement counts change across selected dates, out
 4. Inspect the annual counts and separately reported unknown dates. Explain that an unknown date is different from a known date outside the interval.
 5. Restore the full native selection before the remaining examples. On Query, changed filters require resubmission; saved results should not silently adopt the new scope.
 
-Switching to **Overview** in this round preserved the same combined filters and the same three record IDs. The matrix had one populated cell with **3**, and the annual chart showed **2022: 3**. This verifies the selected filtered views; it does not verify a matrix-cell click or downloaded export contents.
+Switching to **Overview** in the original round preserved the same combined filters and three record IDs, with one populated matrix cell and **2022: 3**. The subsequent [0.4.10 export receipt](../reports/native_export_reconciliation_20261001.json) also verifies the actual matrix-cell drilldown, both downloaded CSV files and their identical three record IDs.
 
 **Review:** Are the active filters visible, and do counts, relationships and records change together?
 
@@ -155,7 +157,7 @@ Both are existing development examples. Select **Generate answer**, inspect the 
 
 For a free search example, try `carbon capture and storage biogas`, inspect **Search term coverage**, then search `biogas` alone. Keyword search uses English word stems and OR matching; a returned passage may match only some terms. Do not describe five retrieved passages as five confirmed answers.
 
-Finally open the [Using mollusks to monitor industrial sites record](https://ciss-advertising-observatory-production.up.railway.app/records/d340f887-efa7-5746-aaf8-14aabba6b63f). Inspect **Stored source text**, extraction notes, original URL, PDF snapshot and first-page preview. Try PDF access/download during the session. **0.4.9 HTTP checks** verified the selected PDF, download and preview bytes; earlier hosted browser inspection verified the rendered preview. A browser download action still needs session confirmation.
+Finally open the [Using mollusks to monitor industrial sites record](https://ciss-advertising-observatory-production.up.railway.app/records/d340f887-efa7-5746-aaf8-14aabba6b63f). Inspect **Stored source text**, extraction notes, original URL, PDF snapshot and first-page preview. The selected PDF, download endpoint and preview bytes passed HTTP checks; browser inspection verified the rendered preview. The actual hosted Edge download click returned `ERR_BLOCKED_BY_CLIENT` and remains unresolved. HTTP checks and successful CSV downloads do not establish browser PDF download success.
 
 This is one reviewed local capture, not complete archive coverage. Its text is partial and its infographic is untranscribed. Original URLs, public archive URLs and local snapshots are separate sources; unavailable or unverified material must stay explicit. Neither a captured PDF nor a cited answer verifies the advertiser's environmental claims.
 
@@ -165,4 +167,4 @@ This is one reviewed local capture, not complete archive coverage. Its text is p
 
 For each of Q1–Q6 record: **version/scope, reviewer, task, observed result, supporting records, assistance, failure or limitation, and decision**. For generated questions retain the answer/run reference, selected tool, cost and latency where available. Mark unperformed steps **not run**, not passed.
 
-The complete 0.4.9 sequence remains unfinished despite the selected current graph/date/CSV checks. Matrix-cell clicks, other export modes, the article-mode sequence, complete live CCS/biogas semantic review and independent client usability tasks still need evidence. Keep the real social export, reviewed CLAIMS publication, counting/entity decisions, independent frozen questions, final two-dataset demonstration and another implementer's handoff reproduction as explicit TODOs. Use the [current handoff guide](../docs/current_handoff.md) for setup, data and attachment transfer, tests and reproduction; this script does not establish those tasks as completed.
+The current native team checks cover selected relationships, date filters, matrix drilldowns, Records/cross-tab downloads, article-mode/Fit, two live development answers and a same-implementer installed-runtime restart. The PDF browser download, independent semantic and client usability tasks remain open. Keep real social data, approved CLAIMS publication, counting/entity decisions, independent frozen questions, the final two-dataset demonstration and another implementer's reproduction as explicit TODOs. Use the [current handoff guide](../docs/current_handoff.md) for setup and reproduction; this script does not establish final acceptance.

@@ -2,12 +2,20 @@
 
 ## Explore the dashboard
 
+[Open Data](https://ciss-advertising-observatory-production.up.railway.app/data) · [Open Query](https://ciss-advertising-observatory-production.up.railway.app/query)
+
 - Open **Data** and select a collection. Filter by sponsor, news outlet, and publication date.
 - Use **Knowledge graph** to select a company, publisher, connection, or article. The side panel shows the named relationship, record counts, shares, and supporting articles. Selecting a distribution row or chart segment narrows the supporting articles.
 - Use **Overview** for the company–outlet matrix, annual counts, and historical label distributions. Unknown dates are reported separately.
 - Use **Records** to open article details, stored text, and available original or archived sources. Export the selected records or grouped counts as CSV.
 - Open **Query** for keyword search or generated answers. Generated answers can use database tools for statistics and retrieved passages for content questions. Check the cited sources when interpreting an advertising claim.
 - For counts, publisher/sponsor lists and percentages, open **Inspect matching records** and use **Previous**, **Next** or **First page**. Paging preserves the submitted selection and makes no model calls. Editing filters does not change a saved answer; submit a new question to apply them. A collection update requires a new query.
+
+To compare a company with an outlet, choose the sponsor, outlet and optional dates in **Collection filters**. In **Overview**, a matrix cell opens its specific articles; **Download counts** exports the whole filtered matrix. In **Records**, **Download selected records** exports the same selection, including rows on other pages. Missing source dates are written as `(Unknown)`.
+
+Generated answers show **Citation [n]** next to every cited quotation. **Retrieval rank** is a separate ordering of search results. One article card may support more than one answer citation.
+
+The selected reviewed PDF's preview and server bytes are available. An Edge **Download PDF** check was blocked with `ERR_BLOCKED_BY_CLIENT`; browser download remains unresolved. Record CSV and cross-tab downloads have been checked separately against their selected records.
 
 The social collection remains unavailable until its client dataset is imported. CLAIMS2 import and read-only views are implemented; real results still await reviewed publication. Historical labels record earlier annotations and remain separate from CLAIMS2 evidence.
 

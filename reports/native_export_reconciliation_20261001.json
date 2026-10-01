@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-01T05:46:44.169765+00:00",
+  "status": "passed_for_selected_hosted_downloads",
+  "scope": "Actual hosted browser downloads reconciled to each other and selected matrix drilldown; team engineering verification",
+  "production_health": {
+    "active_profile": "sentence600-v1",
+    "application": {
+      "commit": "42ff192f9395e014df72fb81d2c5036761e98be5",
+      "features": {
+        "claims_read_view": true,
+        "collection_graph": true,
+        "graph_breakdowns": true,
+        "research_agent": true
+      },
+      "version": "0.4.10"
+    },
+    "chunks": 556,
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "record_counts": {
+      "native": 275
+    },
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "status": "ok"
+  },
+  "cases": [
+    {
+      "scope": "Full native selection; all sponsors/outlets/dates; unknown dates included",
+      "records_download": {
+        "filename": "native-advertising (1).csv",
+        "bytes": 124483,
+        "sha256": "d41d35bba53a7eb34b60e3a444497f0e4ec13454ebe123e300fae4d1334a6243",
+        "download_file_mtime_utc": "2026-10-01T05:39:35.715347+00:00"
+      },
+      "matrix_download": {
+        "filename": "native-sponsor-outlet-cross-tab (1).csv",
+        "bytes": 1420,
+        "sha256": "1204be05b3ec2df03e207a7e25e72702a72f10f42bef0ce6622e5e88cbfec8c5",
+        "download_file_mtime_utc": "2026-10-01T05:38:03.901406+00:00"
+      },
+      "record_count": 263,
+      "distinct_record_ids": 263,
+      "searchable_records": 226,
+      "unknown_dates": 22,
+      "sponsor_categories": 20,
+      "outlets": 8,
+      "matrix_cells_reconciled": 160,
+      "every_matrix_cell_matches_records_csv": true,
+      "row_and_column_totals_match_records_csv": true,
+      "contains_all_six_required_record_fields": true,
+      "record_id_set_sha256": "6f21330540da25726b391e5f5c2fc4a4159f08abc13017c7473f9106a150e72c"
+    },
+    {
+      "scope": "Native; ExxonMobil; The Washington Post; 2022-01-01 through 2022-12-31; unknown dates excluded",
+      "records_download": {
+        "filename": "native-advertising (2).csv",
+        "bytes": 1775,
+        "sha256": "c65b69bba390d1a70a3c7575e172e8283b134aec240ac769abed64f6f8975293",
+        "download_file_mtime_utc": "2026-10-01T05:42:01.677157+00:00"
+      },
+      "matrix_download": {
+        "filename": "native-sponsor-outlet-cross-tab (2).csv",
+        "bytes": 144,
+        "sha256": "afcd234924889071655f1e3d7e7aef35503dfbe6aec9c4cc3595db40e9d6421c",
+        "download_file_mtime_utc": "2026-10-01T05:42:41.060269+00:00"
+      },
+      "record_count": 3,
+      "distinct_record_ids": 3,
+      "searchable_records": 3,
+      "unknown_dates": 0,
+      "sponsor_categories": 1,
+      "outlets": 1,
+      "matrix_cells_reconciled": 1,
+      "every_matrix_cell_matches_records_csv": true,
+      "row_and_column_totals_match_records_csv": true,
+      "contains_all_six_required_record_fields": true,
+      "record_id_set_sha256": "fa8fd80a61c5494302d0edf585c9b71bd4d7af9a41dcd3133a6a9d58adb45c71",
+      "record_ids": [
+        "2ca410b6-ac69-500a-8a03-5751d3942321",
+        "8b8f9f05-b60b-509c-bcc0-959b601f7215",
+        "9815c667-a404-597b-aaac-ad616c9b7a7c"
+      ],
+      "matrix_drilldown_ids_match_records_download": true,
+      "records": [
+        {
+          "record_id": "8b8f9f05-b60b-509c-bcc0-959b601f7215",
+          "date": "2022-07-14"
+        },
+        {
+          "record_id": "2ca410b6-ac69-500a-8a03-5751d3942321",
+          "date": "2022-05-03"
+        },
+        {
+          "record_id": "9815c667-a404-597b-aaac-ad616c9b7a7c",
+          "date": "2022-04-28"
+        }
+      ]
+    }
+  ],
+  "csv_missing_date_value": "(Unknown)",
+  "browser_download_notification": "Full-scope download event observation timed out; all four completed CSV files were found and validated on disk with fresh modification times",
+  "private_browser_artifact_sha256": {
+    "downloads-before-export-check.json": "72b5e9377305b03375193b28a614b18eddf0c3e15780703f71a19ee0b9f7a321",
+    "full-matrix-export.txt": "493a2b43953ca539b751e46c14e44313ff81b5820b6eab383ae847935e7da4a4",
+    "full-records-export.txt": "08238d15489c6891310d34f0a8f8bbcadeec6697b679a7424eca46821ec01422",
+    "filtered-records-settled.txt": "a4cd74be679cbd54ee00881a0cbcf9b85064562a032757f0afe3a13de278f2b6",
+    "filtered-records-export.txt": "f7dcc8c44b5230808c8a634c336ea137e12051c8460f0803e4b1ea99b15ea6b9",
+    "filtered-matrix-drilldown.txt": "596d6948de88c26b5566438415e62036b04cdcc02d363610d5190f98a785716a",
+    "filtered-matrix-drilldown.jpg": "f46cfbce87c1fd59d47fda0ae15a3b2b961f098edafb4301d1d53436aee5c418"
+  },
+  "paid_model_calls_by_this_check": 0,
+  "raw_source_and_retrieval_changes": false,
+  "pdf_browser_download": "Separate unresolved Edge ERR_BLOCKED_BY_CLIENT; CSV success does not resolve it",
+  "real_social_export": "deferred TODO",
+  "human_or_customer_acceptance": "not performed",
+  "independent_reproduction": "not performed",
+  "settled_matrix_drilldown_screenshot": {
+    "filename": "filtered-matrix-drilldown-settled.jpg",
+    "sha256": "f00065882a38ad002e55ecac839f14cc73ca63157951ca5724d67f51c8af746d"
+  },
+  "cell_reconciliation_join": "Records CSV sponsor display value to cross-tab Sponsor / organization display label, plus exact outlet; raw cross-tab Source sponsor is retained separately"
+}

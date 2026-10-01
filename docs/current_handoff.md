@@ -4,6 +4,8 @@ Published 0.4.10: [CI, installed artifact, live version and selected attachment 
 
 The **0.4.10** display correction shows every cited quotation with its original answer number and separates citation numbers from retrieval ranks. The [current native follow-up](../reports/NATIVE_DEMO_FOLLOWUP_20261001.en.md) records matrix, historical-label and article-mode checks, two actual paid development answers, the saved-answer display check and the unresolved Edge PDF download. Independent and dual-dataset acceptance remain pending.
 
+The [export and runtime handoff report](../reports/NATIVE_EXPORT_AND_RUNTIME_HANDOFF_20261001.en.md) records four actual hosted CSV downloads: all 160 cross-tab cells match the 263-record selection, and the combined ExxonMobil, Washington Post and 2022 selection matches three records and its matrix drilldown. A fresh installed-wheel runtime outside the checkout combined the existing verified restored database with a copied selected PDF bundle. Company relationships, free keyword search, the selected preview and HTTP assets were checked before and after an owned-process restart; all 21 restored tables stayed unchanged. This remains a same-implementer, same-machine rehearsal. CSV success does not resolve the blocked browser PDF download.
+
 The [current native demonstration](../deliverables/native_demo_v0_4_9.en.md) now accompanies a [private input handoff guide](native_source_handoff.md). The [1 October check](../reports/NATIVE_HANDOFF_20261001.en.md) records an offline, installed-package rehearsal of all fixed native inputs and selected current graph/date/source interactions. The [publication receipt](../reports/native_handoff_publication_20261001.json) binds both successful CI runs (1,926 passed), source archives and the deployed follow-up. This is a same-implementer rehearsal; independent reproduction and final dual-dataset/client acceptance remain pending.
 
 The **0.4.9** query update adds record pagination inside statistics answers. It keeps the full submitted selection, browses the percentage numerator and makes no model calls while paging. Both question routes and every page check source identity; stale or unverified results require resubmission. The [query browsing report](../reports/QUERY_V0_4_9_20261001.en.md) and [engineering receipt](../reports/query_v0_4_9_engineering_20261001.json) record the checks. The [publication receipt](../reports/query_v0_4_9_publication_20261001.json) binds successful CI, hosted pagination, selected assets and source archives. A source-noted duplicate candidate remains pending a counting-unit decision; no data or admission rules changed.
@@ -18,7 +20,7 @@ The [private source review packet](claims_source_discovery.md#create-a-private-s
 
 The subsequent [0.4.7 local restore](../reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) verifies all 21 current tables, migration checksums and saved source locations. Six CLAIMS2 tables remain empty. A [separate archive comparison](../reports/claims_legacy_source_candidate_20260930.json) identifies a CNBC/SunPower source candidate for legacy input 2, supported by the original CSV and PDF-223. Explicit punctuation differences prevent an exact match; the identity decision remains pending. Neither check calls a model or publishes classifications.
 
-The separate [Railway-origin recovery](../reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) restores a full cloud snapshot to a fresh database on the same PostgreSQL 18.6 service. Its [receipt](../reports/railway_database_recovery_20261001.json) records 13 passed checks and a checksum-verified private backup download. Local and cloud application connections remain unchanged. This is logical recovery within the same managed cluster; independent-machine recovery, global role/password provisioning and source-file recovery remain separate tasks.
+The separate [Railway-origin recovery](../reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) restores a full cloud snapshot to a fresh database on the same PostgreSQL 18.6 service. Its [receipt](../reports/railway_database_recovery_20261001.json) records 13 passed checks and a checksum-verified private backup download. Local and cloud application connections remain unchanged. This is logical recovery within the same managed cluster; independent-machine recovery, global role/password provisioning and complete source-archive and attachment recovery remain separate tasks. The later runtime rehearsal covers copying and running the selected PDF-265 bundle only.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -148,7 +150,7 @@ Before treating a restore as accepted, compare it with the backup's fixed source
 
 The [current 0.4.7 complete local restore receipt](../reports/database_restore_v0_4_7_complete_20260930.json) passed all seven comparisons. Its fixed snapshot and restored copy contain 21 tables, 828 text versions, 2,071 stored passages, 1,051 embeddings, 121 saved answers and 177 usage entries. All 729 saved evidence references and 189 citations locate correctly, including 94 citations to earlier text versions. Six keyword, hybrid and empty-filter probes matched between source and restore. The active profile retained its 556 current passages; the 2,071 total also includes historical passages. The [supplemental read-only check](../reports/database_restore_v0_4_7_scope_20260930.json) confirms all three migration checksums. The six CLAIMS2 tables remain empty: their recovery is not a test of nonempty classification histories. No model requests were made, and the main database and private configuration stayed unchanged. Search probes use separate live read transactions; the dump and inventories share the exported snapshot.
 
-This completes the tested **local same-cluster restore**. Its evidence does not cover the separate Railway snapshot described below, recovery on another machine, source-file recovery, semantic answer quality or another implementer's handoff acceptance. The older 0.2.4 nine-table restore and synthetic wheel checks retain their separate scope.
+This completes the tested **local same-cluster restore**. Its evidence does not cover the separate Railway snapshot described below, recovery on another machine, complete source-archive and attachment recovery, semantic answer quality or another implementer's handoff acceptance. The older 0.2.4 nine-table restore and synthetic wheel checks retain their separate scope.
 
 #### Railway-origin recovery — 1 October 2026 UTC
 
@@ -173,7 +175,7 @@ All 757 cloud evidence references and 190 citations locate in their stored text 
 
 The dump and table inventories share one exported read-only snapshot. Four sequence states matched at the initial source inventory, restored copy and final source observation; sequences are not MVCC data, so this is a stable-observation check, not an atomic snapshot guarantee. Retrieval probes use separate live read transactions. The main local and cloud application connections, private configuration and observed hosted application identity remained unchanged.
 
-The six empty CLAIMS2 tables demonstrate structure and empty-state recovery, not recovery of nonempty assignments, review revisions or retractions. Independent-machine and whole-service recovery, global roles/passwords, private configuration provisioning, PDF/preview recovery and another implementer's reproduction remain pending. Stored text locations and retrieval equality do not establish semantic answer quality, source approval or classification correctness; frozen human review, real social data and client acceptance remain pending.
+The six empty CLAIMS2 tables demonstrate structure and empty-state recovery, not recovery of nonempty assignments, review revisions or retractions. Independent-machine and whole-service recovery, global roles/passwords, private configuration provisioning, complete source-archive and attachment recovery and another implementer's reproduction remain pending. The later runtime rehearsal copied and ran only the selected PDF-265 bundle. Stored text locations and retrieval equality do not establish semantic answer quality, source approval or classification correctness; frozen human review, real social data and client acceptance remain pending.
 
 ### B. Import from approved source files
 
@@ -271,7 +273,7 @@ The deployment contract uses `/app/.venv/bin/observatory migrate` before startup
 
 The historical public health observation on 30 September 2026 identifies application **0.4.4** at commit `e01edc9e7767f37691686d1a999c8423a0a2ceb4`, with native 275 records, 556 passages, `sentence600-v1`, and the graph, distribution and research-agent features enabled. The source, data and index identifiers match the earlier 0.4.3 observation. Both repository CI runs passed; the query/data routes and static project page returned HTTP 200. These checks are recorded in the [publication receipt](../reports/release_v0_4_4_publication_20260930.json), which binds the tested application commits before a documentation-only follow-up. A healthy endpoint is not proof that every user workflow or attachment works.
 
-The latest 0.4.5 observation identifies commit `f2c9142e9274dc4f694c5ac0e6a61270997d753c`.
+The historical 0.4.5 observation identifies commit `f2c9142e9274dc4f694c5ac0e6a61270997d753c`.
 Its successful deployment and migration-3 log were checked in the existing
 Railway project. Native 275, 556 passages, source/data/index identities and the
 three feature flags are unchanged. Query/Data and the static page returned 200.
@@ -287,7 +289,7 @@ After deployment, verify filters, the matrix, entity selection, exact article dr
 Build the source archive from a reviewed clean commit, using a new output name:
 
 ```sh
-python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.7.zip
+python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.10.zip
 ```
 
 The builder includes tracked public code, documents, assets, `Dockerfile`,
@@ -300,7 +302,7 @@ configuration and backups require their separate private transfer.
 - Identify the delivered commits, dependency lock, installed package and target database snapshot.
 - Transfer approved source inputs, complete database backup, attachment files and private configuration through the agreed private channel.
 - Have another implementer reproduce setup, migration/import or full restore, engineering checks and the demonstrated UI flows.
-- Integrate the approved CLAIMS outputs with explicit record/text-version, taxonomy-version and source-evidence bindings; this scheduled work is not implemented by the historical labels.
+- Obtain and publish approved CLAIMS outputs with explicit record/text-version, taxonomy-version and source-evidence bindings. The importer and read interfaces exist; the 37 real candidates remain held for review. Historical labels do not complete this publication.
 - Deferred TODO: reconcile the real social dataset and run both social and cross-collection acceptance cases after the client export becomes available.
 - Obtain the client decisions on company identity, CERAWeek, historical label meaning and useful filters/visualizations. Confirm the counting unit (source records or distinct landing pages/articles) before merging the source-noted New York Times/BP duplicate candidate.
 - Deferred TODO: complete frozen human answer review and client usability review when the customer review materials become available; keep failures visible.
