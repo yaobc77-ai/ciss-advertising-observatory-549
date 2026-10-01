@@ -143,3 +143,11 @@ The single recorded live sample returned search references but did not establish
 the original article URL. Citation metadata proves the search returned a link;
 it does not prove that the page contains the legacy excerpt. Model suggestions
 are also unverified. See the [0.4.6 engineering receipt](../reports/claims_read_engineering_v0_4_6_20260930.json).
+
+## Inspect archived material when literal search misses
+
+A failed literal match does not prove the article is absent. Inspect the preserved source files and article context before spending on another search. Do not rewrite an upstream paragraph or silently relax the evidence locator.
+
+A subsequent [local archive comparison](../reports/claims_legacy_source_candidate_20260930.json) found a CNBC/SunPower candidate for legacy input 2 in the existing CSV and PDF-223. After whitespace compression for display, the CSV differs by a double hyphen versus an em dash; the PDF also differs by a straight versus curly apostrophe. Original text, half-open character positions, file hashes and the explicit differences are preserved in a separate private review packet. Pages 1–3 were visually inspected; full document completeness was not assessed. The live page fetch failed.
+
+This is a manual source comparison, not a new MCP search result. The earlier paid lookup and its five URLs remain unchanged. Source identity remains pending, and no classification was approved or imported. Use the normal reviewed source/import workflow after identity and classification decisions are made.

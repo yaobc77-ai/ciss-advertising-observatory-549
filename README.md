@@ -72,3 +72,5 @@ This repository includes application code, tests, deployment configuration, a [s
 The [private source review packet](docs/claims_source_discovery.md#create-a-private-source-review-packet) freezes a saved lookup and the original CLAIMS paragraph, with optional captured-text comparisons. It runs offline and starts every source decision as pending. The [0.4.7 maintenance receipt](reports/claims_source_review_v0_4_7_20260930.json) records five candidates from the unchanged earlier lookup and no captured pages or new paid calls; the original article URL remains unresolved.
 
 Real social data, complete source/archive coverage, user acceptance testing, independent answer review, and final presentation materials remain part of project completion. Historical CLAIMS labels are not verified greenwashing findings.
+
+The [current local recovery check](reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) preserves all 21 tables, vectors and histories. CLAIMS2 tables are still empty; server recovery and source review remain pending.

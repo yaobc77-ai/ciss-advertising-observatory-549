@@ -1,0 +1,108 @@
+{
+  "checked_at": "2026-10-01T00:43:03.432775+00:00",
+  "format_version": 1,
+  "application_version": "0.4.7",
+  "source_commit": "e977848546f282596d71f5369fd94031b4a24ac3",
+  "restore_receipt": {
+    "path": "reports/database_restore_v0_4_7_complete_20260930.json",
+    "sha256": "d49ff5fc345914e6cd2c0740048d5e567a53a2b73e578b3281e9e640b448b281"
+  },
+  "all_user_tables": 21,
+  "migrations": {
+    "observatory": {
+      "current_version": 3,
+      "pending": [],
+      "migrations": [
+        {
+          "version": 1,
+          "name": "0001_baseline.sql",
+          "checksum": "c9983b6e73c316979011babd053c2b699f7d31a50e8a129437322c905a5b980e",
+          "status": "applied"
+        },
+        {
+          "version": 2,
+          "name": "0002_dashboard_indexes.sql",
+          "checksum": "75aa9c636624b0cdcfd639876239ca535f277677287c122f4d807e8aeb404ec7",
+          "status": "applied"
+        },
+        {
+          "version": 3,
+          "name": "0003_claims2_results.sql",
+          "checksum": "9b3e68e18ef364868f56c3a461f05857e91c979874220efe5a8f33c706d953f2",
+          "status": "applied"
+        }
+      ]
+    },
+    "observatory_restore_v047_20260930": {
+      "current_version": 3,
+      "pending": [],
+      "migrations": [
+        {
+          "version": 1,
+          "name": "0001_baseline.sql",
+          "checksum": "c9983b6e73c316979011babd053c2b699f7d31a50e8a129437322c905a5b980e",
+          "status": "applied"
+        },
+        {
+          "version": 2,
+          "name": "0002_dashboard_indexes.sql",
+          "checksum": "75aa9c636624b0cdcfd639876239ca535f277677287c122f4d807e8aeb404ec7",
+          "status": "applied"
+        },
+        {
+          "version": 3,
+          "name": "0003_claims2_results.sql",
+          "checksum": "9b3e68e18ef364868f56c3a461f05857e91c979874220efe5a8f33c706d953f2",
+          "status": "applied"
+        }
+      ]
+    }
+  },
+  "migration_status_equal": true,
+  "claims2_tables": {
+    "public.claims2_imports": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    },
+    "public.claims2_results": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    },
+    "public.claims2_retractions": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    },
+    "public.claims2_reviews": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    },
+    "public.claims2_runs": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    },
+    "public.claims2_taxonomies": {
+      "rows": 0,
+      "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "owner": "observatory_app"
+    }
+  },
+  "claims2_nonempty_behavior_exercised": false,
+  "current_snapshot_rechecked_unchanged": true,
+  "dump_and_inventory_use_one_exported_snapshot": true,
+  "search_probes_use_exported_snapshot": false,
+  "search_probe_scope": "Separate live read transactions; source inventories before and after are equal",
+  "model_calls": 0,
+  "database_writes_in_supplemental_check": 0,
+  "source_files_in_database_dump": false,
+  "independent_machine_or_railway_restore": "not_verified",
+  "boundaries": [
+    "Empty CLAIMS2 table recovery is not a nonempty assignment, review or retraction recovery test.",
+    "Schema and all row content compare equal; no new classifications are approved or published.",
+    "Exact source positions do not establish quote support or semantic answer quality."
+  ]
+}

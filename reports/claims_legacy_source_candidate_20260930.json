@@ -1,0 +1,79 @@
+{
+  "schema_version": "manual-archive-source-candidate-summary-v1",
+  "created_at": "2026-10-01T00:43:03.534346+00:00",
+  "application_version": "0.4.7",
+  "legacy_input_id": "2",
+  "legacy_article_id": "100",
+  "original_paragraph_sha256": "da2c007468639093f37a11bf696f57a2b5106221e4562a3eeb78689feb9ffad5",
+  "candidate_url": "https://www.cnbc.com/advertorial/2020/11/30/sunpower-a-leading-light-in-the-us-solar-market.html",
+  "candidate_title": "SunPower: A leading light in the U.S. solar market",
+  "candidate_publisher": "CNBC",
+  "candidate_record_id": "12946a63-5c47-5b1d-a21f-eca50f5902e4",
+  "candidate_version_id": "50171722b701eefeedbf43fb9d41ac1c2e8dd9a58c01d9f921c80954a54f0108",
+  "candidate_body_sha256": "35aa0b763abfd26b0faba8a610fa568be9eb2882e0e18ebcc4a054f1f366e29e",
+  "csv_sha256": "689f330321e42ea608070b2590fa24ee6c2bfb06dbc671941b1f0a927f4ceffa",
+  "archive_id": "PDF-223",
+  "pdf_sha256": "768e71bf8a05a87930fe1e6088d732a42fc5979eb55cb603be3d7c7ff9e03963",
+  "pdf_pages": 10,
+  "visual_pages_inspected": [
+    1,
+    2,
+    3
+  ],
+  "comparisons": {
+    "csv": {
+      "exact": false,
+      "whitespace_only": false,
+      "displayed_differences": [
+        {
+          "operation": "replace",
+          "legacy_start": 225,
+          "legacy_end": 227,
+          "source_start": 225,
+          "source_end": 226,
+          "legacy_text": "--",
+          "source_text": "—"
+        }
+      ],
+      "automatically_accepted": false
+    },
+    "pdf": {
+      "exact": false,
+      "whitespace_only": false,
+      "displayed_differences": [
+        {
+          "operation": "replace",
+          "legacy_start": 58,
+          "legacy_end": 59,
+          "source_start": 58,
+          "source_end": 59,
+          "legacy_text": "'",
+          "source_text": "’"
+        },
+        {
+          "operation": "replace",
+          "legacy_start": 225,
+          "legacy_end": 227,
+          "source_start": 225,
+          "source_end": 226,
+          "legacy_text": "--",
+          "source_text": "—"
+        }
+      ],
+      "automatically_accepted": false
+    }
+  },
+  "source_identity_decision": "pending",
+  "classification_review": "not_performed",
+  "original_mcp_receipt_replaced": false,
+  "private_manifest_sha256": "c195bab74766940f8187f2f7f358206c4ae19a8aa8c67809f6195594f87c5233",
+  "live_page_status": "fetch_failed",
+  "new_model_calls": 0,
+  "database_writes": 0,
+  "boundaries": [
+    "Punctuation differences are shown explicitly; exact and whitespace-only match checks fail.",
+    "The CSV URL and PDF title/text support a source candidate, not live URL availability.",
+    "Legacy numeric article_id is not used as a join key to the current record UUID.",
+    "This manual comparison does not replace the original MCP receipt or approve an import."
+  ]
+}
