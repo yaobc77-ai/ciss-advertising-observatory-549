@@ -1,6 +1,8 @@
 # Current project handoff
 
-Updated 30 September 2026. Maintenance package and verified hosted application: **0.4.6**. Its health, migration and CI checks are recorded in the [publication receipt](../reports/release_v0_4_6_publication_20260930.json). Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+Updated 30 September 2026. The **0.4.7** maintenance update adds offline source review packets and passes installed-wheel verification. The last verified hosted application is **0.4.6**, with health, migration and CI checks in the [publication receipt](../reports/release_v0_4_6_publication_20260930.json). Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+
+The [private source review packet](claims_source_discovery.md#create-a-private-source-review-packet) preserves an original paragraph, saved lookup bytes and optional captured text, with exact or whitespace-only excerpt locations. Every source decision starts pending. The [maintenance receipt](../reports/claims_source_review_v0_4_7_20260930.json) records 1,650 installed-wheel offline tests, including 61 packet tests, and a passed package inventory check. One case was skipped and 87 database/live cases were excluded. The actual packet contains five existing candidate URLs, zero captured pages and no new paid calls. It does not establish the original article URL or publish classifications.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -61,6 +63,8 @@ Migration 3 adds six CLAIMS2 tables for taxonomies, runs, import manifests, immu
 evidence assignments, review revisions and retractions. Applying it creates storage;
 it does not approve or import classifications. The importer is a maintenance CLI.
 The [CLAIMS2 website and MCP reads](claims_read_views.md) consume only published current-source assignments. The optional [legacy source lookup](claims_source_discovery.md) is a separate maintenance workflow. Its MCP tool is hidden by default; `OBS_CLAIMS_SOURCE_SEARCH_ENABLED=true` exposes it in that process. A local hit makes no model call; external search uses the shared API budget and changes usage accounting only.
+
+`claims-source-review-packet` needs no API key, database connection or application settings. Open its private `review.html` to inspect candidate URLs and any supplied excerpt locations. The packet's pending `review.json` is separate from the result importer's review format; an externally confirmed source must enter the corpus review process before a new `claims-audit`.
 
 Dashboard browsing and keyword search do not call a model. With `OBS_RESEARCH_AGENT_ENABLED=true`, **Generate answer** first uses the configured model to interpret the question and choose constrained tools. This includes count questions: counting uses database records, but model interpretation has an API cost. Content generation also uses the API budget. Turning the flag off retains the earlier fixed-pattern statistics route.
 
@@ -240,7 +244,7 @@ After deployment, verify filters, the matrix, entity selection, exact article dr
 Build the source archive from a reviewed clean commit, using a new output name:
 
 ```sh
-python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.6.zip
+python scripts/build_handoff.py --output .runtime/ciss-observatory-source-v0.4.7.zip
 ```
 
 The builder includes tracked public code, documents, assets, `Dockerfile`,

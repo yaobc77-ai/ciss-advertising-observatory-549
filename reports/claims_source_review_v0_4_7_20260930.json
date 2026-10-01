@@ -1,0 +1,61 @@
+{
+  "checked_at_utc": "2026-10-01T00:15:28.315492+00:00",
+  "package_version": "0.4.7",
+  "scope": "private_offline_legacy_source_candidate_review",
+  "engineering_status": "passed",
+  "source_recovery_acceptance": "not_established",
+  "classification_acceptance": "not_evaluated",
+  "customer_acceptance": "pending",
+  "new_model_calls": 0,
+  "new_network_search_calls": 0,
+  "new_paid_cost_usd": 0,
+  "source_associations_written": 0,
+  "classifications_published": 0,
+  "tests": {
+    "targeted_source_review_passed": 61,
+    "installed_wheel_offline_passed": 1650,
+    "skipped": 1,
+    "integration_and_live_deselected": 87,
+    "python_version": "3.13.3",
+    "pytest_log_sha256": "869e684d2ff4309b141b6df243e03b2c2c8532703d05b10ca615f66e9d337193",
+    "ruff": "passed"
+  },
+  "installed_artifact": {
+    "status": "passed",
+    "wheel_sha256": "927ffcf1d21c8823b4ee5c3981799023177028b85ffa527a0d1e0a36cb20ae11",
+    "package_inventory_files": 63,
+    "database_verification": "not_requested_for_offline_only_change"
+  },
+  "existing_lookup_packet": {
+    "candidate_urls": 5,
+    "captured_pages": 0,
+    "comparison_states": {
+      "not_captured": 5
+    },
+    "identity_verified": false,
+    "all_review_decisions": "pending",
+    "manifest_sha256": "f5da345f9a92098e66601bab2f82ca4cfeabf0e19f17ae9fa1ba534020c82382",
+    "artifact_hashes_verified": true,
+    "private_text_and_receipt_published": false
+  },
+  "behavior": [
+    "Original CSV bytes are parsed once and bound to selected paragraph and excerpt",
+    "Lookup bytes and supplied UTF-8 captures are preserved with hashes",
+    "Exact and whitespace-only matching preserves repeated original character spans",
+    "No match in a partial capture does not reject the original page",
+    "Capture metadata and page identity remain unauthenticated assertions",
+    "All generated review decisions are pending; packet is not importer approval",
+    "CLI bypasses application settings and database construction"
+  ],
+  "unchanged_services": [
+    "No public dashboard or question-agent tool changes",
+    "No new database migration or taxonomy change",
+    "Paid source-discovery MCP remains opt-in"
+  ],
+  "code_sha256_lf": {
+    "src/observatory/claims_source_review.py": "38294a344d2ab9584bb046ab8c72e9e5ead67821d0e80709437dbfba913e2c21",
+    "src/observatory/claims_linkage.py": "2f221ae3195dc7335728cbf4cdbc7105192bb46292c2ad3ebd717113619217b6",
+    "src/observatory/cli.py": "3c9647dbea5cac7f5fb089f290f0faace07150a4eb3f663dfb087400daf36486",
+    "tests/test_claims_source_review.py": "234d8eb30f261253763608d74987807436d4a61600100ff802e398e45b7b32f5"
+  }
+}

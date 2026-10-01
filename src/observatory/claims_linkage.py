@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import io
 import json
 import sqlite3
 from collections import Counter, defaultdict
@@ -64,7 +65,12 @@ class SourceVersion:
 
 
 def load_inputs(path: Path) -> list[InputParagraph]:
-    with path.open(encoding="utf-8-sig", newline="") as stream:
+    return load_input_bytes(path.read_bytes())
+
+
+def load_input_bytes(data: bytes) -> list[InputParagraph]:
+    """Parse a frozen CSV byte snapshot so its text and digest cannot diverge."""
+    with io.StringIO(data.decode("utf-8-sig"), newline="") as stream:
         reader = csv.DictReader(stream)
         if reader.fieldnames != ["id", "article_id", "text"]:
             raise ValueError("Expected the supplied paragraph id/article_id/text CSV.")

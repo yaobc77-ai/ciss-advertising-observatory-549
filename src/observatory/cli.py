@@ -53,6 +53,13 @@ def main():
     review = sub.add_parser("claims-review-template", help="Create a pending review file from a completed private audit")
     review.add_argument("--audit", type=Path, required=True)
     review.add_argument("--out", type=Path, required=True, help="New private JSON file; never overwritten")
+    source_review = sub.add_parser("claims-source-review-packet", help="Create a private offline review packet for candidate article URLs")
+    source_review.add_argument("--input-csv", type=Path, required=True, help="Original upstream id/article_id/text CSV")
+    source_review.add_argument("--input-id", required=True, help="Paragraph ID within that CSV, not an Observatory record ID")
+    source_review.add_argument("--lookup", type=Path, required=True, help="Saved source discovery receipt JSON")
+    source_review.add_argument("--captures", type=Path, help="Optional saved-text capture manifest; no pages are fetched")
+    source_review.add_argument("--excerpt-start", type=int, help="Original input position, required when the searched excerpt repeats")
+    source_review.add_argument("--out", type=Path, required=True, help="New private output directory")
     claim_import = sub.add_parser("claims-import", help="Validate reviewed CLAIMS results; writing requires --apply")
     claim_import.add_argument("--audit", type=Path, required=True)
     claim_import.add_argument("--bundle", type=Path, required=True)
@@ -92,6 +99,12 @@ def main():
         )
         p.add_argument("--out")
     args = parser.parse_args()
+    if args.command == "claims-source-review-packet":
+        from .claims_source_review import write_source_review_packet
+
+        emit(write_source_review_packet(args.input_csv, args.input_id, args.lookup, args.out,
+                                        captures=args.captures, excerpt_start=args.excerpt_start))
+        return
     settings = Settings.from_env()
     db = Database(settings.database_url)
     if args.command in ("init-db", "migrate"):

@@ -1,8 +1,8 @@
 # CLAIMS integration plan
 
 Updated September 30, 2026. Status: source audit, candidate decoder, reviewed
-result importer, read-only product views and optional maintenance source lookup
-implemented. All 37 saved-result candidates remain on hold. No real CLAIMS2
+result importer, read-only product views, optional maintenance source lookup
+and private offline source review packets implemented. All 37 saved-result candidates remain on hold. No real CLAIMS2
 results have been newly classified, imported or published by this work.
 
 ## Current scope

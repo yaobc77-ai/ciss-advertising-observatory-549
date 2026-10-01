@@ -60,6 +60,82 @@ Unreachable pages, partial extracts, duplicated text and uncertain captures stay
 unresolved. The existing importer independently checks current text versions
 and exact evidence spans before publication.
 
+### Create a private source review packet
+
+The offline `claims-source-review-packet` command connects a saved lookup to
+its unchanged paragraph in the original `id,article_id,text` CSV. It freezes the
+selected text, CSV hash and lookup bytes in a new directory. It does not load
+application settings, open a database, call a model or fetch pages.
+
+```sh
+uv run observatory claims-source-review-packet \
+  --input-csv /private/CLAIMS_2.0_model/src/data/sampled_50_articles_paragraphs.csv \
+  --input-id 2 \
+  --lookup /private/source-lookup.json \
+  --out outputs/claims-source-review-2
+```
+
+Supply the actual paragraph ID from the selected CSV. It never selects a current
+Observatory record with that number. The lookup can be the tool's JSON result or
+a sample wrapper containing `result` and its hash-bound `legacy_input`. The
+searched excerpt must occur unchanged in that input paragraph. If it repeats,
+provide `--excerpt-start` with its original Unicode character position.
+
+Optionally supply `--captures /private/captures/manifest.json` after saving a
+candidate page's extracted text as UTF-8. The capture manifest format is:
+
+```json
+{
+  "schema_version": "claims-source-captures-v1",
+  "captures": [
+    {
+      "candidate_url": "https://publisher.example/article",
+      "text_file": "article.txt",
+      "captured_at": "2026-09-30T18:00:00Z",
+      "capture_method": "Saved page text, manually checked against the page",
+      "completeness": "partial",
+      "title": "Page title",
+      "publisher": "Publisher"
+    }
+  ]
+}
+```
+
+`candidate_url` must be one of the lookup's recorded public URLs. Keep text files
+inside the capture manifest's directory; filenames are relative. Optional
+`final_url` records a supplied redirect destination. `completeness` is
+`unknown`, `partial` or `complete` as asserted by the capture provider; the
+command cannot authenticate where those bytes came from or establish completeness.
+At most five captures are accepted, each limited to 1,000,000 bytes. Raw UTF-8
+bytes and CRLF line endings are retained. No network extraction is performed.
+
+| Packet artifact | Use |
+|---|---|
+| `review.html` | Open locally to inspect candidate URLs and excerpt context. All source decisions are pending. |
+| `source_input.json` | Selected original paragraph, legacy IDs, CSV row/hash and searched excerpt position. |
+| `lookup_receipt.json` | Byte-for-byte saved lookup, including its earlier search usage if present. |
+| `packet.json` | Candidate and capture provenance, match counts and original character locations. |
+| `review.json` | Blank human decisions; separate from the result importer's review format. |
+| `captured-text/` | Copies of supplied UTF-8 text, when captures are provided. |
+| `packet_manifest.json` | Completion marker and hashes of every packet artifact. |
+
+Comparisons distinguish `not_captured`, `no_match`, `unique_excerpt` and
+`repeated_excerpt`. Only whitespace differences are permitted; case, punctuation
+and other characters are preserved. Multiple occurrences remain visible, with a
+total count and at most 100 displayed locations. Positions refer to the copied
+capture's original Unicode characters, not bytes or HTML coordinates.
+
+A partial capture with no match cannot rule out the page. An exact excerpt can
+also appear in copied or syndicated pages; it does not identify the original
+article or establish retained-paragraph order. The supplied title, publisher,
+URL and capture date remain provenance assertions. Review these against the
+original page and captures before recording a source decision.
+
+This packet cannot publish a source association or be passed directly to
+`claims-import`. Admit an externally confirmed article through the existing
+corpus review/import process, then rerun `claims-audit` and the normal
+[assignment review](claims_result_import.md). Keep all packet files private.
+
 Implementation is not source recovery acceptance. Real search receipts, reviewed
 associations and publication evidence must be recorded separately.
 

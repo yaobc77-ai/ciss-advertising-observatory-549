@@ -4,8 +4,8 @@ The maintenance CLI can publish reviewed assignments from the supplied CLAIMS2
 paragraph results. It reads saved model responses; these commands do not call a
 model, run the upstream classifier, or create embeddings.
 
-**Current status:** the importer and read-only query are implemented. No real
-CLAIMS2 labels have been published. Dashboard and MCP integration are next.
+**Current status:** the importer, Dashboard evidence views and read-only MCP
+queries are implemented. No real CLAIMS2 labels have been published.
 An assignment means that an original passage has been mapped to a definition in
 a specific taxonomy. It is not independent fact checking or a legal finding of
 greenwashing.
@@ -199,10 +199,15 @@ is no undo-retraction command in this version.
 ## Remaining product work
 
 The CLI/store is the publication boundary. Record-detail displays, CLAIMS filters
-and coverage, graph edges, read-only MCP tools, and grounded question routing
-still need integration. Saved-result import does not run classification on the
-remaining articles. Real publication also awaits the selected bundle/run and
+and coverage, assignment-specific graph edges and read-only MCP tools consume
+published assignments. Saved-result import does not run classification on the
+remaining articles. Real publication awaits the selected bundle/run and
 recorded authority, source, and semantic review decisions.
+
+Candidate source URLs have a separate private
+[offline review packet](claims_source_discovery.md#create-a-private-source-review-packet).
+An external URL or excerpt match is not an importer candidate; an admitted
+article must first be audited against its current original text version.
 
 See the [integration plan](claims_integration_plan.md) and
 [source audit](claims_source_audit.md) for the supplied bundle's evidence and
