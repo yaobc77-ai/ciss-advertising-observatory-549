@@ -2,11 +2,13 @@
 
 The [selected PDF-265 snapshot and preview are now hosted](../reports/RECORD_ASSETS_HOSTED_20260930.en.md). The [attachment guide](record_assets.md) includes a repeatable HTTP checker and an installed-package command for validating mounted files; production images do not contain the checkout's scripts.
 
-Updated 30 September 2026. The maintenance package and verified hosted application are **0.4.7**. This update adds offline source review packets and passes installed-wheel verification. Both repositories' CI and local/production health checks are recorded in the [publication receipt](../reports/source_review_v0_4_7_publication_20260930.json); source data and retrieval index identities remain unchanged from 0.4.6. Both [source archives](../reports/source_handoff_v0_4_7_20260930.json) have verified file hashes and exclude private materials. Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
+Updated 1 October 2026, following the UTC-dated Railway recovery receipt. The maintenance package and verified hosted application remain **0.4.7**. The maintenance release adds offline source review packets and passes installed-wheel verification. Both repositories' CI and local/production health checks are recorded in the [publication receipt](../reports/source_review_v0_4_7_publication_20260930.json); source data and retrieval index identities remain unchanged from 0.4.6. Both [source archives](../reports/source_handoff_v0_4_7_20260930.json) have verified file hashes and exclude private materials. Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 The [private source review packet](claims_source_discovery.md#create-a-private-source-review-packet) preserves an original paragraph, saved lookup bytes and optional captured text, with exact or whitespace-only excerpt locations. Every source decision starts pending. The [maintenance receipt](../reports/claims_source_review_v0_4_7_20260930.json) records 1,650 installed-wheel offline tests, including 61 packet tests, and a passed package inventory check. One case was skipped and 87 database/live cases were excluded. The actual packet contains five existing candidate URLs, zero captured pages and no new paid calls. It does not establish the original article URL or publish classifications.
 
 The subsequent [0.4.7 local restore](../reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) verifies all 21 current tables, migration checksums and saved source locations. Six CLAIMS2 tables remain empty. A [separate archive comparison](../reports/claims_legacy_source_candidate_20260930.json) identifies a CNBC/SunPower source candidate for legacy input 2, supported by the original CSV and PDF-223. Explicit punctuation differences prevent an exact match; the identity decision remains pending. Neither check calls a model or publishes classifications.
+
+The separate [Railway-origin recovery](../reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) restores a full cloud snapshot to a fresh database on the same PostgreSQL 18.6 service. Its [receipt](../reports/railway_database_recovery_20261001.json) records 13 passed checks and a checksum-verified private backup download. Local and cloud application connections remain unchanged. This is logical recovery within the same managed cluster; independent-machine recovery, global role/password provisioning and source-file recovery remain separate tasks.
 
 The **0.4.5** maintenance update adds a [reviewed CLAIMS2 importer](claims_result_import.md),
 [frozen evaluation inputs](frozen_evaluation.md), and a corrected source handoff archive builder.
@@ -99,7 +101,7 @@ Open `http://127.0.0.1:8050`. Installing the code does not load the live collect
 
 A complete database backup is the route for preserving existing embeddings, old article versions, saved citations, import history, retrieval membership and state, and the usage ledger. A fresh source import cannot recreate those histories.
 
-The current verification script creates one exported PostgreSQL snapshot, backs it up and restores it to a new database in the same owned local cluster:
+The local verification script creates one exported PostgreSQL snapshot, backs it up and restores it to a new database in the same owned local cluster:
 
 ```powershell
 .\.venv\Scripts\python.exe -X utf8 scripts/verify_database_restore.py `
@@ -136,7 +138,32 @@ Before treating a restore as accepted, compare it with the backup's fixed source
 
 The [current 0.4.7 complete local restore receipt](../reports/database_restore_v0_4_7_complete_20260930.json) passed all seven comparisons. Its fixed snapshot and restored copy contain 21 tables, 828 text versions, 2,071 stored passages, 1,051 embeddings, 121 saved answers and 177 usage entries. All 729 saved evidence references and 189 citations locate correctly, including 94 citations to earlier text versions. Six keyword, hybrid and empty-filter probes matched between source and restore. The active profile retained its 556 current passages; the 2,071 total also includes historical passages. The [supplemental read-only check](../reports/database_restore_v0_4_7_scope_20260930.json) confirms all three migration checksums. The six CLAIMS2 tables remain empty: their recovery is not a test of nonempty classification histories. No model requests were made, and the main database and private configuration stayed unchanged. Search probes use separate live read transactions; the dump and inventories share the exported snapshot.
 
-This completes the tested **local same-cluster restore**. It does not establish restoration of the separate Railway database, recovery on another machine, source-file recovery, semantic answer quality or another implementer's handoff acceptance. The older 0.2.4 nine-table restore and synthetic wheel checks retain their separate scope.
+This completes the tested **local same-cluster restore**. Its evidence does not cover the separate Railway snapshot described below, recovery on another machine, source-file recovery, semantic answer quality or another implementer's handoff acceptance. The older 0.2.4 nine-table restore and synthetic wheel checks retain their separate scope.
+
+#### Railway-origin recovery — 1 October 2026 UTC
+
+The [Railway recovery report](../reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) and [machine-readable receipt](../reports/railway_database_recovery_20261001.json) describe a separate fixed snapshot and a fresh restore target on the same managed PostgreSQL 18.6 cluster. All 21 table content fingerprints and schema definitions matched, including owners, permissions and extension versions. Migration version 3 and its checksums matched, with no pending migration. A complete archive and checksum sidecar were downloaded to private storage; neither database was merged into the other.
+
+| Stored material | Local snapshot, 30 September | Railway snapshot, 1 October UTC |
+| --- | ---: | ---: |
+| User tables | 21 | 21 |
+| Records | 275 | 275 |
+| Text versions | 828 | 828 |
+| Passages, including historical profiles | 2,071 | 2,071 |
+| Embeddings | 1,051 | 1,053 |
+| Saved answers | 121 | 120 |
+| Generation outputs | 110 | 112 |
+| Usage ledger entries | 177 | 177 |
+| Saved evidence references | 729 | 757 |
+| Saved citations | 189 | 190 |
+| Active `sentence600-v1` passages | 556 | 556 |
+| CLAIMS2 tables | Six, all empty | Six, all empty |
+
+All 757 cloud evidence references and 190 citations locate in their stored text versions, including 267 historical evidence references and 94 historical citations. Keyword, publisher-filtered, empty-filter and hybrid probes matched between cloud source and restore; the hybrid probe reused a stored 1,536-dimensional vector. No model request or new embedding was made.
+
+The dump and table inventories share one exported read-only snapshot. Four sequence states matched at the initial source inventory, restored copy and final source observation; sequences are not MVCC data, so this is a stable-observation check, not an atomic snapshot guarantee. Retrieval probes use separate live read transactions. The main local and cloud application connections, private configuration and observed hosted application identity remained unchanged.
+
+The six empty CLAIMS2 tables demonstrate structure and empty-state recovery, not recovery of nonempty assignments, review revisions or retractions. Independent-machine and whole-service recovery, global roles/passwords, private configuration provisioning, PDF/preview recovery and another implementer's reproduction remain pending. Stored text locations and retrieval equality do not establish semantic answer quality, source approval or classification correctness; frozen human review, real social data and client acceptance remain pending.
 
 ### B. Import from approved source files
 

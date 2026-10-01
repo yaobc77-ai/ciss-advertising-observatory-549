@@ -75,4 +75,4 @@ Real social data, complete source/archive coverage, user acceptance testing, ind
 
 One reviewed PDF snapshot and its first-page preview are available in the live record view. [Attachment deployment and checks](docs/record_assets.md) explain how to preserve and verify these files separately from application code.
 
-The [current local recovery check](reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) preserves all 21 tables, vectors and histories. CLAIMS2 tables are still empty; server recovery and source review remain pending.
+The [local](reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) and [Railway](reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) recovery checks passed for all 21 tables, vectors and histories. The Railway copy was restored to a new database on the same PostgreSQL 18.6 service; its downloaded backup remains private. Independent-machine recovery and complete project acceptance remain pending.
