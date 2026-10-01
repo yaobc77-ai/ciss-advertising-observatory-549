@@ -553,7 +553,7 @@ def _notice(title, message, kind="info"):
     )
 
 
-def _search_context(question, filters):
+def _scope_selections(filters):
     collection = {
         "native": "Native advertising",
         "social": "Social advertising",
@@ -575,6 +575,13 @@ def _search_context(question, filters):
         if filters.include_unknown_dates
         else "Unknown dates excluded"
     )
+    if filters.record_ids:
+        selections.append(f"Record subset: {len(filters.record_ids):,} selected record IDs")
+    return selections
+
+
+def _search_context(question, filters):
+    selections = _scope_selections(filters)
     return html.Div(
         [
             html.Strong("Last submitted search"),
@@ -596,12 +603,32 @@ def _statistics_card(result, links_enabled):
     records = data.get("records", [])
     names = {"native": "Native ad records", "social": "Social ad records"}
     model_query = bool(result.get("research_trace"))
+    is_share = data.get("kind") == "share"
     sections = [
         html.Span("Collection statistics · model-assisted query" if model_query
                   else "Collection statistics · no model charge", className="eyebrow"),
-        html.H3("Records in this selection"),
+        html.H3("Share of the current selection" if is_share else "Records in this selection"),
         html.P(result["answer"], className="answer-text"),
     ]
+    if is_share:
+        sections.append(html.Div(html.Table([
+            html.Caption("Matching records as a share of the current selection, by collection"),
+            html.Thead(html.Tr([html.Th(label, scope="col") for label in (
+                "Collection", "Matching records", "Current selection", "Share",
+            )])),
+            html.Tbody([html.Tr([
+                html.Th(names[item["dataset"]], scope="row"),
+                html.Td(f"{item['numerator']:,}", className="count-value"),
+                html.Td(f"{item['denominator']:,}", className="count-value"),
+                html.Td(f"{item['percentage']:.2f}%" if item.get("percentage") is not None
+                        else "Undefined · empty selection", className="share-value"),
+            ]) for item in collections]),
+        ]), className="statistics-table"))
+        denominator = Filters.model_validate(data["denominator_filters"])
+        sections.append(html.Details([
+            html.Summary("Denominator · current selection before question targets"),
+            html.P(" · ".join(_scope_selections(denominator))),
+        ], className="statistics-denominator"))
     if groups:
         sections.append(html.Div(html.Table([
             html.Caption({"publishers": "All publishers and counts", "sponsors": "All source-listed sponsors / organizations and counts",
@@ -1942,6 +1969,9 @@ def create_app(service, settings, record_details=None) -> Dash:
             if status in {"service_unavailable", "limited"}:
                 # Never surface provider exception strings, internal locations or configuration.
                 message = (
+                    "The model request limit or project API budget was reached. Try again later. "
+                    "You can continue browsing the collection and using keyword search."
+                    if status == "limited" else
                     "You can continue browsing the collection and using keyword search."
                 )
             else:

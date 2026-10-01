@@ -242,3 +242,14 @@ def test_blank_question_never_invokes_model_or_audit_database():
     result = service.answer("  ", Filters(), "visitor")
     assert result.status == "insufficient_evidence" and result.answer_mode == "clarification"
     assert not agent.calls and not db.saved and db.health_calls == 0
+
+
+def test_limit_is_reported_as_a_limit_not_an_outage(monkeypatch):
+    no_legacy(monkeypatch)
+    run = ResearchRun(route="limited", failure_reason="research_budget_limit")
+    limited, _, _ = setup_service(run)
+    answer = limited.answer("How many records?", Filters(), "visitor").answer
+    assert "limit" in answer and "temporarily unavailable" not in answer
+    run = ResearchRun(route="unavailable", failure_reason="research_provider_unavailable")
+    outage, _, _ = setup_service(run)
+    assert "temporarily unavailable" in outage.answer("How many records?", Filters(), "visitor").answer

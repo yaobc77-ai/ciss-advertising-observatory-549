@@ -17,7 +17,7 @@ from .analytics import sponsor_display
 from .models import Filters
 
 PlanStatus = Literal["ready", "clarify", "unsupported"]
-PlanKind = Literal["count", "list_publishers", "list_sponsors"]
+PlanKind = Literal["count", "share", "list_publishers", "list_sponsors"]
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,7 @@ class QuestionPlan:
     message: str = ""
     matched_entities: dict[str, tuple[str, ...]] = field(default_factory=dict)
     scope_notes: tuple[str, ...] = ()
+    denominator_filters: Filters | None = None
 
     @property
     def group_by(self) -> str | None:
@@ -57,6 +58,20 @@ def _entity_keys(value: str, field_name: str) -> set[str]:
             if key in aliases:
                 keys.update(aliases)
     return keys
+
+
+def canonical_source_values(query: str, field_name: str, values) -> list[str]:
+    """Source values whose exact name, display name or known alias equals ``query``.
+
+    Shared by the rule planner and the research tools so that, for example,
+    "NYT" and "nytimes.com" resolve the same way on both paths.
+    """
+    key = _normalize(query.strip(" \"'‘’“”"))
+    return [
+        value for value in values
+        if isinstance(value, str) and value.strip() and value != "(Unknown)"
+        and key and key in _entity_keys(value, field_name)
+    ]
 
 
 def _resolve_one(value: str, field_name: str, facets: dict) -> tuple[str, ...]:
@@ -129,6 +144,13 @@ def _extract_dates(question: str) -> tuple[str, date | None, date | None, str]:
 _COUNT = re.compile(
     r"^(?:how many|what is the (?:number|count) of)\s+"
     r"(?:(?:native|social(?: media)?)\s+)?(?:ads|advertisements|articles|records)\b(?P<tail>.*)$",
+    re.IGNORECASE,
+)
+_SHARE = re.compile(
+    r"^what (?:percentage|percent|share|proportion) of "
+    r"(?:(?:the )?(?:current|selected) (?:collection|selection)|"
+    r"(?:(?:native|social(?: media)?)\s+)?(?:ads|advertisements|articles|records)"
+    r"(?: in (?:the )?current selection)?)\b(?P<tail>.*)$",
     re.IGNORECASE,
 )
 _GROUP_REQUEST = re.compile(
@@ -218,20 +240,25 @@ def plan_question(question: str, filters: Filters, facets: dict) -> QuestionPlan
     question = re.sub(r"\s+", " ", question).strip().rstrip("?.!？。！").strip()
     chinese = _parse_chinese(question)
     count = _COUNT.fullmatch(question)
+    share = _SHARE.fullmatch(question)
     grouped = _GROUP_REQUEST.fullmatch(question)
-    if not count and not grouped and not chinese:
+    if not count and not share and not grouped and not chinese:
         # A broader quantitative form must not fall through to guessed counts.
         if re.match(r"^(?:how many|what is the (?:number|count) of)\b", question, re.IGNORECASE):
             return QuestionPlan("unsupported", message="Record counts support outlet, sponsor and explicit date filters. Topic or claim counts require validated annotations.")
+        if re.search(r"\b(?:percentage|percent|proportion)\b|占比|百分比", question, re.IGNORECASE):
+            return QuestionPlan("clarify", kind="share", message="Percentages use the current selected collection as the denominator. Select that scope first, then ask what percentage of its records are from an outlet or sponsor.")
         return None
     if _CONTENT_CONSTRAINT.search(question):
         return QuestionPlan("unsupported", message="Topic and greenwashing counts require a defined, validated annotation set. Use evidence search to inspect relevant articles.")
     question, lower, upper, error = _extract_dates(question)
     if error:
         return QuestionPlan("clarify", message=error)
-    if count:
-        match = _COUNT.fullmatch(question)
-        kind: PlanKind = "count"
+    if share and lower is not None:
+        return QuestionPlan("clarify", kind="share", message="For a percentage within a date range, select the date range first. The denominator is the current selection; a date in the question has an ambiguous role.")
+    if count or share:
+        match = (_SHARE if share else _COUNT).fullmatch(question)
+        kind: PlanKind = "share" if share else "count"
         clauses, error = _parse_count(match.group("tail"))
     elif grouped:
         match = _GROUP_REQUEST.fullmatch(question)
@@ -290,6 +317,33 @@ def plan_question(question: str, filters: Filters, facets: dict) -> QuestionPlan
         notes.append("Records with unknown dates are excluded from the requested date range.")
     if kind == "list_sponsors":
         notes.append("Results are source-listed sponsors and organizations; company classification has not been independently verified.")
-    if kind != "count":
+    if kind == "share":
+        notes.append("The denominator is the current selection before question targets; each collection has its own denominator. A zero denominator has no defined percentage.")
+    if kind not in {"count", "share"}:
         notes.append("A source-listed advertising relationship does not establish a wider commercial partnership.")
-    return QuestionPlan("ready", kind=kind, filters=narrowed, matched_entities=matched_entities, scope_notes=tuple(notes))
+    return QuestionPlan("ready", kind=kind, filters=narrowed, matched_entities=matched_entities,
+                        scope_notes=tuple(notes), denominator_filters=filters.model_copy(deep=True)
+                        if kind == "share" else None)
+
+
+def validate_share_scope(numerator: Filters, denominator: Filters) -> None:
+    """Reject a numerator which could include records outside its trusted scope.
+
+    The denominator must be copied from the caller's selection, never generated
+    from question targets. Dataset-specific denominators are evaluated separately.
+    """
+    if denominator.dataset != "all" and numerator.dataset != denominator.dataset:
+        raise ValueError("The percentage numerator cannot widen the collection")
+    for dimension in ("publishers", "sponsors", "platforms", "keywords", "labels", "record_ids"):
+        active, target = getattr(denominator, dimension), getattr(numerator, dimension)
+        if active and (not target or not set(target).issubset(active)):
+            raise ValueError("The percentage numerator cannot widen active filters")
+    for scope in (numerator, denominator):
+        if scope.date_from and scope.date_to and scope.date_from > scope.date_to:
+            raise ValueError("The percentage scope has an invalid date range")
+    if denominator.date_from and (not numerator.date_from or numerator.date_from < denominator.date_from):
+        raise ValueError("The percentage numerator cannot widen the start date")
+    if denominator.date_to and (not numerator.date_to or numerator.date_to > denominator.date_to):
+        raise ValueError("The percentage numerator cannot widen the end date")
+    if numerator.include_unknown_dates and not denominator.include_unknown_dates:
+        raise ValueError("The percentage numerator cannot add unknown dates")

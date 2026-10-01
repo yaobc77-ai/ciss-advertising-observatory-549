@@ -257,3 +257,68 @@ def test_inconclusive_language_does_not_bypass_citation_validation():
     parsed.claims[0].quote = "This invented quote is absent from the source."
     with pytest.raises(ValueError, match="Unverifiable citation"):
         validate_answer(parsed, [ev], target=language_hint("CCS?"))
+
+
+QUOTED_TITLE = "Embracing Net Zero Carbon Emissions Aspirations"
+
+
+def test_quoted_english_title_does_not_flag_english_claim():
+    # v1 misread this English claim as Latin because of the quoted title.
+    claim = (f"The advertisement “{QUOTED_TITLE}” mentions carbon capture and "
+             "storage (CCS) as an emissions-abatement solution.")
+    target = language_hint(ENGLISH_QUESTION)
+    assert check_claim_languages([claim], target, source_titles=[QUOTED_TITLE])["status"] == "match"
+
+
+@pytest.mark.parametrize("claim", [
+    f"El anuncio “{QUOTED_TITLE}” menciona la captura y almacenamiento de carbono (CCS) como solución.",
+    f"该广告“{QUOTED_TITLE}”提到碳捕集与封存（CCS）是一种减排方案，并说明了项目限制。",
+])
+def test_quoted_title_does_not_hide_a_real_language_switch(claim):
+    target = language_hint(ENGLISH_QUESTION)
+    assert check_claim_languages([claim], target, source_titles=[QUOTED_TITLE])["status"] == "mismatch"
+
+
+def test_english_title_inside_chinese_claim_still_matches_chinese():
+    claim = f"这篇广告“{QUOTED_TITLE}”把碳捕集与封存描述为一种减排方案，但没有说明实际减排量。"
+    target = language_hint(CHINESE_QUESTION)
+    assert check_claim_languages([claim], target, source_titles=[QUOTED_TITLE])["status"] == "match"
+
+
+def test_foreign_generated_quote_is_checked_independently_of_english_framing():
+    claim = ENGLISH_CLAIM * 5 + f' “{FRENCH_CLAIM}”'
+    audit = check_claim_languages([claim], language_hint(ENGLISH_QUESTION))
+    assert audit["quoted_prose"][0]["code"] == "fr"
+    assert audit["title_spans_ignored"] == 0
+    assert audit["status"] == "mismatch"
+
+
+def test_untrusted_short_quote_does_not_receive_a_language_certification():
+    claim = ENGLISH_CLAIM + ' “Bonjour tout le monde”'
+    audit = check_claim_languages([claim], language_hint(ENGLISH_QUESTION))
+    assert audit["quoted_prose"][0]["code"] is None
+    assert audit["status"] == "inconclusive"
+
+
+def test_only_exact_selected_source_title_is_exempt():
+    claim = ENGLISH_CLAIM + f' “{FRENCH_CLAIM}”'
+    target = language_hint(ENGLISH_QUESTION)
+    assert check_claim_languages([claim], target, source_titles=[FRENCH_CLAIM])["status"] == "match"
+    assert check_claim_languages([claim], target, source_titles=[FRENCH_CLAIM + " revised"])["status"] == "mismatch"
+
+
+def test_validation_passes_selected_titles_without_exempting_generated_quotes():
+    ev = evidence(ENGLISH_QUOTE)
+    ev.title = QUOTED_TITLE
+    claim = f'The advertisement “{QUOTED_TITLE}” describes a proposed carbon capture project.'
+    result = validate_answer(model_answer(claim, ev), [ev], target=language_hint(ENGLISH_QUESTION))
+    assert result.status == "answered"
+    assert result.language_check["title_spans_ignored"] == 1
+    foreign = validate_answer(model_answer(claim + f' “{FRENCH_CLAIM}”', ev), [ev], target=language_hint(ENGLISH_QUESTION))
+    assert foreign.status == "service_unavailable"
+    assert foreign.failure_reason == "answer_language_mismatch"
+
+
+def test_fully_quoted_foreign_claim_is_still_checked():
+    claim = "“El anuncio menciona la captura y almacenamiento de carbono como una solución para reducir emisiones.”"
+    assert check_claim_languages([claim], language_hint(ENGLISH_QUESTION))["status"] == "mismatch"

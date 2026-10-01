@@ -341,3 +341,19 @@ def test_version_change_during_read_abstains_from_publishing_old_result():
     result = catalog.call("record_statistics", {})
     assert result["status"] == "unavailable"
     assert "collections" not in result
+
+
+@pytest.mark.parametrize("query", ["NYT", "nytimes.com", "NY Times", "纽约时报"])
+def test_publisher_aliases_resolve_to_the_exact_source_spelling(query):
+    # Same alias table as the rule planner, so both answer paths agree.
+    catalog, _ = make_catalog()
+    result = catalog.call("resolve_entity", {"query": query, "entity_type": "publisher"})
+    assert result["status"] == "ok"
+    assert [c["source_value"] for c in result["candidates"]] == ["The New York Times"]
+
+
+def test_unknown_filter_message_is_user_facing():
+    catalog, _ = make_catalog()
+    result = catalog.call("record_statistics", {"filters": {"publishers": ["Imaginary News"]}})
+    assert result["status"] == "clarify"
+    assert "resolve_entity" not in result["message"]

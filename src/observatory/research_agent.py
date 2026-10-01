@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .budget import LimitReached, price
 from .models import Filters
 
-POLICY_VERSION = "research-tools-v2"
+POLICY_VERSION = "research-tools-v3"
 MAX_INPUT_BYTES = 60_000
 MAX_ARGUMENT_BYTES = 8_000
 MAX_INTERMEDIATE_BYTES = 16_000
@@ -33,6 +33,14 @@ Use record_statistics for exact stored-record counts and metadata lists: publish
 company/sponsor, sponsors for a publisher, counts across metadata and dates. Its counts cover
 the selected stored collection, not the whole real-world advertising market. All model calls
 have a cost even when the selected database tool is free. Never count retrieved excerpts.
+For a percentage/share of the current selection, use record_statistics with measure='share'
+and group_by='none'. Tool filters define the numerator only. The denominator is the trusted
+active_scope before those targets; you cannot supply or change it. Keep native and social
+percentages separate. Never substitute a count or a full distribution for a requested share.
+If the question specifies a different denominator (for example 'within 2018' when the active
+scope is not 2018), or the denominator is ambiguous, ask the user to select that scope first.
+Do not silently turn a denominator condition into a numerator filter. A zero denominator is
+undefined, not zero percent. The application calculates every percentage, not you.
 Use canonical source values from entity_context, or resolve_entity when uncertain. Do not
 invent a canonical company or publisher. Display aliases do not establish corporate ownership.
 The sponsor field includes source-listed companies, associations and events; a stored

@@ -129,6 +129,36 @@ def test_dual_collection_totals_keep_native_and_social_units_visible(statistics_
                    for node in component_tree(response))
 
 
+def test_share_displays_actual_percentage_and_explicit_parent_scope(statistics_ui):
+    answer = structured_answer(
+        statistics_ui[2], kind="share", denominator_filters={"dataset": "native", "sponsors": ["Sponsor A"]},
+        collections=[{"dataset": "native", "total": 2, "retrievable": 1, "unknown_dates": 0,
+                      "numerator": 2, "denominator": 9, "percentage": 200 / 9}],
+    )
+    rendered = json.dumps(submit(statistics_ui, answer))
+    assert "22.22%" in rendered
+    assert "Matching records" in rendered and "Current selection" in rendered
+    assert "Denominator" in rendered
+    assert "Sponsors: Sponsor A" in rendered
+    assert "Publishers: The New York Times" in rendered
+    assert SECRET not in rendered
+
+
+def test_empty_share_is_undefined_and_collections_remain_separate(statistics_ui):
+    answer = structured_answer(
+        statistics_ui[2], kind="share", denominator_filters={"dataset": "all"}, records=[],
+        collections=[{"dataset": "native", "total": 1, "retrievable": 1, "unknown_dates": 0,
+                      "numerator": 1, "denominator": 4, "percentage": 25.0},
+                     {"dataset": "social", "total": 0, "retrievable": 0, "unknown_dates": 0,
+                      "numerator": 0, "denominator": 0, "percentage": None}],
+    )
+    rendered = json.dumps(submit(statistics_ui, answer))
+    assert "25.00%" in rendered
+    assert "Undefined" in rendered and "empty selection" in rendered
+    assert "Native ad records" in rendered and "Social ad records" in rendered
+    assert "0.00%" not in rendered
+
+
 def test_clarification_is_explicit_and_never_labeled_as_generated_answer(statistics_ui):
     response = submit(statistics_ui, Answer(status="insufficient_evidence", answer_mode="clarification",
                                            answer="Please choose a company or news outlet before comparing counts."))
@@ -150,6 +180,18 @@ def test_statistics_failure_is_sanitized_without_generated_answer_badge(statisti
     assert "Answer service unavailable" in rendered
     assert "Generated answer" not in rendered
     assert SECRET not in rendered
+
+
+def test_model_limit_is_distinguished_from_an_outage_without_exposing_details(statistics_ui):
+    limited = submit(statistics_ui, Answer(status="limited", answer_mode="tools", answer=SECRET))
+    rendered = json.dumps(limited)
+    assert "Paid answers temporarily limited" in rendered
+    assert "request limit or project API budget was reached" in rendered
+    assert "keyword search" in rendered
+    assert SECRET not in rendered
+    outage = submit(statistics_ui, Answer(status="service_unavailable", answer_mode="tools", answer=SECRET))
+    assert "request limit or project API budget was reached" not in json.dumps(outage)
+    assert SECRET not in json.dumps(outage)
 
 
 @pytest.mark.parametrize("identifier,question", [

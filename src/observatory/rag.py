@@ -505,7 +505,10 @@ def validate_answer(parsed, evidence, cost=0.0, *, target=None):
             raise ValueError("Empty claim")
         citations.append(Citation(evidence_id=c.evidence_id, quote=c.quote))
         sentences.append(f"{c.text} [{i}]")
-    language_check = check_claim_languages([c.text for c in parsed.claims], target)
+    language_check = check_claim_languages(
+        [c.text for c in parsed.claims], target,
+        source_titles=[e.title for e in evidence],
+    )
     if language_check["status"] == "mismatch":
         return Answer(
             status="service_unavailable",

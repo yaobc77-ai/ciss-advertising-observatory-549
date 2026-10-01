@@ -33,6 +33,7 @@ from .knowledge_graph import (
     build_graph,
 )
 from .models import Filters
+from .structured_queries import canonical_source_values
 
 Name = Annotated[str, Field(min_length=1, max_length=200)]
 Names = Annotated[list[Name], Field(max_length=20)]
@@ -80,6 +81,7 @@ class ResolveEntityRequest(ScopedRequest):
 
 class StatisticsRequest(ScopedRequest):
     group_by: Literal["none", "publishers", "sponsors", "platforms"] | None = None
+    measure: Literal["count", "share"] | None = None
 
 
 class SearchRequest(ScopedRequest):
@@ -115,7 +117,7 @@ TOOLS = {
     "resolve_entity": (ResolveEntityRequest,
         "Resolve a sponsor or publisher against actual source names. Returns candidates, not corporate identity merges; ask for clarification when ambiguous."),
     "record_statistics": (StatisticsRequest,
-        "Count all eligible records or list every publisher/sponsor/platform and its count. Exact SQL statistics, including records without searchable body; do not infer totals from retrieved passages."),
+        "Count all eligible records or list every publisher/sponsor/platform and its count. measure='share' calculates a target's percentage of the trusted current selection: filters narrow only the numerator, never the denominator. Select a different denominator scope in the UI first; clarify ambiguous denominator requests. Share requires group_by='none'. Separate native/social denominators; zero denominator means undefined. Exact SQL including records without searchable body; never infer totals from retrieved passages."),
     "search_records": (SearchRequest,
         "Free keyword retrieval of bounded source passages within the collection selection. Use for article content, never corpus totals or factual verification."),
     "get_record": (RecordTextRequest,
@@ -243,7 +245,7 @@ class ToolCatalog:
         for dimension in _DIMENSIONS[:-1]:
             unknown = set(getattr(filters, dimension)) - set(facets.get(dimension, []))
             if unknown:
-                raise ScopeConflict("A requested source name or annotation is unknown. Use resolve_entity or clarify the selection.")
+                raise ScopeConflict("A requested news outlet, sponsor or label is not in this collection. Check the name or adjust the selection.")
 
     def _context(self, name, filters=None):
         return {"tool": name, "filters": (filters or self._base).model_dump(mode="json"),
@@ -315,6 +317,9 @@ class ToolCatalog:
                 # Dropping a leading article is a display lookup only; each
                 # matched exact source spelling remains a separate candidate.
                 names |= {item.removeprefix("the ") for item in names}
+                alias = bool(canonical_source_values(request.query, dimension, [value]))
+                if alias:
+                    names.add(query)
                 if query in names or any(query and query in item for item in names):
                     candidates.append({"entity_id": _candidate_id(dataset, request.entity_type, value),
                                        "dataset": dataset, "source_field": request.entity_type,
@@ -334,11 +339,15 @@ class ToolCatalog:
 
     def _record_statistics(self, request, filters):
         group_by = request.group_by or "none"
-        kind = {"none": "count", "publishers": "list_publishers", "sponsors": "list_sponsors",
-                "platforms": "list_platforms"}[group_by]
+        if request.measure == "share" and group_by != "none":
+            raise ScopeConflict("A percentage compares target records with the current selection. Use no grouping, or ask for a count distribution separately.")
+        kind = "share" if request.measure == "share" else {
+            "none": "count", "publishers": "list_publishers", "sponsors": "list_sponsors",
+            "platforms": "list_platforms"}[group_by]
         # Reuse the exact same read-snapshot and public field projection as UI.
         plan = SimpleNamespace(kind=kind, filters=filters, scope_notes=_NOTES,
-                               group_by=None if group_by == "none" else group_by)
+                               group_by=None if group_by == "none" else group_by,
+                               denominator_filters=self.base_filters if kind == "share" else None)
         answer = self.service._statistics_answer(plan)
         result = deepcopy(answer.structured_result)
         result["records"] = [{key: row.get(key) for key in _RECORD_FIELDS}

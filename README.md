@@ -39,6 +39,8 @@ Selecting a company, publisher, relationship, or article shows its specific conn
 
 Dashboard browsing and keyword search do not call a language model. Generated answers use the configured OpenAI API budget, including model interpretation of count questions.
 
+Query also answers percentages of the current selection using exact database counts. Each answer shows the matching records, denominator and percentage separately for each collection. Change the page filters first when a different denominator is needed; an empty selection has no defined percentage.
+
 ## Run locally
 
 Use Python 3.12 or 3.13, uv, and a PostgreSQL database with pgvector.

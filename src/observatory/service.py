@@ -11,7 +11,7 @@ from .budget import LimitReached, price
 from .db import Database
 from .models import Answer, Filters
 from .rag import Rag
-from .structured_queries import QuestionPlan, plan_question
+from .structured_queries import QuestionPlan, plan_question, validate_share_scope
 
 log = logging.getLogger(__name__)
 
@@ -260,6 +260,8 @@ class Service:
         """
         from .analytics import sponsor_display
 
+        if plan.kind == "share":
+            return self._share_statistics_answer(plan)
         filters = plan.filters
         datasets = ["native", "social"] if filters.dataset == "all" else [filters.dataset]
         collections, groups, records = [], [], []
@@ -301,6 +303,62 @@ class Service:
             },
         )
 
+    def _share_statistics_answer(self, plan):
+        """Compute numerator and trusted denominator in one snapshot per dataset.
+
+        Reuse the database's complete eligibility/filter query rather than
+        reproducing its annotation or unknown-date rules in Python. The caller's
+        scope is bound before any target filters, and no model supplies a count.
+        """
+        numerator, denominator = plan.filters, plan.denominator_filters
+        if not isinstance(numerator, Filters) or not isinstance(denominator, Filters) or plan.group_by:
+            raise ValueError("A percentage needs a trusted denominator and no grouping")
+        validate_share_scope(numerator, denominator)
+        datasets = ("native", "social") if numerator.dataset == "all" else (numerator.dataset,)
+        collections, records = [], []
+        health = self.health()
+        if health.get("status") != "ok":
+            raise ValueError("Percentage statistics require a loaded collection")
+        missing = [dataset for dataset in datasets if not health.get("record_counts", {}).get(dataset)]
+        fields = ("record_id", "version_id", "dataset", "title", "date", "publisher",
+                  "sponsor", "url", "archive_url", "retrievable")
+        for dataset in datasets:
+            if dataset in missing:
+                continue
+            base_query, base_params = self.db._public_query(denominator.model_copy(update={"dataset": dataset}))
+            target_query, target_params = self.db._public_query(numerator.model_copy(update={"dataset": dataset}))
+            # Identical record/version membership also enforces the subset at
+            # the SQL boundary; both queries use the same MVCC snapshot.
+            prefix = f"WITH denominator AS ({base_query}), target AS ({target_query}), numerator AS (SELECT t.* FROM target t JOIN denominator d USING(record_id,version_id)) "
+            params = [*base_params, *target_params]
+            with self.db.connect() as conn:
+                conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+                counts = conn.execute(prefix + """SELECT count(*) AS numerator,
+                    count(*) FILTER (WHERE retrievable) AS retrievable,
+                    count(*) FILTER (WHERE date IS NULL OR date='') AS unknown_dates,
+                    (SELECT count(*) FROM denominator) AS denominator FROM numerator""", params).fetchone()
+                rows = conn.execute(prefix + "SELECT * FROM numerator ORDER BY date DESC NULLS LAST,record_id LIMIT 10", params).fetchall()
+            n, d = counts["numerator"], counts["denominator"]
+            collections.append({
+                "dataset": dataset, "total": n, "retrievable": counts["retrievable"],
+                "unknown_dates": counts["unknown_dates"], "numerator": n, "denominator": d,
+                "percentage": 100 * n / d if d else None,
+                "percentage_status": "defined" if d else "empty_selection",
+            })
+            records.extend({field: row.get(field) for field in fields} for row in self._public_rows(rows))
+        data = {
+            "kind": "share", "method": "database", "group_by": None,
+            "filters": numerator.model_dump(mode="json"),
+            "denominator_filters": denominator.model_dump(mode="json"),
+            "denominator_basis": "current_selection_before_question_targets",
+            "collections": collections, "groups": [], "records": records,
+            "scope_notes": [*plan.scope_notes,
+                "Each percentage uses its collection's eligible records in the current selection before question targets. Unsearchable records still count; a zero denominator is undefined."],
+        }
+        if missing:
+            data["scope_notes"].append("Unloaded collections are omitted, not reported as zero advertisements or zero percent.")
+        return self._tool_statistics_answer(data, base_filters=denominator)
+
     def answer(self, question, filters, visitor):
         if getattr(self.settings, "research_agent_enabled", False):
             return self._answer_with_tools(question, filters, visitor)
@@ -325,7 +383,7 @@ class Service:
             run = agent.run(question, filters, visitor)
             data = run.result
             if run.route == "statistics":
-                result = self._tool_statistics_answer(data)
+                result = self._tool_statistics_answer(data, base_filters=filters)
             elif run.route == "evidence":
                 narrowed = Filters.model_validate(data["filters"])
                 # Question language and wording remain intact for the cited answer.
@@ -342,10 +400,16 @@ class Service:
             elif run.route == "clarify":
                 result = Answer(status="insufficient_evidence", answer_mode="clarification",
                                 answer=data.get("message") or "Please clarify the collection, entity or date range.")
+            elif run.route == "limited":
+                # A rate or budget limit is expected behaviour, not an outage.
+                result = Answer(
+                    status="limited", answer_mode="tools", failure_reason=run.failure_reason,
+                    answer="Your question limit or the API budget has been reached. Browsing and keyword search remain available; please try again later.",
+                )
             else:
                 result = Answer(
-                    status="limited" if run.route == "limited" else "service_unavailable",
-                    answer_mode="tools", failure_reason=run.failure_reason,
+                    status="service_unavailable", answer_mode="tools",
+                    failure_reason=run.failure_reason,
                     answer="Question understanding is temporarily unavailable. Browse the collection or use keyword search.",
                 )
             downstream_cost = result.cost_usd
@@ -388,8 +452,38 @@ class Service:
                       structured_result={"kind": "claims", **data})
 
     @staticmethod
-    def _tool_statistics_answer(data):
+    def _tool_statistics_answer(data, *, base_filters=None):
         """Publish program-computed counts; model-written totals are never used."""
+        if data.get("kind") == "share":
+            numerator = Filters.model_validate(data["filters"])
+            denominator = Filters.model_validate(data["denominator_filters"])
+            if (not isinstance(base_filters, Filters) or denominator != base_filters
+                    or data.get("denominator_basis") != "current_selection_before_question_targets"
+                    or data.get("method") != "database" or data.get("group_by") is not None
+                    or data.get("groups") != []):
+                raise ValueError("The percentage denominator must match the trusted current selection")
+            validate_share_scope(numerator, denominator)
+            seen, messages = set(), []
+            for item in data["collections"]:
+                dataset, n, d = item["dataset"], item["numerator"], item["denominator"]
+                if (dataset not in {"native", "social"} or dataset in seen
+                        or numerator.dataset not in {"all", dataset}
+                        or type(n) is not int or type(d) is not int or not 0 <= n <= d
+                        or type(item.get("total")) is not int or item["total"] != n):
+                    raise ValueError("Invalid separate-collection percentage counts")
+                seen.add(dataset)
+                expected = 100 * n / d if d else None
+                if (item.get("percentage") != expected or isinstance(item.get("percentage"), bool)
+                        or item.get("percentage_status") != ("defined" if d else "empty_selection")):
+                    raise ValueError("The percentage must be computed from its numerator and denominator")
+                unit = "native ad records" if dataset == "native" else "social ad records"
+                messages.append(f"{expected:.2f}% ({n:,} of {d:,} eligible {unit})" if d
+                                else f"Percentage undefined (0 eligible {unit} in the denominator)")
+            if not messages:
+                raise ValueError("A percentage result needs a loaded collection")
+            return Answer(status="answered", answer_mode="statistics",
+                          answer="; ".join(messages) + ". Denominators use the current selection before question targets.",
+                          structured_result=data)
         totals = "; ".join(
             f"{item['total']:,} eligible {'native ad records' if item['dataset'] == 'native' else 'social ad records'}"
             for item in data["collections"]
@@ -448,7 +542,7 @@ class Service:
             return Answer(
                 status="insufficient_evidence",
                 answer_mode="clarification",
-                answer="Counts support named outlets, sponsors and explicit dates. For example: How many native ads are from the New York Times? Percentages and topic counts require a defined denominator or validated annotations. Retrieved passages cannot establish corpus totals.",
+                answer="Counts support named outlets, sponsors and explicit dates. Percentages compare target records with the current selected collection; select the denominator scope first. Topic counts require validated annotations. Retrieved passages cannot establish corpus totals.",
             )
         return self._answer_evidence(question, filters, visitor)
 

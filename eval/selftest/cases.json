@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "description": "Self-made development checks, not independent or client acceptance. Gold values are recomputed by independent SQL over active countable native records. no_count cases check routing only. S19 requires an actual percentage and explicit denominator.",
+  "facets_snapshot": {
+    "note": "Public filter values on 2026-09-30, used only by the offline CI check of the rule planner.",
+    "publishers": ["Business Insider", "CNBC", "Forbes", "Politico", "The Atlantic", "The New York Times", "The Wall Street Journal", "The Washington Post"],
+    "sponsors": ["(Unknown)", "afpm", "api", "bp", "cera", "chevron", "enbridge", "eni", "exelon", "exxonmobil", "nextera energy", "petronas", "ptt", "shell", "southern company", "statoil", "the williams companies, inc.", "totalenergies", "williams", "williams companies"]
+  },
+  "statistics": [
+    {"id": "S01", "question": "How many native ads are from the New York Times?", "expect": "count", "constraints": {"publisher": "The New York Times"}, "rules": "pass"},
+    {"id": "S02", "question": "How many ads were published by NYT?", "expect": "count", "constraints": {"publisher": "The New York Times"}, "rules": "pass"},
+    {"id": "S03", "question": "How many ads are from nytimes.com?", "expect": "count", "constraints": {"publisher": "The New York Times"}, "rules": "pass"},
+    {"id": "S04", "question": "How many ads were sponsored by ExxonMobil?", "expect": "count", "constraints": {"sponsor": "exxonmobil"}, "rules": "pass"},
+    {"id": "S05", "question": "How many ads were sponsored by Exxon?", "expect": "count", "constraints": {"sponsor": "exxonmobil"}, "rules": "gap"},
+    {"id": "S06", "question": "Which publishers is ExxonMobil working with?", "expect": "group", "group_by": "publisher", "constraints": {"sponsor": "exxonmobil"}, "rules": "pass"},
+    {"id": "S07", "question": "Which fossil fuel companies sponsor ads in the Washington Post?", "expect": "group", "group_by": "sponsor", "constraints": {"publisher": "The Washington Post"}, "rules": "gap"},
+    {"id": "S08", "question": "How many ads did Shell sponsor in Forbes?", "expect": "count", "constraints": {"publisher": "Forbes", "sponsor": "shell"}, "rules": "gap"},
+    {"id": "S09", "question": "How many ads were published by CNBC in 2018?", "expect": "count", "constraints": {"publisher": "CNBC", "years": [2018, 2018]}, "rules": "pass"},
+    {"id": "S10", "question": "How many ads were published by CNBC between 2015 and 2016?", "expect": "count", "constraints": {"publisher": "CNBC", "years": [2015, 2016]}, "rules": "pass"},
+    {"id": "S11", "question": "How many ads were published by CNBC in 2030?", "expect": "count", "constraints": {"publisher": "CNBC", "years": [2030, 2030]}, "rules": "pass"},
+    {"id": "S12", "question": "纽约时报有多少条广告", "expect": "count", "constraints": {"publisher": "The New York Times"}, "rules": "pass"},
+    {"id": "S13", "question": "埃克森美孚与哪些媒体合作", "expect": "group", "group_by": "publisher", "constraints": {"sponsor": "exxonmobil"}, "rules": "gap"},
+    {"id": "S14", "question": "ExxonMobil与哪些媒体合作", "expect": "group", "group_by": "publisher", "constraints": {"sponsor": "exxonmobil"}, "rules": "pass"},
+    {"id": "S15", "question": "How many ads mention carbon capture?", "expect": "no_count", "rules": "pass"},
+    {"id": "S16", "question": "How many greenwashing ads did BP publish?", "expect": "no_count", "rules": "pass"},
+    {"id": "S17", "question": "How many ads did TotalEnergies sponsor?", "expect": "count", "constraints": {"sponsor": "totalenergies"}, "rules": "gap"},
+    {"id": "S18", "question": "How many ads are there?", "expect": "count", "constraints": {}, "rules": "gap"},
+    {"id": "S19", "question": "What percentage of ads are from CNBC?", "expect": "share", "constraints": {"publisher": "CNBC"}, "denominator_constraints": {}, "rules": "pass", "note": "The denominator is the full active native selection before the question narrows it to CNBC. Counts or distributions alone do not pass."},
+    {"id": "S20", "question": "How many ads did Chevron sponsor in The Atlantic?", "expect": "count", "constraints": {"publisher": "The Atlantic", "sponsor": "chevron"}, "rules": "gap"},
+    {"id": "S21", "question": "How many social media ads are on Twitter?", "expect": "no_count", "rules": "pass", "note": "Native collection is active and social data is not loaded."},
+    {"id": "S22", "question": "How many ads did ExxonMobil sponsor in the Wall Street Journal in 2022?", "expect": "count", "constraints": {"publisher": "The Wall Street Journal", "sponsor": "exxonmobil", "years": [2022, 2022]}, "rules": "gap"},
+    {"id": "S23", "question": "Which outlets ran TotalEnergies ads?", "expect": "group", "group_by": "publisher", "constraints": {"sponsor": "totalenergies"}, "rules": "gap"},
+    {"id": "S24", "question": "How many ads did Exxon Mobil Corporation sponsor?", "expect": "count", "constraints": {"sponsor": "exxonmobil"}, "rules": "gap"}
+  ],
+  "retrieval": [
+    {"id": "R01", "gold_phrase": "mollusk", "en": "How are mollusks used to monitor industrial sites?", "zh": "广告里如何用软体动物监测工业场地？", "paraphrase": "Which ad describes shellfish acting as living sensors near plants?"},
+    {"id": "R02", "gold_phrase": "Adilabad", "en": "Where is the biogas digester project for employee air travel offsets?", "zh": "员工航空碳抵消的沼气池项目在哪里？", "paraphrase": "Where did the oil company fund cow-dung fuel tanks to offset staff flights?"},
+    {"id": "R03", "gold_phrase": "direct air capture", "en": "Which ad mentions direct air capture plants?", "zh": "哪篇广告提到直接空气捕集工厂？", "paraphrase": "Which ad talks about machines that pull CO2 out of the sky like a giant filter?"},
+    {"id": "R04", "gold_phrase": "Tranquillity", "en": "Which ad mentions battery storage at the Tranquillity solar facility?", "zh": "哪篇广告提到 Tranquillity 太阳能电站的电池储能？", "paraphrase": "Which utility ad covers storing sunshine power in batteries in California?"},
+    {"id": "R05", "gold_phrase": "Baytown", "en": "What does the Baytown hydrogen advertisement say about blue hydrogen?", "zh": "Baytown 氢能广告如何描述蓝氢？", "paraphrase": "Which ad describes a Texas plant making low-carbon fuel from natural gas?"},
+    {"id": "R06", "gold_phrase": "satellite", "en": "Which ads mention satellites?", "zh": "哪些广告提到卫星？", "paraphrase": "Which ads describe watching emissions from orbit?"},
+    {"id": "R07", "gold_phrase": "hydrogen fuel cell", "en": "Which ads discuss hydrogen fuel cells?", "zh": "哪些广告讨论氢燃料电池？", "paraphrase": "Which ads describe vehicles powered by combining hydrogen and oxygen?"}
+  ]
+}

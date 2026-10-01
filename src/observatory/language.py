@@ -1,5 +1,6 @@
 """Local language hints and a conservative mismatch guard, not semantic scoring."""
 
+import re
 from functools import lru_cache
 
 from lingua import LanguageDetectorBuilder
@@ -8,7 +9,30 @@ from lingua import LanguageDetectorBuilder
 # receive high detector scores (e.g. CCS -> Hungarian), so they stay inconclusive.
 MIN_LETTERS = 20
 MIN_MARGIN = 0.20
-POLICY_VERSION = "lingua-2.2.0-min20-margin0.20-v1"
+POLICY_VERSION = "lingua-2.2.0-min20-margin0.20-v3"
+
+# Only exact titles from the selected evidence can be omitted from detection.
+# Quotation marks alone do not establish that text came from a source.
+_QUOTED = re.compile(r'“[^”]*”|"[^"]*"|«[^»]*»|「[^」]*」|『[^』]*』|‘[^’]*’')
+
+
+def _prose(text, source_titles):
+    unchecked_quotes = []
+    ignored = 0
+
+    def replace(match):
+        nonlocal ignored
+        content = match.group()[1:-1]
+        if content in source_titles:
+            ignored += 1
+            return " "
+        unchecked_quotes.append(content)
+        return match.group()
+
+    stripped = _QUOTED.sub(replace, text)
+    # A title alone cannot establish the language of an answer's prose.
+    prose = stripped if sum(c.isalpha() for c in stripped) >= MIN_LETTERS else text
+    return prose, unchecked_quotes, ignored
 
 
 @lru_cache(maxsize=1)
@@ -34,7 +58,7 @@ def language_hint(text):
     return result
 
 
-def check_claim_languages(texts, target):
+def check_claim_languages(texts, target, *, source_titles=()):
     """Only pass generated prose here. Source quotes must retain their language."""
     audit = {
         "policy": POLICY_VERSION,
@@ -42,12 +66,19 @@ def check_claim_languages(texts, target):
         "status": "inconclusive",
         "claims": [],
         "combined": None,
+        "quoted_prose": [],
+        "title_spans_ignored": 0,
     }
     if not target or not target["code"]:
         return audit
-    audit["claims"] = [language_hint(text) for text in texts]
-    audit["combined"] = language_hint("\n".join(texts))
-    hints = [*audit["claims"], audit["combined"]]
+    titles = {title for title in source_titles if isinstance(title, str) and title}
+    parsed = [_prose(text, titles) for text in texts]
+    prose = [item[0] for item in parsed]
+    audit["quoted_prose"] = [language_hint(quote) for item in parsed for quote in item[1]]
+    audit["title_spans_ignored"] = sum(item[2] for item in parsed)
+    audit["claims"] = [language_hint(text) for text in prose]
+    audit["combined"] = language_hint("\n".join(prose))
+    hints = [*audit["claims"], audit["combined"], *audit["quoted_prose"]]
     if any(h["code"] and h["code"] != target["code"] for h in hints):
         audit["status"] = "mismatch"
     elif texts and all(h["code"] == target["code"] for h in hints):
