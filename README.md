@@ -80,3 +80,5 @@ Real social data, complete source/archive coverage, user acceptance testing, ind
 One reviewed PDF snapshot and its first-page preview are available in the live record view. [Attachment deployment and checks](docs/record_assets.md) explain how to preserve and verify these files separately from application code.
 
 The [local](reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) and [Railway](reports/RAILWAY_DATABASE_RECOVERY_20261001.en.md) recovery checks passed for all 21 tables, vectors and histories. The Railway copy was restored to a new database on the same PostgreSQL 18.6 service; its downloaded backup remains private. Independent-machine recovery and complete project acceptance remain pending.
+
+For the current native-data review, use the [demonstration script](deliverables/native_demo_v0_4_9.en.md). The [source input guide](docs/native_source_handoff.md) provides a checksum inventory and an offline check before import. Private inputs, database backups and reviewed attachments are transferred separately from public code.

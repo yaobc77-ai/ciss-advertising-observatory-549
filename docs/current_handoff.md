@@ -1,5 +1,7 @@
 # Current project handoff
 
+The [current native demonstration](../deliverables/native_demo_v0_4_9.en.md) now accompanies a [private input handoff guide](native_source_handoff.md). The [1 October check](../reports/NATIVE_HANDOFF_20261001.en.md) records an offline, installed-package rehearsal of all fixed native inputs and selected current graph/date/source interactions. This is a same-implementer rehearsal; independent reproduction and final dual-dataset/client acceptance remain pending.
+
 The **0.4.9** query update adds record pagination inside statistics answers. It keeps the full submitted selection, browses the percentage numerator and makes no model calls while paging. Both question routes and every page check source identity; stale or unverified results require resubmission. The [query browsing report](../reports/QUERY_V0_4_9_20261001.en.md) and [engineering receipt](../reports/query_v0_4_9_engineering_20261001.json) record the checks. The [publication receipt](../reports/query_v0_4_9_publication_20261001.json) binds successful CI, hosted pagination, selected assets and source archives. A source-noted duplicate candidate remains pending a counting-unit decision; no data or admission rules changed.
 
 The **0.4.8** query update adds database percentages with an explicit current-selection denominator, shared publisher aliases, sanitized limit messages, and source-bound title handling in the answer language check. Its [query verification report](../reports/QUERY_V0_4_8_20261001.en.md) separates development regression checks from independent semantic and client acceptance. The [publication receipt](../reports/query_v0_4_8_publication_20261001.json) binds both successful CI runs, production health, selected attachment checks and verified source archives. Earlier recovery and source-review receipts below retain their original versions.
@@ -171,7 +173,7 @@ The six empty CLAIMS2 tables demonstrate structure and empty-state recovery, not
 
 ### B. Import from approved source files
 
-The native importer requires the exact inputs bound by the three manifests in `config/`. Preserve bytes and relative paths; do not edit manifest hashes to make a different file pass validation.
+For complete reproduction, preserve the seven input files below and the three manifests in `config/`, including their bytes and relative paths. The manifests constrain reviewed admissions, body ranges and recovery files; they do not fix every optional metadata, historical prediction or archive input. Check all ten hashes against the fixed reference inventory. Do not edit manifest hashes to accept different files.
 
 | Private input | Purpose |
 | --- | --- |
@@ -184,6 +186,8 @@ The native importer requires the exact inputs bound by the three manifests in `c
 | `sources/recovered_native/PDF-265.pypdf-6.10.0.txt` | Exact extracted PDF-265 text, with preserved character positions and page separators. |
 
 The corresponding manifests are `config/native_admissions.json`, `config/native_body_ranges.json` and `config/native_body_recoveries.json`. They specify the source hashes, reviewed admissions and retrieval ranges. The PDF and extracted-text hashes are checked independently. `scripts/extract_pdf_text.py`, with the optional locked `pdf` extra, reproduces the reviewed extraction without OCR or normalizing the original text.
+
+The [private native source handoff](native_source_handoff.md) adds a complete checksum inventory and an explicit `verify_clean_import.py --inputs-only` check. The original archive index retains legacy absolute candidate paths; these are not portable, reviewed attachments. Preserve that input unchanged and transfer approved captures using the separate record asset bundle. Do not run the historical verifier without the flag as an offline check: its default mode clears `obs_test` and reproduces `legacy600-v1`.
 
 ```sh
 uv run observatory import-native --root /path/to/approved-source-bundle

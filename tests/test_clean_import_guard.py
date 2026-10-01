@@ -13,6 +13,11 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts/verify_clean_import.py"
 spec = importlib.util.spec_from_file_location("clean_import_verifier", SCRIPT)
 verifier = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verifier)
+OPTIONAL_INPUTS = (
+    "sources/Native Advertising Data/native_ad_dataset.xlsx",
+    "sources/FA25_SP26/CLAIMS 1.0 Runs/CSVS/predictions_calibrated.csv",
+    "analysis/pdf_archive/source_index.json",
+)
 
 
 @pytest.fixture(autouse=True)
@@ -70,7 +75,8 @@ def input_fixture(tmp_path, monkeypatch):
     root = tmp_path / "unpacked"
     root.mkdir()
     hashes = {}
-    for name in [*verifier.MANIFEST_HASHES, *[f"sources/input-{i}.txt" for i in range(7)]]:
+    for name in [*verifier.MANIFEST_HASHES, *OPTIONAL_INPUTS,
+                 *[f"sources/input-{i}.txt" for i in range(4)]]:
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(name.encode())
@@ -123,14 +129,18 @@ def test_input_path_cannot_escape_root(tmp_path, relative):
         verifier.project_file(tmp_path, relative)
 
 
-def test_output_exists_prevents_any_run(tmp_path, monkeypatch):
+@pytest.mark.parametrize("flags", [[], ["--inputs-only"]])
+def test_output_exists_prevents_any_run(tmp_path, monkeypatch, flags):
     output = tmp_path / "result.json"
     output.write_text("keep", encoding="utf-8")
     work = Mock()
+    offline = Mock()
     monkeypatch.setattr(verifier, "run", work)
-    assert verifier.main(["--root", str(tmp_path), "--output", str(output)]) == 1
+    monkeypatch.setattr(verifier, "run_inputs_only", offline)
+    assert verifier.main(["--root", str(tmp_path), "--output", str(output), *flags]) == 1
     assert output.read_text(encoding="utf-8") == "keep"
     work.assert_not_called()
+    offline.assert_not_called()
 
 
 def test_exception_report_and_console_omit_connection_details(tmp_path, monkeypatch, capsys):
@@ -230,3 +240,163 @@ def test_locator_rejects_text_spanning_excluded_gap(monkeypatch):
     monkeypatch.setattr(verifier, "EXPECTED_COUNTS", {"chunks": 1})
     with pytest.raises(verifier.VerificationError, match="chunk_crosses_excluded_gap"):
         verifier.verify_chunk_locators(db)
+
+
+def offline_fixture(tmp_path, monkeypatch):
+    root, reference = input_fixture(tmp_path, monkeypatch)
+    records = [
+        SimpleNamespace(
+            record_id=f"record-{i}", url=f"https://example.invalid/article/{i}",
+            dataset="native", countable=i < 263, retrievable=i < 226,
+            annotations=[], raw={},
+        ) for i in range(275)
+    ]
+    records[0].annotations = [
+        {"version": "claims-original", "labels": []},
+        {"version": "claims-calibrated", "labels": ["green_labels.green_binary"]},
+    ]
+    records[1].raw = {"previous_body_annotations": [
+        {"version": "claims-original", "labels": ["green_labels.green_binary"]},
+        {"version": "claims-calibrated", "labels": []},
+    ]}
+    batch = SimpleNamespace(
+        source_hashes=dict(reference["source_hashes"]), records=records,
+        rejected=[], candidates=[{} for _ in range(12)],
+    )
+    monkeypatch.setattr(verifier, "load_native", Mock(return_value=batch))
+    return root, batch
+
+
+def test_inputs_only_verifies_batch_without_database_environment_or_api(tmp_path, monkeypatch):
+    import dotenv
+    import openai
+
+    from observatory import config
+
+    root, _ = offline_fixture(tmp_path, monkeypatch)
+    before = {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    tripwires = []
+    for owner, attribute in [
+        (verifier, "run"), (verifier, "TestOnlyDatabase"), (verifier, "test_database_url"),
+        (config.Settings, "from_env"), (config, "load_dotenv"),
+        (dotenv, "load_dotenv"), (openai, "OpenAI"),
+    ]:
+        blocker = Mock(side_effect=AssertionError(f"offline called {attribute}"))
+        monkeypatch.setattr(owner, attribute, blocker)
+        tripwires.append(blocker)
+    monkeypatch.setattr(verifier, "version", Mock(return_value="9.8.7"))
+    monkeypatch.chdir(tmp_path)
+    output = tmp_path / "offline.json"
+    assert verifier.main(["--inputs-only", "--root", str(root), "--output", str(output)]) == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["mode"] == "inputs_only"
+    assert report["snapshot_release"] == "0.2.3"
+    assert report["package_version"] == "9.8.7"
+    assert report["database"] is None
+    assert report["test_tables_cleared"] is False
+    assert report["index"] == "not_evaluated"
+    assert report["expected_index_profile"] is None
+    assert report["counts"] == {"stored": 275, "countable": 263, "retrievable": 226}
+    assert report["unique_record_ids"] == report["unique_record_urls"] == 275
+    assert report["rejected"] == 0
+    assert report["additional_candidates"] == 12
+    assert len(report["input_hashes"]) == 10
+    annotations = report["historical_annotations"]
+    assert annotations["current_entries"] == 2
+    assert annotations["records_with_current_annotations"] == 1
+    assert annotations["entries_by_version"] == {"claims-original": 1, "claims-calibrated": 1}
+    assert annotations["nonempty_entries_by_version"] == {"claims-calibrated": 1}
+    assert annotations["previous_body_records"] == 1
+    assert annotations["previous_body_entries"] == 2
+    assert report["development_contract"]["quote_location_validation"] == "not_evaluated"
+    assert report["reference_sha256"] == hashlib.sha256(before[Path(verifier.REFERENCE)]).hexdigest()
+    assert report["gold_sha256"] == hashlib.sha256(before[Path(verifier.GOLD)]).hexdigest()
+    verifier.load_native.assert_called_once_with(
+        root, require_admissions=True, require_body_reviews=True, require_body_recoveries=True
+    )
+    verifier.Database.connect.assert_not_called()
+    for blocker in tripwires:
+        blocker.assert_not_called()
+    assert before == {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("name", OPTIONAL_INPUTS)
+@pytest.mark.parametrize("change,code", [
+    ("modified", "input_hash_mismatch"), ("missing", "missing_or_escaped_input"),
+])
+def test_inputs_only_rejects_changed_or_missing_optional_inputs(tmp_path, monkeypatch, name, change, code):
+    root, _ = offline_fixture(tmp_path, monkeypatch)
+    path = root / name
+    if change == "modified":
+        path.write_bytes(b"changed optional input")
+    else:
+        path.unlink()
+    with pytest.raises(verifier.VerificationError, match=f"^{code}$"):
+        verifier.run_inputs_only(root, {})
+    verifier.load_native.assert_not_called()
+    verifier.Database.connect.assert_not_called()
+
+
+@pytest.mark.parametrize("change,code", [
+    ("hashes", "loaded_input_hashes_changed"),
+    ("records", "invalid_import_batch"), ("rejected", "invalid_import_batch"),
+    ("countable", "wrong_input_counts"), ("retrievable", "wrong_input_counts"),
+    ("record_id", "duplicate_record_ids"), ("url", "duplicate_record_urls"),
+    ("dataset", "wrong_import_dataset"),
+])
+def test_inputs_only_rejects_loaded_batch_mismatches(tmp_path, monkeypatch, change, code):
+    root, batch = offline_fixture(tmp_path, monkeypatch)
+    if change == "hashes":
+        batch.source_hashes[OPTIONAL_INPUTS[0]] = "changed"
+    elif change == "records":
+        batch.records.pop()
+    elif change == "rejected":
+        batch.rejected.append("rejected source row")
+    elif change == "countable":
+        batch.records[-1].countable = True
+    elif change == "retrievable":
+        batch.records[-1].retrievable = True
+    elif change == "record_id":
+        batch.records[-1].record_id = batch.records[0].record_id
+    elif change == "url":
+        batch.records[-1].url = batch.records[0].url
+    else:
+        batch.records[-1].dataset = "social"
+    with pytest.raises(verifier.VerificationError, match=f"^{code}$"):
+        verifier.run_inputs_only(root, {})
+    verifier.Database.connect.assert_not_called()
+
+
+def test_default_cli_retains_historical_database_route(tmp_path, monkeypatch):
+    def fake_run(root, report):
+        report["status"] = "passed"
+
+    database = Mock(side_effect=fake_run)
+    offline = Mock(side_effect=AssertionError("default route must remain database reproduction"))
+    monkeypatch.setattr(verifier, "run", database)
+    monkeypatch.setattr(verifier, "run_inputs_only", offline)
+    output = tmp_path / "default.json"
+    assert verifier.main(["--root", str(tmp_path), "--output", str(output)]) == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["mode"] == "database_reproduction"
+    assert report["database"] == "obs_test"
+    assert report["expected_index_profile"] == verifier.LEGACY_PROFILE
+    assert verifier.EXPECTED_COUNTS["chunks"] == 558
+    database.assert_called_once()
+    offline.assert_not_called()
+
+
+@pytest.mark.parametrize("kind", [RuntimeError, verifier.VerificationError])
+def test_inputs_only_failure_reports_only_allowlisted_codes(tmp_path, monkeypatch, capsys, kind):
+    secret = "postgresql://account:SECRET@example.invalid/application"
+    monkeypatch.setattr(verifier, "run_inputs_only", Mock(side_effect=kind(secret)))
+    output = tmp_path / "failed.json"
+    assert verifier.main(["--inputs-only", "--root", str(tmp_path), "--output", str(output)]) == 1
+    serialized = output.read_text(encoding="utf-8")
+    captured = capsys.readouterr()
+    assert "SECRET" not in serialized + captured.out + captured.err
+    report = json.loads(serialized)
+    assert report["failure_code"] == "verification_failed"
+    assert "error_type" not in report
+    assert report["database"] is None
+    assert report["test_tables_cleared"] is False

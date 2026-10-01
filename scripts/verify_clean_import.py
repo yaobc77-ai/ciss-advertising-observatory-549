@@ -1,8 +1,11 @@
-"""Reproduce the 0.2.3 source snapshot and legacy600 index in disposable obs_test.
+"""Verify fixed native inputs, or reproduce the historical snapshot in obs_test.
 
-Requires an installed observatory package, an explicit unpacked --root with private
-inputs, and OBS_TEST_DATABASE_URL supplied by the caller. Never reads .env or the
-application URL. This command clears obs_test business tables; run it exclusively.
+--inputs-only validates the 0.2.3 source contract entirely offline. It does not
+connect to a database, generate an index or reconstruct historical model outputs.
+Without that flag, this command reproduces the source snapshot and legacy600 index,
+and clears obs_test business tables; run it exclusively. That mode additionally
+requires OBS_TEST_DATABASE_URL supplied by the caller. Neither mode reads .env or
+the application URL. Both require an installed package and an explicit --root.
 Source and wheel installations must be checked in separate environments. Historical
 answer runs/versions are not reconstructed by importing this current snapshot.
 """
@@ -14,6 +17,7 @@ import hashlib
 import json
 import os
 import sys
+from collections import Counter
 from importlib.metadata import version
 from pathlib import Path
 
@@ -42,6 +46,18 @@ TABLES = (
     "annotations,chunks,record_versions,records,chunk_profile_membership,"
     "retrieval_preparations,retrieval_publications,retrieval_state,retrieval_profiles"
 )
+FAILURE_CODES = frozenset({
+    "chunk_crosses_excluded_gap", "chunk_identity_mismatch", "chunk_text_hash_mismatch",
+    "chunk_text_mismatch", "connected_database_refused", "duplicate_record_ids",
+    "duplicate_record_urls", "input_hash_mismatch", "invalid_chunk_offset",
+    "invalid_import_batch", "invalid_test_database_url", "loaded_input_hashes_changed",
+    "missing_or_escaped_input", "missing_test_database_url", "non_test_database_refused",
+    "repeat_import_not_idempotent", "repeat_inputs_changed", "unexpected_first_import",
+    "unexpected_manifest_hash", "unexpected_paid_or_answer_activity", "unsafe_input_path",
+    "wrong_chunk_count", "wrong_gold_span_count", "wrong_gold_suite", "wrong_import_dataset",
+    "wrong_index_profile", "wrong_input_counts", "wrong_input_inventory", "wrong_record_counts",
+    "wrong_release_reference", "wrong_snapshot_counts", "wrong_source_data_version",
+})
 
 
 class VerificationError(RuntimeError):
@@ -169,6 +185,69 @@ def verify_snapshot(db, cases):
             "paid_activity": activity}
 
 
+def run_inputs_only(root: Path, report: dict):
+    """Verify the full fixed input inventory and construct a batch without a DB."""
+    root, hashes, cases = verify_inputs(root)
+    report.update(
+        input_hashes=hashes,
+        reference_sha256=hashlib.sha256(project_file(root, REFERENCE).read_bytes()).hexdigest(),
+        gold_sha256=hashlib.sha256(project_file(root, GOLD).read_bytes()).hexdigest(),
+    )
+    batch = load_native(
+        root, require_admissions=True, require_body_reviews=True, require_body_recoveries=True
+    )
+    require(batch.source_hashes == hashes, "loaded_input_hashes_changed")
+    require(not batch.rejected and len(batch.records) == 275, "invalid_import_batch")
+    counts = {
+        "stored": len(batch.records),
+        "countable": sum(record.countable for record in batch.records),
+        "retrievable": sum(record.retrievable for record in batch.records),
+    }
+    require(counts == {key: EXPECTED_COUNTS[key] for key in counts}, "wrong_input_counts")
+    unique_ids = len({record.record_id for record in batch.records})
+    unique_urls = len({record.url for record in batch.records})
+    require(unique_ids == len(batch.records), "duplicate_record_ids")
+    require(unique_urls == len(batch.records), "duplicate_record_urls")
+    require(all(record.dataset == "native" for record in batch.records), "wrong_import_dataset")
+    annotations = [annotation for record in batch.records for annotation in record.annotations]
+    previous = [
+        annotation for record in batch.records
+        for annotation in record.raw.get("previous_body_annotations", [])
+    ]
+    report.update(
+        counts=counts,
+        unique_record_ids=unique_ids,
+        unique_record_urls=unique_urls,
+        rejected=len(batch.rejected),
+        additional_candidates=len(batch.candidates),
+        historical_annotations={
+            "records_with_current_annotations": sum(bool(r.annotations) for r in batch.records),
+            "current_entries": len(annotations),
+            "entries_by_version": dict(Counter(a.get("version", "missing") for a in annotations)),
+            "nonempty_entries_by_version": dict(Counter(
+                a.get("version", "missing") for a in annotations if a.get("labels")
+            )),
+            "previous_body_records": sum(
+                bool(r.raw.get("previous_body_annotations")) for r in batch.records
+            ),
+            "previous_body_entries": len(previous),
+            "previous_body_entries_by_version": dict(Counter(
+                a.get("version", "missing") for a in previous
+            )),
+            "scope": "saved legacy annotations only; no CLAIMS2 publication or human approval",
+        },
+        development_contract={
+            "cases": len(cases),
+            "ready_cases": sum(case.status == "ready" for case in cases),
+            "ready_support_quotes": sum(
+                len(case.support_quote) for case in cases if case.status == "ready"
+            ),
+            "quote_location_validation": "not_evaluated",
+        },
+        status="passed",
+    )
+
+
 def run(root: Path, report: dict):
     root, hashes, cases = verify_inputs(root)
     report.update(input_hashes=hashes, gold_sha256=hashlib.sha256(project_file(root, GOLD).read_bytes()).hexdigest())
@@ -203,6 +282,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, type=Path, help="Unpacked release root containing the hash-pinned private inputs")
     parser.add_argument("--output", required=True, type=Path, help="New JSON report path; never overwrites an existing report")
+    parser.add_argument("--inputs-only", action="store_true",
+                        help="Verify source files and the native batch offline; no database or index")
     args = parser.parse_args(argv)
     # Reserve the output before clearing anything; an existing report fails safely.
     try:
@@ -211,24 +292,34 @@ def main(argv=None):
     except OSError:
         print("clean_import_output_unavailable", file=sys.stderr)
         return 1
-    report = {"snapshot_release": RELEASE, "package_version": version("ciss-observatory"),
+    report = {"snapshot_release": RELEASE, "package_version": None,
+              "mode": "inputs_only" if args.inputs_only else "database_reproduction",
               "status": "failed", "expected_source_data_version": EXPECTED_VERSION,
-              "expected_index_profile": LEGACY_PROFILE,
-              "version_contract": "historical source hash plus explicit legacy600-v1 reproduction",
-              "root": str(args.root.resolve()), "package_location": str(Path(observatory.__file__).resolve()),
-              "package_module_sha256": {
-                  p.name: digest(p.read_text(encoding="utf-8"))
-                  for p in sorted(Path(observatory.__file__).parent.glob("*.py"))
-              },
-              "database": "obs_test", "test_tables_cleared": False,
+              "expected_index_profile": None if args.inputs_only else LEGACY_PROFILE,
+              "version_contract": (
+                  "historical 0.2.3 input hashes and in-memory batch only; installed package reported separately"
+                  if args.inputs_only else "historical source hash plus explicit legacy600-v1 reproduction"
+              ),
+              "index": "not_evaluated" if args.inputs_only else "legacy600-v1_reproduction",
+              "root": str(args.root.resolve()),
+              "database": None if args.inputs_only else "obs_test", "test_tables_cleared": False,
               "historical_locator_reproduction": "not_applicable_current_snapshot_only",
               "human_semantic_acceptance": "not_evaluated"}
     try:
-        run(args.root, report)
+        report["package_version"] = version("ciss-observatory")
+        report["package_location"] = str(Path(observatory.__file__).resolve())
+        report["package_module_sha256"] = {
+            p.name: digest(p.read_text(encoding="utf-8"))
+            for p in sorted(Path(observatory.__file__).parent.glob("*.py"))
+        }
+        if args.inputs_only:
+            run_inputs_only(args.root, report)
+        else:
+            run(args.root, report)
     except Exception as exc:
         # Driver/parser errors can include connection details. Never serialize them.
-        report["error_type"] = type(exc).__name__
-        report["failure_code"] = str(exc) if isinstance(exc, VerificationError) else "verification_failed"
+        code = str(exc) if isinstance(exc, VerificationError) else "verification_failed"
+        report["failure_code"] = code if code in FAILURE_CODES else "verification_failed"
     finally:
         with stream:
             json.dump(report, stream, ensure_ascii=False, indent=2, default=str)
