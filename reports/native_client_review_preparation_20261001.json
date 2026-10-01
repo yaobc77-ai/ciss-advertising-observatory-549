@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-01T06:24:40.835260+00:00",
+  "scope": "Prepared private review material for previously used native examples; no client or semantic acceptance",
+  "status": "prepared_pending_human_review",
+  "packet_manifest_sha256": "1b2a51a1399201ffbc819f470d38f5545150d0c8466d6233ed235c51851382ca",
+  "files": [
+    {
+      "path": "cases.json",
+      "bytes": 59802,
+      "sha256": "50ee87be8010b358ce0deaad3752f9fc4e132c3ab77061050d836397bfbe4fa8"
+    },
+    {
+      "path": "decisions.csv",
+      "bytes": 894,
+      "sha256": "7e015eaee1190d1b49551a2729a707099747d4970270b5ee937920286730c9f9"
+    },
+    {
+      "path": "health-after.json",
+      "bytes": 510,
+      "sha256": "c930204f33f5a5cae13e0d434279e308083221d1be6f4d5487dd111f68af21b2"
+    },
+    {
+      "path": "health-before.json",
+      "bytes": 510,
+      "sha256": "c930204f33f5a5cae13e0d434279e308083221d1be6f4d5487dd111f68af21b2"
+    },
+    {
+      "path": "review.md",
+      "bytes": 22211,
+      "sha256": "c2b0321ed17d0f9239db729dfe30fc08042cff6d7924881569a173f1e38cb55e"
+    },
+    {
+      "path": "source-answer-receipt.json",
+      "bytes": 7961,
+      "sha256": "32bc90d3e1220190f7193c7907e9962d5f1e7c5c621e0b0d564b5002065e141d"
+    },
+    {
+      "path": "source-export-receipt.json",
+      "bytes": 5631,
+      "sha256": "12816be0796cf6ec22be40c1fb97922156f10638ebd7485d60d4ae4620096605"
+    },
+    {
+      "path": "source-native-records.csv",
+      "bytes": 124483,
+      "sha256": "d41d35bba53a7eb34b60e3a444497f0e4ec13454ebe123e300fae4d1334a6243"
+    },
+    {
+      "path": "source-responses/01374b51-3fae-5fe7-8c60-b4bffa2b7ba0.json",
+      "bytes": 4336,
+      "sha256": "d9ee154ae0a2cc59dd64e7fe7fc2a2cc2a19e2af5401d8f55a4e5b9848c18b3c"
+    },
+    {
+      "path": "source-responses/0d2b4bc2-4397-5604-8235-fcda8c7088f7.json",
+      "bytes": 3286,
+      "sha256": "b54ef6a8b3c3ac558ed974e1f6d01fd75afbafb57895d8c024438b2493e05db5"
+    }
+  ],
+  "metadata_tasks": [
+    {
+      "id": "native-review-01",
+      "records": 19,
+      "unknown_dates": 1,
+      "distribution": {}
+    },
+    {
+      "id": "native-review-02",
+      "records": 15,
+      "unknown_dates": 0,
+      "distribution": {
+        "The New York Times": 3,
+        "Business Insider": 5,
+        "The Washington Post": 5,
+        "The Wall Street Journal": 2
+      }
+    },
+    {
+      "id": "native-review-03",
+      "records": 18,
+      "unknown_dates": 2,
+      "distribution": {
+        "AFPM": 1,
+        "Southern Company": 2,
+        "API": 6,
+        "Chevron": 1,
+        "Shell": 2,
+        "Eni": 1,
+        "ExxonMobil": 5
+      }
+    },
+    {
+      "id": "native-review-04",
+      "records": 3,
+      "unknown_dates": 0,
+      "distribution": {}
+    }
+  ],
+  "saved_answer_runs": [
+    125,
+    126
+  ],
+  "exact_quotations_verified": 4,
+  "blank_human_review_rows": 6,
+  "snapshot": {
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "active_profile": "sentence600-v1"
+  },
+  "source_bindings_unchanged_during_preparation": true,
+  "application_at_preparation": {
+    "commit": "1d81503260732a9470524a60c7c78219519373cf",
+    "features": {
+      "claims_read_view": true,
+      "collection_graph": true,
+      "graph_breakdowns": true,
+      "research_agent": true
+    },
+    "version": "0.4.10"
+  },
+  "new_model_calls": 0,
+  "database_writes": 0,
+  "reviewer": null,
+  "approval": null,
+  "independent": false,
+  "approved_for_freeze": false,
+  "sent_to_client": false,
+  "existing_frozen_review_packet_modified": false,
+  "private_packet_path_not_published": true
+}

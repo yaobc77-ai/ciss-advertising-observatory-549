@@ -2,7 +2,7 @@
 
 This handoff preserves the current native source snapshot. It is separate from
 the public source archive, database backup and hosted attachment bundle.
-The application is 0.4.9; the unchanged source files follow the fixed 0.2.3
+The application is 0.4.10; the unchanged source files follow the fixed 0.2.3
 source contract. This does not recreate the current retrieval index or saved answers.
 
 ## Contents
@@ -61,6 +61,15 @@ After an offline pass, choose one documented data path:
   report before preparing the intended retrieval profile and embeddings.
 - To preserve old text versions, vectors, answers and the usage ledger, restore
   the complete database backup using [the recovery guide](current_handoff.md#a-restore-a-complete-database-copy).
+
+The [current-package full import rehearsal](../reports/NATIVE_FULL_IMPORT_20261001.en.md)
+used the installed 0.4.10 CLI and all fixed inputs in a new dedicated database.
+The first import created 275 versions; repeating it created none and retained
+275 unchanged records. The resulting counts were 275 stored, 263 countable and
+226 retrievable. Existing databases and private configuration stayed unchanged.
+This fresh import initializes `legacy600-v1` with 558 passages and no embeddings;
+it does not reproduce the production 556-passage `sentence600-v1` profile or
+saved answers. The test was performed by the same implementer on the same machine.
 
 Provision private configuration and mount the selected attachment bundle separately.
 Neither the ZIP nor the offline check transfers credentials or records customer approval.

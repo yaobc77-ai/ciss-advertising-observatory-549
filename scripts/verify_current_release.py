@@ -147,6 +147,45 @@ def verify_offline(directory):
             "fixture_chunk_manifest_sha256": sha256(json.dumps(chunks, sort_keys=True).encode())}
 
 
+def application_table_names():
+    """Guard the current migrations' unquoted tables and migration ledger."""
+    from observatory.migrations import discover_migrations
+
+    names = {"schema_migrations"}
+    for migration in discover_migrations():
+        for declaration in re.finditer(
+            r"\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?", migration.sql, re.IGNORECASE
+        ):
+            name = re.match(r"([a-z_][a-z0-9_]*)\s*\(", migration.sql[declaration.end():],
+                            re.IGNORECASE)
+            require(name is not None, "unsupported_migration_table_declaration")
+            names.add(name[1].lower())
+    require(len(names) > 1, "migration_table_inventory_missing")
+    return sorted(names)
+
+
+def require_no_public_application_relations(connection, names):
+    """Reject every same-name public relation before creating a test schema."""
+    conflicts = connection.execute(
+        "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace "
+        "WHERE n.nspname='public' AND c.relname=ANY(%s)", (names,),
+    ).fetchall()
+    require(not conflicts, "public_application_relation_conflict")
+
+
+def require_application_table_schema(connection, schema, names):
+    """Every unqualified application name must resolve to an ordinary test table."""
+    resolved = connection.execute(
+        "SELECT requested.name,n.nspname AS schema,c.relkind AS kind "
+        "FROM unnest(%s::text[]) AS requested(name) "
+        "LEFT JOIN pg_class c ON c.oid=to_regclass(quote_ident(requested.name)) "
+        "LEFT JOIN pg_namespace n ON n.oid=c.relnamespace", (names,),
+    ).fetchall()
+    require(len(resolved) == len(names) and {row["name"] for row in resolved} == set(names)
+            and all(row["schema"] == schema and row["kind"] == "r" for row in resolved),
+            "application_table_schema_mismatch")
+
+
 def verify_database(directory, url, database_name):
     import psycopg
     from psycopg import sql
@@ -159,6 +198,8 @@ def verify_database(directory, url, database_name):
     from observatory.models import Filters
 
     schema = "obs_release_" + uuid4().hex
+    tables = application_table_names()
+    tables_verified = False
     original = Database.connect
 
     def guarded(database, vector=False):
@@ -169,6 +210,9 @@ def verify_database(directory, url, database_name):
                     == database_name, "connected_database_refused")
             require(connection.execute("SELECT current_schema() AS name").fetchone()["name"]
                     == schema, "connected_schema_refused")
+            require_no_public_application_relations(connection, tables)
+            if tables_verified:
+                require_application_table_schema(connection, schema, tables)
             connection.commit()
             return connection
         except BaseException:
@@ -180,12 +224,17 @@ def verify_database(directory, url, database_name):
                 == database_name, "connected_database_refused")
         require(connection.execute("SELECT extname FROM pg_extension WHERE extname='vector'")
                 .fetchone() is not None, "test_database_vector_extension_missing")
+        require_no_public_application_relations(connection, tables)
         connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
     isolated_url = make_conninfo(url, options=f"-c search_path={schema},public")
     os.environ["OBS_DATABASE_URL"] = isolated_url
     Database.connect = guarded
     try:
         first_migration = run_cli("migrate")
+        db = Database(isolated_url)
+        with db.connect() as connection:
+            require_application_table_schema(connection, schema, tables)
+        tables_verified = True
         repeated = run_cli("migrate")
         require(first_migration["current_version"] == repeated["current_version"]
                 and not repeated["pending"], "migration_not_repeatable")
@@ -199,7 +248,6 @@ def verify_database(directory, url, database_name):
                     for year in (2025, 2026)]
         repeated_import = run_cli("import-records", directory / "fixture-2026.jsonl",
                                   "--dataset", "native", "--out", "")
-        db = Database(isolated_url)
         require({row["record_id"] for row in db.public_rows(Filters())}
                 == {"release-fixture:2025", "release-fixture:2026"}, "cross_year_upsert_failed")
         require(not any(item["deactivated"] for item in imported)
@@ -226,6 +274,7 @@ def verify_database(directory, url, database_name):
             require(not any(counts.values()), "unexpected_model_or_answer_data")
             status = migration_status(connection)
         return {"database": database_name, "schema_isolated": True, "migration_version": status["current_version"],
+                "public_application_relations_absent": True, "resolved_application_tables": len(tables),
                 "cross_year_records": 2, "repeat_unchanged": repeated_import["unchanged"],
                 "health": db.health(), "sentence_chunks_located": len(chunks),
                 "missing_embeddings": prepared["missing_embeddings"],

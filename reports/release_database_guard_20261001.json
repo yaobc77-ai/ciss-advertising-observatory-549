@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-10-01T06:46:41.878650+00:00",
+  "status": "passed_focused_database_isolation_guard_check",
+  "scope": "Maintenance verifier and targeted guard regression tests only",
+  "files_sha256": {
+    "scripts/verify_current_release.py": "f40163726507b0d48d9110026e26cc83965e54caa2f33e52b9433c08f0dc6dfa",
+    "tests/test_release_reproduction.py": "af1f04dcadc6e76e30cc70ec58155c7976147f34b9c4ea479ce4d98d753abf07",
+    "docs/CURRENT_RELEASE_REPRODUCTION.md": "7d0107d7c91db2595e9af56bb1a8036fd05e6cff4f3a5cdb0f09546e83dc9c87",
+    "english/scripts/verify_current_release.py": "f40163726507b0d48d9110026e26cc83965e54caa2f33e52b9433c08f0dc6dfa",
+    "english/tests/test_release_reproduction.py": "af1f04dcadc6e76e30cc70ec58155c7976147f34b9c4ea479ce4d98d753abf07"
+  },
+  "tests": {
+    "passed": 37,
+    "selection": "tests/test_release_reproduction.py"
+  },
+  "ruff": "passed_source_and_english_script_and_test",
+  "commands": [
+    {
+      "name": "pytest",
+      "exit_code": 0,
+      "stdout_sha256": "6c679464147e093900daca93c051cc37e8347785ff0c87724d646ccefa31c98b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ruff",
+      "exit_code": 0,
+      "stdout_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "same_name_public_relation_preflight": "before_schema_creation_and_each_application_connection",
+  "post_migration_table_resolution": "every_expected_name_in_target_schema_as_ordinary_table_before_repeat_and_fixture",
+  "migration_table_inventory": 21,
+  "unsupported_table_declarations_refused": true,
+  "real_read_only_preflight": {
+    "database_role": "existing_dedicated_test_database",
+    "transaction_read_only": "on",
+    "expected_refusal": "public_application_relation_conflict",
+    "same_name_public_relations": 15,
+    "read_statements": 4,
+    "sql_write_attempts": 0
+  },
+  "full_fixture_database_script_run": false,
+  "database_writes": 0,
+  "old_database_written": false,
+  "main_database_connected": false,
+  "preserved_import_database_connected": false,
+  "private_configuration_unchanged": true,
+  "model_calls": 0,
+  "public_code_version_or_migrations_changed": false,
+  "english_script_and_test_byte_identical": true,
+  "english_doc_not_added": true,
+  "not_demonstrated": [
+    "Protection against unrelated concurrent DDL",
+    "Independent implementer handoff",
+    "Actual successful synthetic migration/import after the guard change"
+  ],
+  "prior_full_source_import_receipt_unchanged": true
+}

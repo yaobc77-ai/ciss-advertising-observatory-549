@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "status": "passed_same_implementer_complete_source_import",
+  "checked_at_utc": "2026-10-01T06:32:42.482278+00:00",
+  "scope": "Installed 0.4.10 complete native input first/repeat CLI import into a new dedicated database",
+  "package_version": "0.4.10",
+  "source_revision": "c949b797ece83d7e31b586e2b9082b62ffa290d2",
+  "wheel_sha256": "1de41b46eda3dbfed74fb7d3115a1f8696d6d93d2d30df16ff01bc7d741c39cd",
+  "dependencies_sha256": "8645f6fa931549d02cc0ff8e4fffc47e684a3d93cfec421a564c5fbd22b0c5f9",
+  "all_input_payload_hashes_verified": true,
+  "input_payload_count": 12,
+  "public_collision_tables_found": 15,
+  "unsafe_random_schema_route_refused": true,
+  "new_unique_dedicated_database_created": true,
+  "installed_cli_commands": [
+    {
+      "label": "migration",
+      "exit_code": 0,
+      "guards": {
+        "guarded_database_connections": 2,
+        "forbidden_network_attempts": 0,
+        "model_client_attempts": 0
+      }
+    },
+    {
+      "label": "import-first",
+      "exit_code": 0,
+      "guards": {
+        "guarded_database_connections": 1,
+        "forbidden_network_attempts": 0,
+        "model_client_attempts": 0
+      }
+    },
+    {
+      "label": "import-repeat",
+      "exit_code": 0,
+      "guards": {
+        "guarded_database_connections": 1,
+        "forbidden_network_attempts": 0,
+        "model_client_attempts": 0
+      }
+    }
+  ],
+  "migration": {
+    "current_version": 3,
+    "pending": [],
+    "migrations": [
+      {
+        "version": 1,
+        "name": "0001_baseline.sql",
+        "checksum": "c9983b6e73c316979011babd053c2b699f7d31a50e8a129437322c905a5b980e",
+        "status": "applied"
+      },
+      {
+        "version": 2,
+        "name": "0002_dashboard_indexes.sql",
+        "checksum": "75aa9c636624b0cdcfd639876239ca535f277677287c122f4d807e8aeb404ec7",
+        "status": "applied"
+      },
+      {
+        "version": 3,
+        "name": "0003_claims2_results.sql",
+        "checksum": "9b3e68e18ef364868f56c3a461f05857e91c979874220efe5a8f33c706d953f2",
+        "status": "applied"
+      }
+    ]
+  },
+  "first_import": {
+    "input_records": 275,
+    "new_versions": 275,
+    "unchanged": 0,
+    "rejected": 0
+  },
+  "repeat_import": {
+    "input_records": 275,
+    "new_versions": 0,
+    "unchanged": 275,
+    "rejected": 0
+  },
+  "counts": {
+    "stored": 275,
+    "countable": 263,
+    "retrievable": 226
+  },
+  "active_records": 275,
+  "record_identity_and_current_text_versions_match_source": true,
+  "repeat_ids_versions_flags_unchanged": true,
+  "all_immutable_data_and_current_state_rows_unchanged_on_repeat": true,
+  "repeat_import_adds_one_audit_entry": true,
+  "retrieval_preparation_timestamp_may_advance": true,
+  "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+  "active_profile": "legacy600-v1",
+  "stored_chunks": 558,
+  "chunk_and_body_hash_locations_valid": true,
+  "new_database_table_counts": {
+    "public.annotations": 534,
+    "public.answer_runs": 0,
+    "public.chunk_profile_membership": 558,
+    "public.chunks": 558,
+    "public.claims2_imports": 0,
+    "public.claims2_results": 0,
+    "public.claims2_retractions": 0,
+    "public.claims2_reviews": 0,
+    "public.claims2_runs": 0,
+    "public.claims2_taxonomies": 0,
+    "public.embeddings": 0,
+    "public.generation_outputs": 0,
+    "public.imports": 2,
+    "public.record_versions": 275,
+    "public.records": 275,
+    "public.retrieval_preparations": 1,
+    "public.retrieval_profiles": 1,
+    "public.retrieval_publications": 0,
+    "public.retrieval_state": 1,
+    "public.schema_migrations": 3,
+    "public.usage_ledger": 0
+  },
+  "model_calls": 0,
+  "model_client_attempts": 0,
+  "non_database_network_attempts": 0,
+  "model_fees_usd": 0,
+  "new_database_writes_performed": true,
+  "new_database_preserved": true,
+  "existing_databases": {
+    "observatory": {
+      "tables": 21,
+      "full_snapshot_sha256": "ab7a1e09a22b7c2b0525a3514da8c468bde4f005612b8f90db9abd707b176290",
+      "read_only_before_after_equal": true
+    },
+    "obs_test": {
+      "tables": 15,
+      "full_snapshot_sha256": "a4bc4f2cad8820e8280bf0de1a4b98ddf89723f0bcb2ed54e7482532fd1c43ad",
+      "read_only_before_after_equal": true
+    }
+  },
+  "private_configuration_unchanged": true,
+  "private_receipt": {
+    "file": "private-receipt.json",
+    "sha256": "5febd2db4a70d3907fe4d78738938c9954aad1ddb56f38f5897017132417b5c6",
+    "bytes": 845762
+  },
+  "not_demonstrated": [
+    "Current sentence600-v1 556-chunk production index reproduction",
+    "Embedding/vector generation or restore",
+    "Saved answer and usage history recovery",
+    "End-to-end model RAG",
+    "Another implementer or another machine",
+    "Real social data",
+    "Approved CLAIMS2 publication",
+    "Independent semantic or customer acceptance"
+  ]
+}
