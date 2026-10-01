@@ -1,5 +1,7 @@
 # Native advertising demonstration — 0.4.9
 
+Published 0.4.10: [CI, installed artifact, live version and selected attachment checks](../reports/citation_v0_4_10_publication_20261001.json). The application code and tests now match across the two repositories. These engineering checks do not complete independent or dual-dataset acceptance.
+
 Latest follow-up: [matrix, labels, article graph and two live content answers](../reports/NATIVE_DEMO_FOLLOWUP_20261001.en.md). The 0.4.10 display correction makes each Citation number visible beside every quoted passage. These later observations supplement the original check boundaries below; the PDF browser download was blocked by Edge and remains unresolved.
 
 Prepared: 1 October 2026. **Draft for native-data review. This is not final project acceptance or the final demonstration of both datasets.**

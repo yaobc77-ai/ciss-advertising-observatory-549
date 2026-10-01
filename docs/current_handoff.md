@@ -1,5 +1,7 @@
 # Current project handoff
 
+Published 0.4.10: [CI, installed artifact, live version and selected attachment checks](../reports/citation_v0_4_10_publication_20261001.json). The application code and tests now match across the two repositories. These engineering checks do not complete independent or dual-dataset acceptance.
+
 The **0.4.10** display correction shows every cited quotation with its original answer number and separates citation numbers from retrieval ranks. The [current native follow-up](../reports/NATIVE_DEMO_FOLLOWUP_20261001.en.md) records matrix, historical-label and article-mode checks, two actual paid development answers, the saved-answer display check and the unresolved Edge PDF download. Independent and dual-dataset acceptance remain pending.
 
 The [current native demonstration](../deliverables/native_demo_v0_4_9.en.md) now accompanies a [private input handoff guide](native_source_handoff.md). The [1 October check](../reports/NATIVE_HANDOFF_20261001.en.md) records an offline, installed-package rehearsal of all fixed native inputs and selected current graph/date/source interactions. The [publication receipt](../reports/native_handoff_publication_20261001.json) binds both successful CI runs (1,926 passed), source archives and the deployed follow-up. This is a same-implementer rehearsal; independent reproduction and final dual-dataset/client acceptance remain pending.

@@ -26,6 +26,9 @@ The display now preserves every valid **Citation [n]** next to its exact quotati
 
 The focused source suite passed **60 tests**, including seven new checks. Ruff passed. A local browser rendered the actual saved live answers with both quotations visible on the correct cards; it made no new model or database calls. This saved-answer display check is separate from the two preceding live generations. Publication and installed-artifact checks are recorded separately when available.
 
+
+Publication: the [0.4.10 receipt](citation_v0_4_10_publication_20261001.json) binds both successful CI runs (1,936 passed each), a fresh installed-wheel run (1,936 passed), the deployed application commit, unchanged source/index versions, selected attachment HTTP checks and verified code archives. Query and the selected PDF preview were opened after deployment. No additional live generation was performed for the display correction.
+
 ## Remaining decisions and checks
 
 Real social and cross-collection examples, reviewed CLAIMS2 publication, independent frozen questions and human/client review remain TODOs. Browser PDF download, other export modes and another implementer's reproduction are still unaccepted. Do not replace the final two-dataset demonstration with these native development checks.
