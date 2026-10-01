@@ -69,3 +69,5 @@ independent answer/client review remain pending.
 
 The [1 October handoff check](../reports/NATIVE_HANDOFF_20261001.en.md)
 records the actual private ZIP, installed-package rehearsal and selected hosted UI observations.
+The [publication receipt](../reports/native_handoff_publication_20261001.json)
+provides the two source commits, successful CI and separately verified source ZIP hashes.

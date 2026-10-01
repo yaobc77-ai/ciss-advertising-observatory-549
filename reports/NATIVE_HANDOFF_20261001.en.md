@@ -4,6 +4,10 @@ Checked 1 October 2026. [Machine receipt](native_handoff_20261001.json) ·
 [Input instructions](../docs/native_source_handoff.md) ·
 [Current demonstration script](../deliverables/native_demo_v0_4_9.en.md)
 
+[Publication receipt](native_handoff_publication_20261001.json): both repositories'
+installed-wheel CI passed 1,926 tests. Railway deployed the source follow-up and the
+selected attachment HTTP checks passed. Source/index identities remained unchanged.
+
 ## Source input rehearsal
 
 The private `native-inputs-20261001.zip` contains 12 payload files and two inventory
