@@ -846,22 +846,35 @@ def _coverage_notice(diagnostics):
 
 def _evidence_cards(evidence, enabled, citations=()):
     citation_quotes = {}
-    for citation in citations:
+    for number, citation in enumerate(citations, start=1):
         citation = _mapping(citation)
-        citation_quotes.setdefault(citation.get("evidence_id"), []).append(
-            str(citation.get("quote") or "")
-        )
+        evidence_id = citation.get("evidence_id")
+        quote = citation.get("quote")
+        if isinstance(evidence_id, str) and evidence_id and isinstance(quote, str):
+            citation_quotes.setdefault(evidence_id, []).append((number, quote))
     cards = []
     for rank, value in enumerate(evidence, start=1):
         item = _mapping(value)
         passage = str(item.get("text") or "")
         supported = [
-            quote
-            for quote in citation_quotes.get(item.get("evidence_id"), [])
-            if quote and quote in passage
+            (number, quote)
+            for number, quote in citation_quotes.get(item.get("evidence_id"), [])
+            if quote.strip() and quote in passage
         ]
-        excerpt = supported[0] if supported else passage
-        excerpt = excerpt[:520] + ("…" if len(excerpt) > 520 else "")
+        if supported:
+            quote_blocks = [
+                html.Div(
+                    [
+                        html.Span(f"Citation [{number}]", className="evidence-code"),
+                        html.Blockquote(quote),
+                    ],
+                    className="citation-quote",
+                )
+                for number, quote in supported
+            ]
+        else:
+            excerpt = passage[:520] + ("…" if len(passage) > 520 else "")
+            quote_blocks = [html.Blockquote(excerpt)]
         cards.append(
             html.Article(
                 [
@@ -874,7 +887,7 @@ def _evidence_cards(evidence, enabled, citations=()):
                                 className="dataset-chip",
                             ),
                             html.Span(
-                                f"Result {rank}",
+                                f"Retrieval rank {rank}",
                                 className="evidence-code",
                             ),
                         ],
@@ -901,7 +914,7 @@ def _evidence_cards(evidence, enabled, citations=()):
                         else "Ordered by retrieval relevance; rank is not a confidence score.",
                         className="match-note",
                     ),
-                    html.Blockquote(excerpt),
+                    *quote_blocks,
                     html.Details(
                         [
                             html.Summary("Read retrieved passage"),
