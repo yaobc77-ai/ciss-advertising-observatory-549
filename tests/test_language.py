@@ -322,3 +322,37 @@ def test_validation_passes_selected_titles_without_exempting_generated_quotes():
 def test_fully_quoted_foreign_claim_is_still_checked():
     claim = "“El anuncio menciona la captura y almacenamiento de carbono como una solución para reducir emisiones.”"
     assert check_claim_languages([claim], language_hint(ENGLISH_QUESTION))["status"] == "mismatch"
+
+
+REPETITIVE_ENGLISH_CLAIMS = [
+    "The advertisement “CCUS, the industry that will change industry” mentions carbon capture and storage technologies.",
+    "The advertisement “Creating a Net-Zero World” mentions innovations in carbon capture, utilization and storage.",
+    "The advertisement “Can R&D solve the daunting challenges of taking carbon out of the equation?” mentions carbon capture, utilization and storage technology.",
+    "The advertisement “Embracing Net Zero Carbon Emissions Aspirations” mentions carbon capture and storage as an emissions-abatement solution.",
+    "The advertisement “Moving Toward Net Zero Carbon Emissions” mentions carbon capture and storage.",
+    "The advertisement “Moving Toward Net Zero Carbon Emissions” mentions pursuing carbon capture and storage to reduce emissions.",
+]
+
+
+def test_joined_repetitive_english_claims_are_not_rejected_as_latin():
+    # Recorded 2026-10-01: each claim English, joined title-free text read as Latin.
+    titles = [claim.split("“")[1].split("”")[0] for claim in REPETITIVE_ENGLISH_CLAIMS]
+    target = language_hint("How many ads mention carbon capture?")
+    result = check_claim_languages(REPETITIVE_ENGLISH_CLAIMS, target, source_titles=titles)
+    assert result["status"] == "match"
+
+
+def test_one_switched_claim_among_english_claims_is_still_a_mismatch():
+    claims = [*REPETITIVE_ENGLISH_CLAIMS[:3],
+              "El anuncio menciona la captura y el almacenamiento de carbono como una solución para reducir emisiones."]
+    target = language_hint("How many ads mention carbon capture?")
+    assert check_claim_languages(claims, target)["status"] == "mismatch"
+
+
+def test_short_inconclusive_claims_fall_back_to_the_joined_text():
+    claims = ["Shell: CCS.", "BP: hydrogen.", "Eni: biofuels."]
+    result = check_claim_languages(claims, language_hint(ENGLISH_QUESTION))
+    assert all(h["code"] is None for h in result["claims"])
+    combined = result["combined"]["code"]
+    expected = "inconclusive" if combined is None else ("match" if combined == "en" else "mismatch")
+    assert result["status"] == expected

@@ -9,7 +9,7 @@ from lingua import LanguageDetectorBuilder
 # receive high detector scores (e.g. CCS -> Hungarian), so they stay inconclusive.
 MIN_LETTERS = 20
 MIN_MARGIN = 0.20
-POLICY_VERSION = "lingua-2.2.0-min20-margin0.20-v3"
+POLICY_VERSION = "lingua-2.2.0-min20-margin0.20-v4"
 
 # Only exact titles from the selected evidence can be omitted from detection.
 # Quotation marks alone do not establish that text came from a source.
@@ -78,9 +78,16 @@ def check_claim_languages(texts, target, *, source_titles=()):
     audit["title_spans_ignored"] = sum(item[2] for item in parsed)
     audit["claims"] = [language_hint(text) for text in prose]
     audit["combined"] = language_hint("\n".join(prose))
-    hints = [*audit["claims"], audit["combined"], *audit["quoted_prose"]]
-    if any(h["code"] and h["code"] != target["code"] for h in hints):
+    # Each claim is judged on its own; the joined text only decides when no
+    # claim is conclusive. Under v3 six English claims of the form "The
+    # advertisement mentions carbon capture..." were joined into text that
+    # lingua read as Latin (margin 0.9997), rejecting a correct answer.
+    own = [*audit["claims"], *audit["quoted_prose"]]
+    combined = audit["combined"]
+    if any(h["code"] and h["code"] != target["code"] for h in own):
         audit["status"] = "mismatch"
-    elif texts and all(h["code"] == target["code"] for h in hints):
+    elif texts and all(h["code"] == target["code"] for h in own):
         audit["status"] = "match"
+    elif not any(h["code"] for h in own) and combined["code"]:
+        audit["status"] = "match" if combined["code"] == target["code"] else "mismatch"
     return audit
