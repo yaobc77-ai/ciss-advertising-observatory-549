@@ -1,6 +1,6 @@
 # Current project handoff
 
-The **0.4.9** query update adds record pagination inside statistics answers. It keeps the full submitted selection, browses the percentage numerator and makes no model calls while paging. Both question routes and every page check source identity; stale or unverified results require resubmission. The [query browsing report](../reports/QUERY_V0_4_9_20261001.en.md) and [engineering receipt](../reports/query_v0_4_9_engineering_20261001.json) record the checks. A source-noted duplicate candidate remains pending a counting-unit decision; no data or admission rules changed.
+The **0.4.9** query update adds record pagination inside statistics answers. It keeps the full submitted selection, browses the percentage numerator and makes no model calls while paging. Both question routes and every page check source identity; stale or unverified results require resubmission. The [query browsing report](../reports/QUERY_V0_4_9_20261001.en.md) and [engineering receipt](../reports/query_v0_4_9_engineering_20261001.json) record the checks. The [publication receipt](../reports/query_v0_4_9_publication_20261001.json) binds successful CI, hosted pagination, selected assets and source archives. A source-noted duplicate candidate remains pending a counting-unit decision; no data or admission rules changed.
 
 The **0.4.8** query update adds database percentages with an explicit current-selection denominator, shared publisher aliases, sanitized limit messages, and source-bound title handling in the answer language check. Its [query verification report](../reports/QUERY_V0_4_8_20261001.en.md) separates development regression checks from independent semantic and client acceptance. The [publication receipt](../reports/query_v0_4_8_publication_20261001.json) binds both successful CI runs, production health, selected attachment checks and verified source archives. Earlier recovery and source-review receipts below retain their original versions.
 
@@ -294,7 +294,7 @@ configuration and backups require their separate private transfer.
 - Have another implementer reproduce setup, migration/import or full restore, engineering checks and the demonstrated UI flows.
 - Integrate the approved CLAIMS outputs with explicit record/text-version, taxonomy-version and source-evidence bindings; this scheduled work is not implemented by the historical labels.
 - Deferred TODO: reconcile the real social dataset and run both social and cross-collection acceptance cases after the client export becomes available.
-- Obtain the client decisions on company identity, CERAWeek, historical label meaning and useful filters/visualizations.
+- Obtain the client decisions on company identity, CERAWeek, historical label meaning and useful filters/visualizations. Confirm the counting unit (source records or distinct landing pages/articles) before merging the source-noted New York Times/BP duplicate candidate.
 - Deferred TODO: complete frozen human answer review and client usability review when the customer review materials become available; keep failures visible.
 - Present the current implemented features and their explicit TODOs. The final two-dataset demonstration and client handoff acceptance follow the outstanding materials; the old 0.2.2 presentation is an earlier research preview.
 
