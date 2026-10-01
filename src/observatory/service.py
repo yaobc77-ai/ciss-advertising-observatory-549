@@ -377,7 +377,11 @@ class Service:
         downstream_cost = 0.0
         version = "unavailable"
         try:
-            version = self.db.health()["data_version"]
+            before = self.health()
+            candidate_version = before.get("data_version")
+            if before.get("status") != "ok" or not isinstance(candidate_version, str) or not candidate_version or candidate_version == "unavailable":
+                raise ValueError("A healthy source version is required for question tools")
+            version = candidate_version
             catalog = ToolCatalog(self, filters)
             agent = self.research_agent or ResearchAgent(self.rag, catalog)
             run = agent.run(question, filters, visitor)
@@ -413,11 +417,16 @@ class Service:
                     answer="Question understanding is temporarily unavailable. Browse the collection or use keyword search.",
                 )
             downstream_cost = result.cost_usd
-            if self.db.health()["data_version"] != version:
+            after = self.health()
+            if after.get("status") != "ok" or after.get("data_version") != version:
                 result = Answer(status="service_unavailable", answer_mode="tools",
                                 failure_reason="data_changed_during_tool_research",
                                 answer="The collection changed while processing this question. Please submit it again.",
                                 cost_usd=result.cost_usd)
+            elif result.answer_mode == "statistics" and result.structured_result is not None:
+                # Bind later record pagination to the same source snapshot that
+                # passed the query's before/after guard, not a model-supplied ID.
+                result.structured_result = {**result.structured_result, "data_version": version}
             result.cost_usd += run.cost_usd
             result.research_trace = run.audit()
         except Exception as exc:
@@ -521,11 +530,26 @@ class Service:
                 if current_count else plan_question(question, filters, {}))
         if plan is not None:
             try:
-                if not current_count and plan.status != "unsupported":
+                if plan.status == "unsupported":
+                    return Answer(status="insufficient_evidence", answer_mode="clarification", answer=plan.message)
+                before = self.health()
+                version = before.get("data_version")
+                if before.get("status") != "ok" or not isinstance(version, str) or not version or version == "unavailable":
+                    raise ValueError("A healthy source version is required for statistics")
+                if not current_count:
                     plan = plan_question(question, filters, self.facets(filters.dataset))
                 if plan.status != "ready":
                     return Answer(status="insufficient_evidence", answer_mode="clarification", answer=plan.message)
                 result = self._statistics_answer(plan)
+                after = self.health()
+                if after.get("status") != "ok" or after.get("data_version") != version:
+                    result = Answer(
+                        status="service_unavailable", answer_mode="statistics",
+                        failure_reason="data_changed_during_statistics",
+                        answer="The collection changed while processing this question. Please submit it again.",
+                    )
+                else:
+                    result.structured_result = {**result.structured_result, "data_version": version}
             except Exception:
                 log.warning("Statistics answer unavailable")
                 result = Answer(

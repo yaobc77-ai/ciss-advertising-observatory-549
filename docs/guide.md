@@ -7,6 +7,7 @@
 - Use **Overview** for the company–outlet matrix, annual counts, and historical label distributions. Unknown dates are reported separately.
 - Use **Records** to open article details, stored text, and available original or archived sources. Export the selected records or grouped counts as CSV.
 - Open **Query** for keyword search or generated answers. Generated answers can use database tools for statistics and retrieved passages for content questions. Check the cited sources when interpreting an advertising claim.
+- For counts, publisher/sponsor lists and percentages, open **Inspect matching records** and use **Previous**, **Next** or **First page**. Paging preserves the submitted selection and makes no model calls. Editing filters does not change a saved answer; submit a new question to apply them. A collection update requires a new query.
 
 The social collection remains unavailable until its client dataset is imported. CLAIMS2 import and read-only views are implemented; real results still await reviewed publication. Historical labels record earlier annotations and remain separate from CLAIMS2 evidence.
 

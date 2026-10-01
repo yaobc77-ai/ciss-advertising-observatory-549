@@ -35,6 +35,10 @@ class StatisticsOnlyDB:
         self.facet_calls = []
         self.dashboard_calls = []
         self.forbidden_calls = []
+        self.version = "source-v1"
+
+    def health(self):
+        return {"status": "ok", "data_version": self.version}
 
     def facets(self, dataset):
         self.facet_calls.append(dataset)
@@ -115,6 +119,7 @@ def test_customer_questions_use_complete_record_statistics(question, kind, expec
     assert answer.answer_mode == "statistics"
     assert answer.structured_result["kind"] == kind
     assert answer.structured_result["collections"][0]["total"] == expected
+    assert answer.structured_result["data_version"] == db.version
     assert answer.cost_usd == 0
     assert not answer.evidence and not answer.citations
     assert not db.forbidden_calls and not rag.calls
@@ -263,6 +268,47 @@ def test_current_selection_count_does_not_require_entity_facets(rows):
     assert answer.status == "answered"
     assert answer.structured_result["collections"][0]["total"] == 1
     assert not db.facet_calls and not db.forbidden_calls and not rag.calls
+
+
+@pytest.mark.parametrize("during", ["facets", "dashboard"])
+def test_statistics_source_change_discards_old_answer_even_if_total_is_unchanged(rows, during):
+    service, db, rag = statistics_service(rows)
+    original = getattr(db, during)
+
+    def change(*args, **kwargs):
+        result = original(*args, **kwargs)
+        db.version = "source-v2"
+        return result
+
+    setattr(db, during, change)
+    answer = service.answer("How many native ads from NYT?", Filters(), "visitor")
+    assert answer.status == "service_unavailable"
+    assert answer.failure_reason == "data_changed_during_statistics"
+    assert "submit it again" in answer.answer
+    assert answer.structured_result is None and not answer.evidence and not answer.citations
+    assert not db.forbidden_calls and not rag.calls and answer.cost_usd == 0
+
+
+@pytest.mark.parametrize("health", [
+    {}, {"status": "unavailable", "data_version": "source-v1"},
+    {"status": "ok", "data_version": ""}, {"status": "ok", "data_version": "unavailable"},
+    {"status": "ok", "data_version": None},
+])
+def test_statistics_without_healthy_source_identity_cannot_publish(rows, health):
+    service, db, rag = statistics_service(rows)
+    db.health = lambda: health
+    answer = service.answer("How many records?", Filters(), "visitor")
+    assert answer.status == "service_unavailable" and answer.structured_result is None
+    assert not db.dashboard_calls and not db.facet_calls and not rag.calls
+
+
+def test_statistics_health_loss_after_query_discards_result(rows):
+    service, db, rag = statistics_service(rows)
+    health = iter([db.health(), {"status": "unavailable", "data_version": db.version}])
+    db.health = lambda: next(health)
+    answer = service.answer("How many records?", Filters(), "visitor")
+    assert answer.failure_reason == "data_changed_during_statistics"
+    assert answer.structured_result is None and not rag.calls
 
 
 def test_semantic_answer_preserves_paid_evidence_route():

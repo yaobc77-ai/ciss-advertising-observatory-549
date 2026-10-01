@@ -593,14 +593,13 @@ def _search_context(question, filters):
     )
 
 
-def _statistics_card(result, links_enabled):
-    """Display complete SQL categories and bounded example record references."""
-    from observatory.network_ui import record_cards
+def _statistics_card(result, links_enabled, service):
+    """Display complete SQL categories and all records through scoped paging."""
+    from observatory.query_records import statistics_records_panel
 
     data = result["structured_result"]
     collections = data.get("collections", [])
     groups = data.get("groups", [])
-    records = data.get("records", [])
     names = {"native": "Native ad records", "social": "Social ad records"}
     model_query = bool(result.get("research_trace"))
     is_share = data.get("kind") == "share"
@@ -650,13 +649,7 @@ def _statistics_card(result, links_enabled):
         html.Ul([html.Li(note) for note in notes + data.get("scope_notes", [])], className="scope-note"),
         html.P("Computed from all eligible stored records in this selection, including records without searchable text. Native articles and social posts are separate units. These are collection counts, not a census of all advertising.", className="scope-note"),
     ])
-    if records:
-        total = sum(item["total"] for item in collections)
-        sections.append(html.Details([
-            html.Summary(f"Inspect matching records · showing {len(records):,} of {total:,}"),
-            *record_cards(records, links_enabled),
-            dcc.Link("Explore the full collection →", href="/data"),
-        ], className="statistics-records"))
+    sections.append(statistics_records_panel(data, service, links_enabled))
     sections.append(_research_steps(result))
     return html.Div(sections, className="answer-card statistics-answer")
 
@@ -1423,6 +1416,12 @@ def create_app(service, settings, record_details=None) -> Dash:
         )
 
     app.layout = layout
+    from observatory.query_records import register_query_records, validation_panel
+
+    # Answer-specific record controls appear only after a statistics answer.
+    # Keep strict callback validation while declaring those dynamic components.
+    app.validation_layout = html.Div([layout(), validation_panel()])
+    register_query_records(app, service, enabled)
 
     @app.callback(
         Output("query-page", "hidden"),
@@ -1953,7 +1952,7 @@ def create_app(service, settings, record_details=None) -> Dash:
             )
             if result.get("answer_mode") == "statistics" and result.get("structured_result"):
                 effective = Filters.model_validate(result["structured_result"]["filters"])
-                return [_search_context(question, effective), _statistics_card(result, enabled)]
+                return [_search_context(question, effective), _statistics_card(result, enabled, service)]
             if result.get("answer_mode") == "tools" and result.get("structured_result"):
                 effective = Filters.model_validate(result["structured_result"].get("filters") or filters.model_dump())
                 return [_search_context(question, effective), _tools_card(result, enabled)]

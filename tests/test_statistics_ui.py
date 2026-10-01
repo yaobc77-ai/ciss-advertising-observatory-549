@@ -21,6 +21,7 @@ def statistics_ui():
 def structured_answer(service, group_by=None, groups=None, **updates):
     data = {
         "intent": "outlet_count" if group_by is None else "company_publishers",
+        "data_version": service.health()["data_version"],
         "filters": {"dataset": "native", "publishers": ["The New York Times"], "include_unknown_dates": False},
         "group_by": group_by,
         "collections": [{"dataset": "native", "total": 28, "retrievable": 20, "unknown_dates": 0}],
@@ -111,7 +112,9 @@ def test_matching_record_inspection_is_collapsed_and_has_working_detail_links(st
     assert "showing 1 of 28" in json.dumps(details)
     links = [node["props"] for node in component_tree(details) if node["type"] in ("A", "Link")]
     assert any(link.get("href") == "/records/native-a" and link.get("children") == "A capture proposal" for link in links)
-    assert any(link.get("href") == "/data" for link in links)
+    assert not any(link.get("href") == "/data" for link in links)
+    controls = {node["props"].get("id") for node in component_tree(details)}
+    assert {"query-records-prev", "query-records-next", "query-records-reset", "query-records-scope"} <= controls
     assert SECRET not in json.dumps(details)
 
 
@@ -125,8 +128,10 @@ def test_dual_collection_totals_keep_native_and_social_units_visible(statistics_
     assert "Native ad records: 263 eligible" in rendered
     assert "Social ad records: 0 eligible" in rendered
     assert "Native articles and social posts are separate units" in rendered
-    assert not any(node["type"] == "Details" and node["props"].get("className") == "statistics-records"
-                   for node in component_tree(response))
+    browser = next(node for node in component_tree(response)
+                   if node["type"] == "Details" and node["props"].get("className") == "statistics-records")
+    collection = next(node for node in component_tree(browser) if node["props"].get("id") == "query-records-collection")
+    assert [option["value"] for option in collection["props"]["options"]] == ["native"]
 
 
 def test_share_displays_actual_percentage_and_explicit_parent_scope(statistics_ui):

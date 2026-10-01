@@ -41,6 +41,8 @@ Dashboard browsing and keyword search do not call a language model. Generated an
 
 Query also answers percentages of the current selection using exact database counts. Each answer shows the matching records, denominator and percentage separately for each collection. Change the page filters first when a different denominator is needed; an empty selection has no defined percentage.
 
+Open **Inspect matching records** to browse all records behind a count, list or percentage. Previous, Next and First page keep the submitted selection and make no model calls. Submit again after changing the question or filters; if the collection changes, the application asks for a new query.
+
 ## Run locally
 
 Use Python 3.12 or 3.13, uv, and a PostgreSQL database with pgvector.

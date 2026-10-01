@@ -1,5 +1,7 @@
 # Current project handoff
 
+The **0.4.9** query update adds record pagination inside statistics answers. It keeps the full submitted selection, browses the percentage numerator and makes no model calls while paging. Both question routes and every page check source identity; stale or unverified results require resubmission. The [query browsing report](../reports/QUERY_V0_4_9_20261001.en.md) and [engineering receipt](../reports/query_v0_4_9_engineering_20261001.json) record the checks. A source-noted duplicate candidate remains pending a counting-unit decision; no data or admission rules changed.
+
 The **0.4.8** query update adds database percentages with an explicit current-selection denominator, shared publisher aliases, sanitized limit messages, and source-bound title handling in the answer language check. Its [query verification report](../reports/QUERY_V0_4_8_20261001.en.md) separates development regression checks from independent semantic and client acceptance. The [publication receipt](../reports/query_v0_4_8_publication_20261001.json) binds both successful CI runs, production health, selected attachment checks and verified source archives. Earlier recovery and source-review receipts below retain their original versions.
 
 The [selected PDF-265 snapshot and preview are now hosted](../reports/RECORD_ASSETS_HOSTED_20260930.en.md). The [attachment guide](record_assets.md) includes a repeatable HTTP checker and an installed-package command for validating mounted files; production images do not contain the checkout's scripts.

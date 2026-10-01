@@ -84,7 +84,7 @@ def test_model_mode_bypasses_legacy_intent_rules_and_publishes_only_tool_statist
     result = service.answer(question, Filters(), "visitor")
     assert result.status == "answered" and result.answer_mode == "statistics"
     assert "19 eligible native ad records" in result.answer
-    assert result.structured_result == run.result
+    assert result.structured_result == {**run.result, "data_version": db.version}
     assert result.cost_usd == pytest.approx(0.002)
     assert len(agent.calls) == len(db.saved) == 1
     assert not db.searches
@@ -92,6 +92,37 @@ def test_model_mode_bypasses_legacy_intent_rules_and_publishes_only_tool_statist
     assert db.saved[0][2] is result
     assert result.research_trace["original_question"] == question
     assert result.research_trace["transport"] == "responses_function_calling"
+
+
+def test_statistics_record_navigation_uses_server_source_version_not_tool_supplied_value():
+    supplied = statistics()
+    supplied["data_version"] = "untrusted-model-value"
+    service, db, _ = setup_service(ResearchRun(route="statistics", result=supplied))
+    result = service.answer("How many ads come from NYT?", Filters(), "visitor")
+    assert result.status == "answered"
+    assert result.structured_result["data_version"] == db.version
+    assert supplied["data_version"] == "untrusted-model-value"
+
+
+@pytest.mark.parametrize("health", [
+    {}, {"status": "unavailable", "data_version": "source-v1"},
+    {"status": "ok", "data_version": ""}, {"status": "ok", "data_version": "unavailable"},
+])
+def test_question_tools_need_healthy_source_before_any_model_call(health):
+    service, db, agent = setup_service(ResearchRun(route="statistics", result=statistics()))
+    db.health = lambda: health
+    result = service.answer("How many ads from NYT?", Filters(), "visitor")
+    assert result.status == "service_unavailable" and result.structured_result is None
+    assert not agent.calls and not db.searches and result.cost_usd == 0
+
+
+def test_question_tools_health_loss_discards_stats_even_with_unchanged_version():
+    service, db, _ = setup_service(ResearchRun(route="statistics", result=statistics()))
+    versions = iter([db.health(), {"status": "unavailable", "data_version": db.version}])
+    db.health = lambda: next(versions)
+    result = service.answer("How many ads from NYT?", Filters(), "visitor")
+    assert result.failure_reason == "data_changed_during_tool_research"
+    assert result.structured_result is None
 
 
 def test_all_categories_are_preserved_and_unknown_not_called_a_company(monkeypatch):
