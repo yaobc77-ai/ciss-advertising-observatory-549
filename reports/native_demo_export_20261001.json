@@ -1,0 +1,30 @@
+{
+  "checked_at_utc": "2026-10-01T04:45:06.245155+00:00",
+  "scope": "One downloaded selected relationship count CSV; not all export modes",
+  "application_version": "0.4.9",
+  "ui_observed_commit": "bc20d07e03a3d260b814e0e2c8e218f228861361",
+  "download_basename": "advertising-selection-counts (3).csv",
+  "download_last_write_utc": "2026-10-01T04:19:53.459079+00:00",
+  "download_bytes": 225,
+  "download_sha256": "be814013d0198c5b163d40b2cddb4cd8e004b6926c8d81d5c5e536a0e88fef90",
+  "utf8_bom_present": true,
+  "data_rows": 1,
+  "selection": "ExxonMobil → The Washington Post",
+  "dimension": "News outlets",
+  "source_category": "The Washington Post",
+  "records": 5,
+  "denominator": 15,
+  "share": 0.3333333333333333,
+  "displayed_share_percent": 33.3,
+  "missing_source_field": false,
+  "download_event": "Automation notification timed out; actual resulting download file found and inspected",
+  "file_matches_recorded_ui_scope_and_counts": true,
+  "private_csv_committed_or_uploaded": false,
+  "paid_model_calls": 0,
+  "source_identity_or_admissions_changed": false,
+  "remaining_browser_checks": [
+    "matrix-cell click",
+    "PDF browser download",
+    "other export modes"
+  ]
+}

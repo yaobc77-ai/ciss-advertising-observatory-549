@@ -8,7 +8,7 @@ The full sequence remains incomplete. Selected steps were checked on the hosted 
 
 - **Current native UI walkthrough:** full native scope, both organization distributions, the ExxonMobil–Washington Post relationship and the combined 2022 filter in Knowledge graph and Overview. See the [current walkthrough report](../reports/NATIVE_HANDOFF_20261001.en.md). This is a team check, not independent client acceptance.
 - **0.4.9 publication checks:** hosted NYT record pagination, CNBC percentage pagination, and HTTP access to one selected PDF and preview. See the [publication receipt](../reports/query_v0_4_9_publication_20261001.json).
-- **Remaining session checks:** matrix-cell clicks, exported file contents, the article-mode/Fit sequence, complete live CCS/biogas semantic review and independent client tasks. Earlier [0.4.2 material](native_demo_v0_4_2.en.md) remains historical; use the current observations below for sponsor counts. A known development question or an engineering check does not establish semantic accuracy or customer approval.
+- **Remaining session checks:** matrix-cell clicks, other export modes, the article-mode/Fit sequence, complete live CCS/biogas semantic review and independent client tasks. The selected relationship CSV was subsequently [found and checked](../reports/native_demo_export_20261001.json). Earlier [0.4.2 material](native_demo_v0_4_2.en.md) remains historical; use the current observations below for sponsor counts. A known development question or an engineering check does not establish semantic accuracy or customer approval.
 
 ## Before the session
 
@@ -27,7 +27,7 @@ Client question: **How can users compare the volume of fossil fuel native advert
 2. Select a cell. Check that the matching record list names that company and outlet, rather than displaying only a collection total.
 3. Download the counts and compare the selected row with the displayed count. Explain that the counting unit is currently eligible source records. A source-noted NYT/BP duplicate candidate is awaiting a decision on records versus distinct articles/landing pages; no merge has been applied.
 
-**Current check boundary:** the filtered matrix value was inspected in Q3 below. Clicking a matrix cell and verifying the resulting scope have not been checked in this round. Count-export preparation was observed in the graph, but no downloaded file was obtained; file contents remain unverified.
+**Current check boundary:** the filtered matrix value was inspected in Q3 below. Clicking a matrix cell and verifying the resulting scope have not been checked in this round. The selected graph relationship CSV was downloaded and checked; the matrix count export remains a separate session check.
 
 Then open **Query**, restore the full native scope, and submit:
 
@@ -62,7 +62,7 @@ The following distribution was observed in the **current 0.4.9 hosted UI** with 
 
 Selecting **ExxonMobil → The Washington Post** showed five supporting article IDs. The panel reported **5 / 15 = 33.3%** of ExxonMobil's records and **5 / 18 = 27.8%** of The Washington Post's records. The parent distribution retained its denominator of 15. Repeat this selection and inspect the actual titles.
 
-**Download selected counts** displayed **Prepared 1 categories for 5 records; parent denominator 15** in this round. The browser download event timed out after ten seconds and no file was obtained. Preparation is verified; successful download and CSV contents are not. In the session, obtain the file and confirm it contains the selected Washington Post category rather than the full parent list.
+**Download selected counts** displayed **Prepared 1 categories for 5 records; parent denominator 15** in this round. The browser download notification timed out after ten seconds, but the resulting file was subsequently found in Downloads and [checked](../reports/native_demo_export_20261001.json): one Washington Post row, 5 records, denominator 15 and share 1/3. Repeat this during the client session; other export modes have not been confirmed here.
 
 Next select **Washington Post → sponsors**. The current UI showed **18 records, including two with unknown dates**, with this complete distribution:
 
@@ -161,4 +161,4 @@ This is one reviewed local capture, not complete archive coverage. Its text is p
 
 For each of Q1–Q6 record: **version/scope, reviewer, task, observed result, supporting records, assistance, failure or limitation, and decision**. For generated questions retain the answer/run reference, selected tool, cost and latency where available. Mark unperformed steps **not run**, not passed.
 
-The complete 0.4.9 sequence remains unfinished despite the selected current graph/date checks. Matrix-cell clicks, downloaded file contents, the article-mode sequence, complete live CCS/biogas semantic review and independent client usability tasks still need evidence. Keep the real social export, reviewed CLAIMS publication, counting/entity decisions, independent frozen questions, final two-dataset demonstration and another implementer's handoff reproduction as explicit TODOs. Use the [current handoff guide](../docs/current_handoff.md) for setup, data and attachment transfer, tests and reproduction; this script does not establish those tasks as completed.
+The complete 0.4.9 sequence remains unfinished despite the selected current graph/date/CSV checks. Matrix-cell clicks, other export modes, the article-mode sequence, complete live CCS/biogas semantic review and independent client usability tasks still need evidence. Keep the real social export, reviewed CLAIMS publication, counting/entity decisions, independent frozen questions, final two-dataset demonstration and another implementer's handoff reproduction as explicit TODOs. Use the [current handoff guide](../docs/current_handoff.md) for setup, data and attachment transfer, tests and reproduction; this script does not establish those tasks as completed.

@@ -58,9 +58,13 @@ were made in this session.
 
 The selected-count export displayed “Prepared 1 categories for 5 supporting records”
 with parent denominator 15. The browser automation's download event timed out after
-ten seconds, so no downloaded CSV was inspected. This is an unverified download,
-not proof that export bytes passed. PDF browser download was not exercised; earlier
-HTTP attachment checks retain their own scope.
+ten seconds. A later [filesystem check](native_demo_export_20261001.json) found
+the resulting 225-byte CSV written at 04:19:53 UTC: one Washington Post row,
+5 records, denominator 15 and share 1/3. Its SHA-256 is
+`be814013d0198c5b163d40b2cddb4cd8e004b6926c8d81d5c5e536a0e88fef90`.
+The selected CSV download is verified; the timeout affected the automation
+notification. Other export modes and PDF browser download were not exercised;
+earlier HTTP attachment checks retain their own scope.
 
 Matrix cell clicks and the complete live CCS/biogas answer sequence were not rerun.
 The earlier [0.4.9 publication receipt](query_v0_4_9_publication_20261001.json)
