@@ -73,4 +73,6 @@ The [private source review packet](docs/claims_source_discovery.md#create-a-priv
 
 Real social data, complete source/archive coverage, user acceptance testing, independent answer review, and final presentation materials remain part of project completion. Historical CLAIMS labels are not verified greenwashing findings.
 
+One reviewed PDF snapshot and its first-page preview are available in the live record view. [Attachment deployment and checks](docs/record_assets.md) explain how to preserve and verify these files separately from application code.
+
 The [current local recovery check](reports/DATABASE_RESTORE_V0_4_7_20260930.en.md) preserves all 21 tables, vectors and histories. CLAIMS2 tables are still empty; server recovery and source review remain pending.

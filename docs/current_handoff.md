@@ -1,5 +1,7 @@
 # Current project handoff
 
+The [selected PDF-265 snapshot and preview are now hosted](../reports/RECORD_ASSETS_HOSTED_20260930.en.md). The [attachment guide](record_assets.md) includes a repeatable HTTP checker and an installed-package command for validating mounted files; production images do not contain the checkout's scripts.
+
 Updated 30 September 2026. The maintenance package and verified hosted application are **0.4.7**. This update adds offline source review packets and passes installed-wheel verification. Both repositories' CI and local/production health checks are recorded in the [publication receipt](../reports/source_review_v0_4_7_publication_20260930.json); source data and retrieval index identities remain unchanged from 0.4.6. Both [source archives](../reports/source_handoff_v0_4_7_20260930.json) have verified file hashes and exclude private materials. Full collection-graph interaction checks were performed on **0.4.2**; 0.4.6 adds tested assignment-specific evidence reads. The [CLAIMS source audit](claims_source_audit.md) is a maintenance command; it does not publish labels.
 
 The [private source review packet](claims_source_discovery.md#create-a-private-source-review-packet) preserves an original paragraph, saved lookup bytes and optional captured text, with exact or whitespace-only excerpt locations. Every source decision starts pending. The [maintenance receipt](../reports/claims_source_review_v0_4_7_20260930.json) records 1,650 installed-wheel offline tests, including 61 packet tests, and a passed package inventory check. One case was skipped and 87 database/live cases were excluded. The actual packet contains five existing candidate URLs, zero captured pages and no new paid calls. It does not establish the original article URL or publish classifications.
@@ -183,12 +185,12 @@ uv run python scripts/build_record_asset_bundle.py build --source-root . --desti
 The builder returns the manifest SHA-256. Transfer the bundle privately, then check that mounted copy:
 
 ```sh
-uv run python scripts/build_record_asset_bundle.py check --root /mounted/record-assets-release --manifest-sha256 ACTUAL_MANIFEST_HASH
+/app/.venv/bin/python -c "from pathlib import Path; from observatory.asset_bundle import load_bundle; print('verified assets:', len(load_bundle(Path('/mounted/record-assets-release'), 'ACTUAL_MANIFEST_HASH')))"
 ```
 
 Set `OBS_RECORD_ASSET_ROOT` to that mount and `OBS_RECORD_ASSET_MANIFEST_SHA256` to the returned hash. The bundle contains `record_assets.json`, hash-named PDFs and optional previews. A configured bundle is checked as a whole; an invalid or incomplete bundle disables attachments without falling back to other files. The record JSON exposes `record_asset_status=bundle_verified` or `bundle_unavailable`. Without these settings, the existing local-workspace attachment paths remain in use.
 
-The actual local PDF-265 bundle build and check have passed with one reviewed PDF and one cached preview; its manifest SHA-256 is `0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9`. The private files were not published. This does not provision a Railway mount or prove hosted attachment access. Check the deployed detail, PDF and preview endpoints after private transfer; hosted attachment acceptance remains pending until that check. Missing or changed assets must stay unavailable rather than being substituted. A restored database by itself does not restore filesystem attachments.
+The selected PDF-265 bundle is now mounted on the Railway application, with one PDF and one cached preview. Its manifest SHA-256 is `0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9`. [Mounted checks in two deployments and local/hosted HTTP checks](../reports/RECORD_ASSETS_HOSTED_20260930.en.md) passed; a browser check showed the rendered preview. Private bundle files remain outside Git. This confirms access and container replacement survival for this selected capture, not archive coverage or customer source approval. Missing or changed assets must stay unavailable rather than being substituted. A restored database by itself does not restore filesystem attachments.
 
 ## 6. Verify code, data and answers separately
 

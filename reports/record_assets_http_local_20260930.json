@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "origin": "http://127.0.0.1:8050",
+  "expected_local_manifest_sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9",
+  "expected_record_asset_status": "local_workspace",
+  "requested_other_record_id": "12946a63-5c47-5b1d-a21f-eca50f5902e4",
+  "expected_assets": 1,
+  "checked_at": "2026-10-01T01:28:46.970722+00:00",
+  "request_method": "GET",
+  "direct_database_connections": 0,
+  "model_calls": 0,
+  "remote_manifest_hash": "not_observable_via_http",
+  "whole_remote_bundle_equivalence": "not_verified",
+  "ui_verification": "not_verified",
+  "new_container_persistence": "not_verified",
+  "records": [
+    {
+      "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+      "checks": {
+        "record_http_200": true,
+        "record_json_type": true,
+        "record_id_exact": true,
+        "body_hash_matches_api": true,
+        "body_hash_matches_manifest": true,
+        "source_url_exact": true,
+        "asset_status_exact": true,
+        "attachments_list": true,
+        "other_record_available": true
+      },
+      "failure_codes": [],
+      "expected_body_sha256": "28110347b8b96cd32ac4b7bcac41d1f3b80c67798e220f9043382eb40a622b67",
+      "assets": [
+        {
+          "asset_id": "3b091bcd92d9d06f505b2efef33423f4",
+          "expected_pdf_sha256": "20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c",
+          "checks": {
+            "unique_attachment": true,
+            "canonical_attachment_paths": true,
+            "pdf_http_200": true,
+            "pdf_type": true,
+            "pdf_bytes": true,
+            "download_http_200": true,
+            "download_type": true,
+            "download_bytes": true,
+            "download_disposition": true,
+            "download_same_bytes": true,
+            "preview_http_200": true,
+            "preview_type": true,
+            "preview_bytes": true,
+            "unknown_record_pdf_404": true,
+            "unknown_record_pdf_no_asset_bytes": true,
+            "unknown_record_preview_404": true,
+            "unknown_record_preview_no_asset_bytes": true,
+            "unknown_asset_pdf_404": true,
+            "unknown_asset_pdf_no_asset_bytes": true,
+            "unknown_asset_preview_404": true,
+            "unknown_asset_preview_no_asset_bytes": true,
+            "cross_record_pdf_404": true,
+            "cross_record_pdf_no_asset_bytes": true,
+            "cross_record_preview_404": true,
+            "cross_record_preview_no_asset_bytes": true
+          },
+          "failure_codes": [],
+          "preview": "expected",
+          "observed_pdf_sha256": "20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c",
+          "observed_download_sha256": "20b2ec33f808d96dc749ce0c62cd8b35dec43da48d7df0db44905544cb93479c",
+          "expected_preview_sha256": "0a5f9e1282ea5f97bc16694d06bd7bad6a3b5654f56b947a262e29edb6759030",
+          "observed_preview_sha256": "0a5f9e1282ea5f97bc16694d06bd7bad6a3b5654f56b947a262e29edb6759030"
+        }
+      ],
+      "observed_body_sha256": "28110347b8b96cd32ac4b7bcac41d1f3b80c67798e220f9043382eb40a622b67",
+      "cross_record_isolation": "verified",
+      "other_record_id": "12946a63-5c47-5b1d-a21f-eca50f5902e4"
+    }
+  ],
+  "status": "passed_for_selected_http_assets"
+}

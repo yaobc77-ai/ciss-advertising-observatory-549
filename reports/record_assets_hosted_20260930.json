@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-01T01:28:50.184595+00:00",
+  "scope": "one_selected_reviewed_native_record_attachment_bundle",
+  "application": {
+    "commit": "33667fbe99ac322db87c44b46a2e3074a97498a8",
+    "features": {
+      "claims_read_view": true,
+      "collection_graph": true,
+      "graph_breakdowns": true,
+      "research_agent": true
+    },
+    "version": "0.4.7"
+  },
+  "record_id": "d340f887-efa7-5746-aaf8-14aabba6b63f",
+  "record_url": "https://ciss-advertising-observatory-production.up.railway.app/records/d340f887-efa7-5746-aaf8-14aabba6b63f",
+  "expected_manifest_sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9",
+  "bundle": {
+    "pdfs": 1,
+    "previews": 1,
+    "pdf_bytes": 2770692,
+    "preview_bytes": 108680,
+    "manifest_bytes": 1952,
+    "total_bytes": 2881324,
+    "private_files_in_git": 0
+  },
+  "mounted_file_checks": [
+    {
+      "status": "verified",
+      "assets": 1,
+      "records": 1,
+      "manifest_sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9",
+      "volume_mount_detected": true,
+      "deployment_id": "0fba1255-bb49-4508-96fc-78c0b66457f2",
+      "replica_id": "573d8196-847f-4a0f-9468-bb0b53af01b0"
+    },
+    {
+      "status": "verified",
+      "assets": 1,
+      "records": 1,
+      "manifest_sha256": "0a4eed8b7dcd205ec7d6b99f9e3837aa6e0ce29fa5344919c19962d2c84d10d9",
+      "volume_mount_detected": true,
+      "deployment_id": "f612a08c-7aa9-4d85-8396-bcd77ab6a4ea",
+      "replica_id": "6b9196d0-c5f3-414e-94c6-5d0540318ce2"
+    }
+  ],
+  "new_container_bundle_survival": "verified_for_this_selected_bundle",
+  "http_reports": [
+    {
+      "path": "reports/record_assets_http_hosted_20260930.json",
+      "sha256": "4af2121ba8d8bca826c7b6b4fb3cdd838e212319ec6f8668c36cdf80d341e576",
+      "status": "passed_for_selected_http_assets",
+      "records": 1
+    },
+    {
+      "path": "reports/record_assets_http_local_20260930.json",
+      "sha256": "515d855a4d6e8f0bc39d81d0da81e4ca9a9b441550ddcb350302000269650657",
+      "status": "passed_for_selected_http_assets",
+      "records": 1
+    }
+  ],
+  "browser_check": {
+    "record_metadata_visible": true,
+    "pdf_open_and_download_links_visible": true,
+    "first_page_preview_rendered": true,
+    "screenshot_sha256": "bee954c83ea953095ab6b5fd0471cde6aa19d0c76698aba7f957a6095ee67d02",
+    "screenshot_retained_privately": true,
+    "download_button_interaction": "not_separately_tested_in_browser"
+  },
+  "source_and_index_identifiers_unchanged": true,
+  "current_health_identity": {
+    "source_data_version": "5114ebc1cf9afe59cdaa715e3ea45166",
+    "index_version": "d580c5962a6222e595db2ed8681f9787cef648dad653b055120b6bed10e3af75",
+    "data_version": "f19d4d697f4e6d2699d2c58b3ce80620b03e02c7e9447f24e012123adcb00f53",
+    "record_counts": {
+      "native": 275
+    },
+    "chunks": 556,
+    "active_profile": "sentence600-v1"
+  },
+  "verification_script_sha256": "97434695ef1082ba3df6225a79c659d5bc5c3d7a3fcc5fc43b7a604fe8836b04",
+  "new_model_calls": 0,
+  "direct_database_writes_by_http_verifier": 0,
+  "limitations": [
+    "This is AI engineering source review, not customer source-identity approval.",
+    "No other archived files or CLAIMS classifications were approved or published.",
+    "PDF-265 contains partial text recovery and an untranscribed infographic.",
+    "Current original-page availability and advertisement truth were not verified.",
+    "Complete archive coverage, real social data and independent user acceptance remain pending.",
+    "No independent-machine or separate-network reproduction is claimed."
+  ]
+}
