@@ -20,13 +20,15 @@ from psycopg import sql
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime"
-BIN = RUNTIME / "postgres" / "Library" / "bin"
-DATA = RUNTIME / "pgdata"
+BIN = RUNTIME / "postgres18" / "Library" / "bin"
+DATA = RUNTIME / "pgdata18"
+LEGACY_DATA = RUNTIME / "pgdata"
+TARGET_MAJOR = "18"
 MARKER = RUNTIME / "postgres-cluster.json"
 SECRET_DIR = RUNTIME / "secrets"
 SECRET_FILE = SECRET_DIR / "postgres.json"
 ENV_FILE = ROOT / ".env"
-LOG = RUNTIME / "postgres.log"
+LOG = RUNTIME / "postgres18.log"
 HOST = "127.0.0.1"
 PORT = 55432
 DATABASE = "observatory"
@@ -95,15 +97,35 @@ def connection(database=DATABASE, *, admin=False, password=None):
     )
 
 
+def verify_runtime(*, require_data=False):
+    """Reject a wrong binary/data major before invoking any cluster control tool."""
+    binary = BIN / "postgres.exe"
+    if not binary.is_file():
+        raise RuntimeError("PostgreSQL 18 runtime is missing. Run Setup-Postgres.ps1 first.")
+    result = run([str(binary), "--version"])
+    match = re.search(r"\bPostgreSQL\)?\s+(\d+)(?:\.\d+)*\b", result.stdout)
+    if not match or match[1] != TARGET_MAJOR:
+        raise RuntimeError("This project requires PostgreSQL 18 binaries; no cluster was started or stopped.")
+    data_version = DATA / "PG_VERSION"
+    if data_version.exists():
+        major = data_version.read_text(encoding="ascii").strip()
+        if major != match[1]:
+            raise RuntimeError("PostgreSQL binary and data directory major versions differ. Run the reviewed upgrade; existing data will not be initialized or opened.")
+    elif require_data:
+        raise RuntimeError("The PostgreSQL 18 project cluster has not been initialized.")
+
+
 def verify_marker():
     if not MARKER.is_file() or not (DATA / "PG_VERSION").is_file():
         raise RuntimeError("The project cluster has not been initialized. Run Start-Postgres.ps1.")
     marker = json.loads(MARKER.read_text(encoding="utf-8"))
     if Path(marker["data_directory"]).resolve() != DATA.resolve() or marker.get("port") != PORT:
         raise RuntimeError("Cluster ownership marker does not match this project; refusing to operate.")
+    verify_runtime(require_data=True)
 
 
 def is_running():
+    verify_marker()
     return run([str(BIN / "pg_ctl.exe"), "status", "-D", str(DATA)], check=False).returncode == 0
 
 
@@ -116,9 +138,12 @@ def verify_server():
 
 
 def initialize():
+    verify_runtime()
     if (DATA / "PG_VERSION").exists():
         verify_marker()
         return
+    if (LEGACY_DATA / "PG_VERSION").exists():
+        raise RuntimeError("An existing PostgreSQL 16 project cluster requires the reviewed PostgreSQL 18 migration. Existing data and credentials were retained; setup does not perform a major upgrade.")
     if DATA.exists() and any(DATA.iterdir()):
         raise RuntimeError("PostgreSQL data directory is nonempty; refusing to initialize or overwrite it.")
     if MARKER.exists():

@@ -347,3 +347,6 @@ def validate_share_scope(numerator: Filters, denominator: Filters) -> None:
         raise ValueError("The percentage numerator cannot widen the end date")
     if numerator.include_unknown_dates and not denominator.include_unknown_dates:
         raise ValueError("The percentage numerator cannot add unknown dates")
+    presence = getattr(denominator, "date_presence", "any")
+    if presence != "any" and getattr(numerator, "date_presence", "any") != presence:
+        raise ValueError("The percentage numerator cannot widen the publication-date presence")

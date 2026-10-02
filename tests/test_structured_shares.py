@@ -184,7 +184,9 @@ def test_unloaded_social_is_omitted_not_zero_percent():
 
 
 @pytest.mark.parametrize("args,status", [
-    ({"measure": "share", "denominator_filters": {"publishers": ["The New York Times"]}}, "invalid_request"),
+    # A comparison group without a target would always be 100%.
+    ({"measure": "share", "denominator_filters": {"publishers": ["The New York Times"]}}, "clarify"),
+    ({"measure": "count", "denominator_filters": {"sponsors": ["exxonmobil"]}}, "clarify"),
     ({"measure": "share", "percentage": 99}, "invalid_request"),
     ({"measure": "share", "group_by": "publishers"}, "clarify"),
     ({"measure": "share", "filters": {"publishers": ["Missing Outlet"]}}, "clarify"),
@@ -281,6 +283,9 @@ def test_share_prose_reports_actual_percentage_and_denominator_not_raw_count():
     result = Service._tool_statistics_answer(data, base_filters=Filters())
     assert "25.00% (1 of 4 eligible native ad records)" in result.answer
     assert result.answer_mode == "statistics" and result.structured_result == data
+    # Questions run with supplemented dates on, so the trusted scope carries that flag.
+    for key in ("filters", "denominator_filters"):
+        data[key]["include_inferred_dates"] = True
     service, db, _ = setup_service(ResearchRun(route="statistics", result=data))
     result = service.answer("What percentage is from NYT?", Filters(), "visitor")
     assert result.status == "answered" and "25.00%" in result.answer
@@ -352,3 +357,70 @@ def test_count_and_list_contracts_remain_unchanged_without_share_measure():
     assert listed["kind"] == "list_sponsors"
     assert {row["name"]: row["count"] for row in listed["groups"]} == {"exxonmobil": 1, "ExxonMobil": 1, "bp": 1}
     assert "denominator_filters" not in count and "denominator_filters" not in listed
+
+
+
+def test_question_comparison_group_counts_the_target_inside_the_group():
+    # "What share of ExxonMobil's ads ran in The New York Times?" (2026-10-01 U06
+    # was answered against the whole collection: 3 of 263 instead of 3 of 15).
+    tools, db = catalog()
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"sponsors": ["exxonmobil"]},
+        "filters": {"publishers": ["The New York Times"]}})
+    assert result["status"] == "ok"
+    assert result["denominator_basis"] == "question_comparison_group"
+    assert result["denominator_filters"]["sponsors"] == ["exxonmobil"]
+    assert result["filters"]["sponsors"] == ["exxonmobil"]
+    assert result["filters"]["publishers"] == ["The New York Times"]
+    item = result["collections"][0]
+    assert (item["numerator"], item["denominator"], item["percentage"]) == (1, 2, 50.0)
+    answer = Service._tool_statistics_answer(result, base_filters=Filters())
+    assert "50.00% (1 of 2" in answer.answer
+    assert "comparison group is ads sponsored by ExxonMobil" in answer.answer
+
+
+def test_comparison_group_cannot_widen_the_trusted_selection():
+    tools, db = catalog(Filters(publishers=["The Washington Post"]))
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"publishers": ["The New York Times"]},
+        "filters": {"sponsors": ["exxonmobil"]}})
+    assert result["status"] == "clarify" and db.scopes == []
+
+
+def test_forged_comparison_group_outside_the_selection_is_rejected_by_the_service():
+    tools, _ = catalog()
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"sponsors": ["exxonmobil"]},
+        "filters": {"publishers": ["The New York Times"]}})
+    with pytest.raises(ValueError):
+        Service._tool_statistics_answer(result, base_filters=Filters(publishers=["The Washington Post"]))
+
+
+def test_aliases_in_the_comparison_group_are_audited():
+    tools, _ = catalog()
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"sponsors": ["exxonmobil"]},
+        "filters": {"publishers": ["NYT"]}})
+    assert result["alias_resolutions"] == [
+        {"field": "publishers", "requested": "NYT", "source_value": "The New York Times"}]
+
+
+def test_forged_comparison_group_cannot_widen_date_presence():
+    tools, _ = catalog(Filters(date_presence="known"))
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"sponsors": ["exxonmobil"]},
+        "filters": {"publishers": ["The New York Times"]}})
+    assert result["status"] == "ok"
+    forged = {**result, "denominator_filters": {**result["denominator_filters"], "date_presence": "missing"}}
+    with pytest.raises(ValueError):
+        Service._tool_statistics_answer(forged, base_filters=Filters(date_presence="known"))
+
+
+def test_empty_comparison_group_reports_an_undefined_percentage():
+    tools, _ = catalog()
+    result = tools.call("record_statistics", {
+        "measure": "share", "denominator_filters": {"sponsors": ["bp"], "date_presence": "known"},
+        "filters": {"publishers": ["The Washington Post"]}})
+    item = result["collections"][0]
+    assert (item["numerator"], item["denominator"], item["percentage"], item["percentage_status"]) == (0, 0, None, "empty_selection")
+    assert "Percentage undefined" in Service._tool_statistics_answer(result, base_filters=Filters()).answer

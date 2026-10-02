@@ -136,7 +136,7 @@ def test_standalone_stdio_process_lists_tools_and_reads_schema_without_a_databas
         parameters = StdioServerParameters(
             command=sys.executable, args=["-X", "utf8", "-m", "observatory.mcp_server"],
             cwd=Path(__file__).resolve().parents[1],
-            env={**os.environ, "OBS_DATABASE_URL": "", "OPENAI_API_KEY": ""},
+            env={**os.environ, "OBS_DATABASE_URL": "", "OPENAI_API_KEY": "", "OBS_WEB_SEARCH_ENABLED": "false"},
         )
         async with Client(parameters, mode="legacy", read_timeout_seconds=10) as client:
             listed = await client.list_tools()

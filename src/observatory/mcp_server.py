@@ -22,7 +22,7 @@ from mcp.types import (
 )
 
 from .models import Filters
-from .research_tools import ToolCatalog
+from .research_tools import ToolCatalog, WebGapRequest
 
 
 def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
@@ -34,6 +34,7 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
         source_search = ClaimsSourceSearch(catalog.service.rag, enabled=True,
                                            base_filters=catalog.base_filters)
     maintenance_enabled = source_search is not None and source_search.enabled
+    web_enabled = bool(getattr(settings, "web_search_enabled", False))
 
     async def list_tools(context, params):
         listed = [Tool(name=definition["name"], description=definition["description"],
@@ -47,6 +48,15 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
                 # Corpus state is read-only, but a paid search writes its usage ledger.
                 read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=True,
             )))
+        if web_enabled:
+            listed.append(Tool(name="search_external_sources", description=(
+                "Paid external native-ad evidence lookup after a prior empty search_records result. "
+                "Requires its single-use web_fallback_ticket from this server instance; expires in five minutes. "
+                "Never use for corpus counts, database errors or verified greenwashing. External provider-cited "
+                "paraphrases stay separate from stored records; at most one search call per ticket."
+            ), input_schema=WebGapRequest.model_json_schema(), annotations=ToolAnnotations(
+                read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=True,
+            )))
         return ListToolsResult(tools=listed)
 
     async def call_tool(context, params):
@@ -54,6 +64,8 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
         # fixed catalog dispatch, never a dynamically selected Python function.
         if maintenance_enabled and params.name == source_search.definition()["name"]:
             result = await anyio.to_thread.run_sync(source_search.call, params.arguments or {})
+        elif web_enabled and params.name == "search_external_sources":
+            result = await anyio.to_thread.run_sync(catalog.search_external_sources, params.arguments or {})
         else:
             result = await anyio.to_thread.run_sync(catalog.call, params.name, params.arguments or {})
         return CallToolResult(
@@ -74,7 +86,10 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
                       "explicit opt-in. It searches unchanged legacy excerpts locally first, then at most "
                       "one paid external search, writes usage accounting only, and returns pending source "
                       "candidates requiring review. Never use it as a fallback for public questions or "
-                      "treat candidate identities as approved sources."),
+                      "treat candidate identities as approved sources. An optional search_external_sources "
+                      "tool is separate public research: it needs a single-use empty-database-search ticket, "
+                      "charges the API budget, and returns labeled external references, never corpus counts. "
+                      "For company comparisons use separate comparison_scopes in search_records."),
         on_list_tools=list_tools, on_call_tool=call_tool,
     )
 

@@ -16,7 +16,7 @@ Native advertising data is connected. The social media view and importer are imp
 | --- | --- |
 | How many native ads appear by company and news outlet? | A company–outlet matrix with exact counts and CSV export. |
 | Which companies sponsor ads at each outlet? | An interactive relationship graph, named sponsor lists, distribution charts, and supporting articles. |
-| How do counts change across dates, outlets, and sponsors? | Shared filters and annual counts, with unknown dates reported separately. |
+| How do counts change across dates, outlets, and sponsors? | Shared filters, annual counts, all tied highest years, and comparisons between named date periods. Unknown dates are reported separately. |
 | Which themes appear in the ads? | Historical labels and a separate CLAIMS2 evidence view. Real CLAIMS2 results await reviewed publication. |
 | How can users explore social media advertising? | A separate collection view and configurable importer. Real-data analysis awaits the client export. |
 | How can RAG help users explore both datasets? | Database tools answer count questions; retrieved article passages support cited content answers. Cross-dataset use awaits social data. |
@@ -41,7 +41,7 @@ Generated answers show every cited quotation with its answer number, such as **C
 
 Dashboard browsing and keyword search do not call a language model. Generated answers use the configured OpenAI API budget, including model interpretation of count questions.
 
-Query also answers percentages of the current selection using exact database counts. Each answer shows the matching records, denominator and percentage separately for each collection. Change the page filters first when a different denominator is needed; an empty selection has no defined percentage.
+Query also answers percentages using exact database counts. Each answer shows the matching records, denominator and percentage separately for each collection. The comparison group must stay within the current page filters; an empty group has no defined percentage.
 
 Open **Inspect matching records** to browse all records behind a count, list or percentage. Previous, Next and First page keep the submitted selection and make no model calls. Submit again after changing the question or filters; if the collection changes, the application asks for a new query.
 
@@ -72,6 +72,8 @@ uv run ruff check src tests scripts
 Database and paid API tests run separately. `Dockerfile` and `railway.json` provide the application deployment configuration. GitHub Pages serves the static project page; the live dashboard and RAG run on Railway.
 
 ## Documentation and remaining work
+
+The [MCP and research tools guide](docs/mcp_research_tools.md) explains the eight shared tools, question routing, exact statistics, source evidence, knowledge graph relationships, CLAIMS reads, and optional web lookup. The website uses model function calling; an independent MCP server exposes the same tool implementation. Answers separate the summary, supporting evidence, scope and execution details. External web findings remain separate from collection records and counts.
 
 This repository includes application code, tests, deployment configuration, a [setup and user guide](docs/guide.md), and [current handoff instructions](docs/current_handoff.md). The [CLAIMS source audit](docs/claims_source_audit.md) checks saved results against original articles. A [reviewed-result importer](docs/claims_result_import.md) preserves source evidence and review history. The [read-only views](docs/claims_read_views.md) display published definitions and original evidence when results are available. Optional [source discovery](docs/claims_source_discovery.md) finds candidate article URLs for legacy inputs; its maintenance MCP tool is hidden by default and does not update records. The [integration plan](docs/claims_integration_plan.md) describes remaining processing work.
 

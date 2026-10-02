@@ -13,9 +13,8 @@ from observatory.service import Service, summarize
 PRIVATE = "private://credential@local/raw-source"
 PUBLIC_FIELDS = {
     "record_id", "version_id", "dataset", "title", "date", "publisher", "sponsor",
-    "url", "archive_url", "retrievable",
+    "url", "archive_url", "retrievable", "date_basis", "inferred_date", "inferred_tier",
 }
-
 
 def record(identity, dataset, publisher, sponsor, *, when="2021-03-04", retrievable=True, **extra):
     return {

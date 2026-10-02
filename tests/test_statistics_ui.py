@@ -57,7 +57,7 @@ def test_outlet_count_is_labeled_as_database_statistics_and_shows_effective_scop
     assert "Generated answer" not in rendered
     assert "Insufficient evidence" not in rendered
     assert "28 native ad records" in rendered
-    assert "28 eligible" in rendered
+    assert "28 matching" in rendered
     assert "20 searchable" in rendered
     assert "Last submitted search" in rendered
     assert "Publishers: The New York Times" in rendered
@@ -81,7 +81,7 @@ def test_complete_publisher_table_does_not_stop_at_tenth_group(statistics_ui):
     assert all(group["name"] in json.dumps(table) for group in groups)
     assert "All publishers and counts" in json.dumps(table)
     assert "Native ad records" in json.dumps(table)
-    assert "105 eligible" in json.dumps(response)
+    assert "105 matching" in json.dumps(response)
     assert "2 with unknown dates" in json.dumps(response)
     counts = [node["props"]["children"] for node in component_tree(table)
               if node["type"] == "Td" and node["props"].get("className") == "count-value"]
@@ -125,8 +125,8 @@ def test_dual_collection_totals_keep_native_and_social_units_visible(statistics_
                                             {"dataset": "social", "total": 0, "retrievable": 0, "unknown_dates": 0}])
     response = submit(statistics_ui, answer)
     rendered = json.dumps(response)
-    assert "Native ad records: 263 eligible" in rendered
-    assert "Social ad records: 0 eligible" in rendered
+    assert "Native ad records: 263 matching" in rendered
+    assert "Social ad records: 0 matching" in rendered
     assert "Native articles and social posts are separate units" in rendered
     browser = next(node for node in component_tree(response)
                    if node["type"] == "Details" and node["props"].get("className") == "statistics-records")

@@ -16,6 +16,15 @@ def digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+# Supplemented dates need no manual review; a row someone rejects is ignored.
+# A web-search date (tier C) is used only when its evidence page is on the same
+# site as the advertisement, checked automatically when the row is created.
+USABLE_INFERENCE = ("(d.review_state<>'rejected' AND (d.tier<>'C' OR d.review_state='accepted' "
+                    "OR d.evidence->>'host_match'='true'))")
+INFERRED_DATE = ("(SELECT d.inferred_date FROM date_inferences d WHERE d.version_id=v.version_id "
+                 f"AND {USABLE_INFERENCE} AND d.precision='day' ORDER BY d.tier,d.method LIMIT 1)")
+
+
 class Database:
     def __init__(self, url: str):
         self.url = url
@@ -151,20 +160,27 @@ class Database:
                     f"COALESCE(NULLIF(v.payload->>'{field}',''),'(Unknown)')=ANY(%s)"
                 )
                 params.append(values)
+        # Source date, or (only when requested) an unreviewed day-precision inference.
+        published = (f"COALESCE(NULLIF(v.payload->>'published_at','')::date,{INFERRED_DATE})"
+                     if filters.include_inferred_dates else "NULLIF(v.payload->>'published_at','')::date")
+        if filters.date_presence == "known":
+            terms.append(f"{published} IS NOT NULL")
+        elif filters.date_presence == "missing":
+            terms.append(f"{published} IS NULL")
         dates = []
         if filters.date_from:
-            dates.append("(v.payload->>'published_at')::date>=%s")
+            dates.append(f"{published}>=%s")
             params.append(filters.date_from)
         if filters.date_to:
-            dates.append("(v.payload->>'published_at')::date<=%s")
+            dates.append(f"{published}<=%s")
             params.append(filters.date_to)
         if dates:
             expression = " AND ".join(dates)
             if filters.include_unknown_dates:
-                expression = f"(({expression}) OR v.payload->>'published_at' IS NULL)"
+                expression = f"(({expression}) OR {published} IS NULL)"
             terms.append(f"({expression})")
         elif not filters.include_unknown_dates:
-            terms.append("v.payload->>'published_at' IS NOT NULL")
+            terms.append(f"{published} IS NOT NULL")
         if filters.labels:
             terms.append(
                 "EXISTS (SELECT 1 FROM annotations a WHERE a.version_id=v.version_id AND a.payload->>'version'='claims-calibrated' AND (a.payload->'labels') ?| %s)"
@@ -174,15 +190,28 @@ class Database:
 
     def _public_query(self, filters: Filters):
         where, params = self.where(filters)
+        source_date = "NULLIF(v.payload->>'published_at','')"
+        effective_date = (f"COALESCE({source_date},di.inferred_date::text)"
+                          if filters.include_inferred_dates else source_date)
+        inferred_enabled = "true" if filters.include_inferred_dates else "false"
         # Explicit projection prevents raw data, disclosure and local paths escaping.
         sql = f"""SELECT r.record_id,r.dataset,v.version_id,
          v.payload->>'url' AS url,v.payload->>'archive_url' AS archive_url,
          v.payload->>'publisher' AS publisher,v.payload->>'title' AS title,
          v.payload->>'published_at' AS date,v.payload->>'sponsor' AS sponsor,
+         {source_date} AS source_date,{effective_date} AS effective_date,
          v.payload->>'keyword' AS keyword,v.payload->>'platform' AS platform,
          v.payload->>'account' AS account,(v.payload->>'retrievable')::boolean AS retrievable,
+         CASE WHEN NULLIF(v.payload->>'published_at','') IS NOT NULL THEN 'source'
+              WHEN {inferred_enabled} AND di.method IS NOT NULL THEN 'inferred:' || di.method ELSE 'missing' END AS date_basis,
+         di.inferred_date::text AS inferred_date,di.tier AS inferred_tier,
          COALESCE((SELECT a.payload->'labels' FROM annotations a WHERE a.version_id=v.version_id AND a.payload->>'version'='claims-calibrated' ORDER BY a.ordinal LIMIT 1),'[]'::jsonb) AS labels
          FROM records r JOIN record_versions v ON v.version_id=r.current_version
+         LEFT JOIN LATERAL (SELECT d.method,d.tier,d.inferred_date FROM date_inferences d
+              WHERE d.version_id=v.version_id AND {USABLE_INFERENCE}
+                AND d.precision='day'
+                AND NULLIF(v.payload->>'published_at','') IS NULL
+              ORDER BY d.tier,d.method LIMIT 1) di ON true
          WHERE {where}"""
         return sql, params
 
@@ -382,7 +411,7 @@ class Database:
             conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
             totals = conn.execute(prefix + """SELECT count(*) AS total,
                 count(*) FILTER (WHERE retrievable) AS retrievable,
-                count(*) FILTER (WHERE date IS NULL OR date='') AS unknown_dates
+                count(*) FILTER (WHERE effective_date IS NULL OR effective_date='') AS unknown_dates
                 FROM filtered""", params).fetchone()
             offset = min(offset, max(0, ((totals["total"] - 1) // limit) * limit))
             page_rows = conn.execute(
@@ -402,10 +431,10 @@ class Database:
                 COALESCE(NULLIF(publisher,''),'(Unknown)') AS publisher,count(*) AS count
                 FROM filtered GROUP BY 1,2 ORDER BY count DESC,1,2""", params).fetchall()
             months = conn.execute(prefix + """SELECT
-                COALESCE(NULLIF(left(date,7),''),'Unknown') AS month,count(*) AS count
+                COALESCE(NULLIF(left(effective_date,7),''),'Unknown') AS month,count(*) AS count
                 FROM filtered GROUP BY 1 ORDER BY 1""", params).fetchall()
             years = conn.execute(prefix + """SELECT
-                COALESCE(NULLIF(left(date,4),''),'Unknown') AS year,count(*) AS count
+                COALESCE(NULLIF(left(effective_date,4),''),'Unknown') AS year,count(*) AS count
                 FROM filtered GROUP BY 1 ORDER BY 1""", params).fetchall()
             labels = conn.execute(prefix + """, label_records AS (
                 SELECT DISTINCT record_id,btrim(label) AS name FROM filtered
@@ -416,9 +445,13 @@ class Database:
             labeled = conn.execute(prefix + """SELECT count(*) AS count FROM filtered
                 WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(labels) AS label
                 WHERE btrim(label)<>'')""", params).fetchone()["count"]
+            # Inferred dates are counted in the same snapshot as every total.
+            inferred = conn.execute(prefix + """SELECT inferred_tier AS tier,count(*) AS n
+                FROM filtered WHERE date_basis LIKE 'inferred:%%' GROUP BY 1 ORDER BY 1""", params).fetchall()
         total = totals["total"]
         stats = {**totals, **{name: [] for name in ("publishers", "sponsors", "platforms", "keywords")},
-                 "relationships": relationships, "timeline": months}
+                 "relationships": relationships, "timeline": months,
+                 "inferred_dates": {row["tier"]: row["n"] for row in inferred}}
         for row in groups:
             stats[row["name"]].append({
                 "name": row["value"], "count": row["count"],
@@ -434,6 +467,67 @@ class Database:
             },
             "matrix": sponsor_publisher_matrix_from_counts(relationships),
         }
+
+    def research_statistics(self, filters: Filters, *, group_by="years", ranking="all", periods=()):
+        """Year groups or named-period counts from one read-only snapshot.
+
+        Source dates remain in ``date``. All date selection, missing counts and
+        grouping use the explicitly selected ``effective_date`` projection.
+        Period filters are trusted, pre-intersected Filters from the tool layer.
+        """
+        if group_by not in ("none", "years") or ranking not in ("all", "highest"):
+            raise ValueError("Unsupported statistics grouping or ranking")
+        if len(periods) > 3:
+            raise ValueError("At most three comparison periods are supported")
+        datasets = ("native", "social") if filters.dataset == "all" else (filters.dataset,)
+
+        def totals(conn, scope):
+            select, params = self._public_query(scope)
+            rows = conn.execute(f"WITH filtered AS ({select}) " + """SELECT dataset,
+                count(*) AS total,count(*) FILTER (WHERE retrievable) AS retrievable,
+                count(*) FILTER (WHERE effective_date IS NULL OR effective_date='') AS unknown_dates,
+                count(*) FILTER (WHERE source_date IS NULL OR source_date='') AS source_unknown_dates,
+                count(*) FILTER (WHERE date_basis LIKE 'inferred:%%') AS inferred_dates
+                FROM filtered GROUP BY dataset ORDER BY dataset""", params).fetchall()
+            by_dataset = {row["dataset"]: row for row in rows}
+            return [by_dataset.get(dataset, {"dataset": dataset, "total": 0,
+                "retrievable": 0, "unknown_dates": 0, "source_unknown_dates": 0,
+                "inferred_dates": 0}) for dataset in datasets]
+
+        select, params = self._public_query(filters)
+        prefix = f"WITH filtered AS ({select}) "
+        with self.connect() as conn:
+            conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            collections = totals(conn, filters)
+            groups = []
+            if group_by == "years":
+                groups = conn.execute(prefix + """, year_counts AS (
+                    SELECT dataset,left(effective_date,4) AS name,count(*) AS count
+                    FROM filtered WHERE effective_date IS NOT NULL AND effective_date<>''
+                    GROUP BY dataset,left(effective_date,4)
+                ), ranked AS (
+                    SELECT *,dense_rank() OVER (PARTITION BY dataset ORDER BY count DESC) AS position
+                    FROM year_counts
+                ) SELECT dataset,name,count FROM ranked """ +
+                    ("WHERE position=1 " if ranking == "highest" else "") +
+                    "ORDER BY dataset,name", params).fetchall()
+            comparison = [{"label": period["label"],
+                "filters": period["filters"].model_dump(mode="json"),
+                "collections": totals(conn, period["filters"])} for period in periods]
+            records = conn.execute(prefix + """, examples AS (
+                SELECT *,row_number() OVER (PARTITION BY dataset
+                    ORDER BY effective_date DESC NULLS LAST,record_id) AS example_position
+                FROM filtered
+            ) SELECT * FROM examples WHERE example_position<=10
+                ORDER BY dataset,example_position""", params).fetchall()
+            tiers = conn.execute(prefix + """SELECT inferred_tier AS tier,count(*) AS count
+                FROM filtered WHERE date_basis LIKE 'inferred:%%'
+                GROUP BY inferred_tier ORDER BY inferred_tier""", params).fetchall()
+        return {"collections": collections, "groups": groups, "periods": comparison,
+            "records": records, "inferred_tiers": {row["tier"]: row["count"] for row in tiers},
+            "filters": filters.model_dump(mode="json"),
+            "date_basis": "source_or_supplemented" if filters.include_inferred_dates else "source_only",
+            "snapshot": "repeatable_read_read_only"}
 
     def network(self, filters: Filters, limit=60):
         """Bounded source-listed sponsor/outlet links for native advertisements."""

@@ -2,7 +2,13 @@
 
 from dash import html
 
-from observatory.app import _evidence_cards
+from observatory.app import (
+    _evidence_cards,
+    _evidence_coverage,
+    _external_research_card,
+    _grounded_answer_content,
+    _partial_collection_answer,
+)
 from observatory.models import Citation, Evidence
 
 
@@ -145,3 +151,106 @@ def test_numbered_citations_respect_disabled_source_links():
     assert links == ["/records/record-one"]
     assert "Source links are disabled" in list(descendants(cards[0]))
     assert citation_labels(cards[0]) == ["Citation [1]"]
+
+
+def test_summary_and_company_sections_link_to_numbered_source_quotes():
+    result = {
+        "summary": [{"text": "Both advertisements describe emissions projects.", "citation_indices": [1, 2]}],
+        "sections": [{"title": "ExxonMobil", "citation_indices": [1]},
+                     {"title": "Shell", "citation_indices": [2]}],
+        "cited_claims": [{"text": "ExxonMobil describes a proposed project.", "citation_indices": [1]},
+                         {"text": "Shell describes an operating facility.", "citation_indices": [2]}],
+        "citations": [{"evidence_id": "one", "quote": "a proposed project"},
+                      {"evidence_id": "two", "quote": "an operating facility"}],
+    }
+    content = _grounded_answer_content(result, "Legacy flat answer.")
+    # Traverse the returned list as a container, like the Query answer card.
+    visible = list(descendants(html.Div(content)))
+    assert "Summary" in visible and "ExxonMobil" in visible and "Shell" in visible
+    assert "Legacy flat answer." not in visible
+    links = [item.href for item in visible if isinstance(item, html.A)]
+    assert links == ["#answer-citation-1", "#answer-citation-2",
+                     "#answer-citation-1", "#answer-citation-2"]
+    cards = _evidence_cards([evidence("one", "ExxonMobil describes a proposed project."),
+                             evidence("two", "Shell describes an operating facility.")], True, result["citations"])
+    assert {item.id for item in descendants(html.Div(cards))
+            if isinstance(item, html.Div) and getattr(item, "id", "").startswith("answer-citation-")} == {
+        "answer-citation-1", "answer-citation-2",
+    }
+
+
+def test_legacy_answers_keep_their_text_and_invalid_reference_numbers_are_not_links():
+    assert "Legacy source-grounded answer." in list(descendants(html.Div(
+        _grounded_answer_content({}, "Legacy source-grounded answer."),
+    )))
+    result = {"summary": [{"text": "A description.", "citation_indices": [1, 0, 2, True]}],
+              "citations": [{"evidence_id": "one", "quote": "A description."}]}
+    links = [item.href for item in descendants(html.Div(_grounded_answer_content(result, "")))
+             if isinstance(item, html.A)]
+    assert links == ["#answer-citation-1"]
+
+
+def test_web_passages_remain_explicitly_outside_collection_and_use_safe_source_links():
+    result = {"external_research": {
+        "status": "ok", "source_kind": "external_web",
+        "passages": [{"text": "A provider summary of an external announcement. [W1]", "source_ids": ["W1"]},
+                     {"text": "A malformed uncited passage.", "source_ids": ["W2"]}],
+        "sources": [{"source_id": "W1", "url": "https://example.test/announcement", "title": "Announcement"},
+                    {"source_id": "W2", "url": "javascript:alert(1)", "title": "Unsafe"}],
+    }}
+    card = _external_research_card(result, True)
+    visible = list(descendants(card))
+    assert "Outside the advertising collection" in visible
+    assert "Additional web sources" in visible
+    assert "A malformed uncited passage." not in visible
+    links = [item.href for item in visible if isinstance(item, html.A)]
+    assert links == ["https://example.test/announcement", "https://example.test/announcement"]
+    paragraphs = [item for item in visible if isinstance(item, html.P)]
+    cited = next(item for item in paragraphs if "provider summary" in str(item.children))
+    assert len([item for item in descendants(cited) if isinstance(item, html.A)]) == 1
+    assert "Not independently verified" in visible
+    hidden = _external_research_card(result, False)
+    assert "https://example.test/announcement" not in [item.href for item in descendants(hidden) if isinstance(item, html.A)]
+
+
+def test_web_lookup_failure_has_no_provider_details_or_fabricated_evidence():
+    result = {"external_research": {"status": "unavailable", "summary": "private exception trace"}}
+    card = _external_research_card(result, True)
+    assert "private exception trace" not in list(descendants(card))
+    assert not any(isinstance(item, html.A) for item in descendants(card))
+    assert _external_research_card({}, True) is None
+
+
+def test_comparison_coverage_exposes_the_missing_side_without_asserting_absence():
+    result = {"structured_result": {"kind": "evidence_coverage", "groups": [
+        {"label": "ExxonMobil", "passages": 3}, {"label": "Shell", "passages": 0},
+    ]}}
+    card = _evidence_coverage(result)
+    visible = list(descendants(card))
+    assert "ExxonMobil" in visible and "Shell" in visible
+    assert "3" in visible and "0" in visible
+    assert "No matching stored passage retrieved" in visible
+    assert card.open is True
+    assert "No matching stored passages retrieved for: Shell." in visible
+    assert any(isinstance(item, str) and "does not prove" in item for item in visible)
+    assert _evidence_coverage({}) is None
+
+
+def test_complete_retrieval_coverage_is_a_collapsed_disclosure():
+    card = _evidence_coverage({"structured_result": {"kind": "evidence_coverage", "groups": [
+        {"label": "ExxonMobil", "passages": 3}, {"label": "Shell", "passages": 2},
+    ]}})
+    assert isinstance(card, html.Details)
+    assert card.open is False
+    assert "Retrieval coverage" in list(descendants(card))
+
+
+def test_one_missing_comparison_side_is_partial_even_with_a_cited_summary():
+    result = {"status": "insufficient_evidence", "summary": [{"text": "Only one side is supported.", "citation_indices": [1]}],
+              "structured_result": {"kind": "evidence_coverage", "groups": [
+                  {"label": "ExxonMobil", "passages": 2}, {"label": "Shell", "passages": 0},
+              ]}}
+    assert _partial_collection_answer(result) is True
+    assert _partial_collection_answer({**result, "status": "answered"}) is False
+    assert _partial_collection_answer({**result, "summary": []}) is False
+    assert _partial_collection_answer({"status": "insufficient_evidence", "summary": result["summary"]}) is False

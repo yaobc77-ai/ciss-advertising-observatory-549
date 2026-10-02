@@ -64,6 +64,8 @@ class Filters(BaseModel):
     date_from: date | None = None
     date_to: date | None = None
     include_unknown_dates: bool = True
+    date_presence: Literal["any", "known", "missing"] = Field(default="any", description="Publication-date presence, intersected with the date range and include_unknown_dates. Null or empty date is missing; not an ingestion or collection date.")
+    include_inferred_dates: bool = Field(default=False, description="Use unreviewed inferred dates (date_inferences) where the source date is missing. Off by default; answers must state when inferred dates were used.")
 
 
 class Evidence(BaseModel):
@@ -93,16 +95,34 @@ class Citation(BaseModel):
     quote: str
 
 
+class CitedStatement(BaseModel):
+    """A displayed statement bound to the answer's one-based citation numbers."""
+
+    text: str
+    citation_indices: list[StrictInt] = Field(default_factory=list)
+
+
+class AnswerSection(BaseModel):
+    """A neutral heading grouping existing cited claims, without extra prose."""
+
+    title: str
+    citation_indices: list[StrictInt] = Field(default_factory=list)
+
+
 class Answer(BaseModel):
     status: Literal[
         "answered", "insufficient_evidence", "service_unavailable", "limited"
     ]
     answer: str
-    answer_mode: Literal["rag", "statistics", "clarification", "tools"] = "rag"
+    answer_mode: Literal["rag", "statistics", "clarification", "tools", "web_supplement"] = "rag"
     structured_result: dict[str, Any] | None = None
     research_trace: dict[str, Any] = Field(default_factory=dict)
     citations: list[Citation] = Field(default_factory=list)
     evidence: list[Evidence] = Field(default_factory=list)
+    summary: list[CitedStatement] = Field(default_factory=list)
+    sections: list[AnswerSection] = Field(default_factory=list)
+    cited_claims: list[CitedStatement] = Field(default_factory=list)
+    external_research: dict[str, Any] = Field(default_factory=dict)
     cost_usd: float = 0.0
     latency_ms: int = 0
     failure_reason: str = ""

@@ -24,6 +24,11 @@ def main():
     sub.add_parser("init-db")
     sub.add_parser("migrate", help="Apply ordered database migrations and initialize retrieval state")
     sub.add_parser("migration-status", help="Inspect applied and pending migrations without changing data")
+    infer = sub.add_parser("infer-dates", help="Propose likely dates for records without a source date (preview unless --apply)")
+    infer.add_argument("--apply", action="store_true", help="Write proposals to date_inferences (source dates never change)")
+    infer.add_argument("--web-search", action="store_true", help="Also search the web for undated records without a URL date (paid)")
+    infer.add_argument("--paid", action="store_true", help="Confirm the paid web search")
+    infer.add_argument("--record-ids", nargs="*", default=None, help="Limit web search to these records")
     sub.add_parser("health")
     sub.add_parser("serve")
     sub.add_parser("budget")
@@ -113,6 +118,45 @@ def main():
 
         with db.connect() as conn:
             emit({"initialized": True, **migration_status(conn)})
+    elif args.command == "infer-dates":
+        from .date_inference import (
+            apply_inferences,
+            propose_url_inferences,
+            undated_records,
+            url_date,
+        )
+
+        if args.web_search and not args.paid:
+            raise SystemExit("--web-search calls a paid hosted search; add --paid to confirm.")
+        with db.connect() as conn:
+            proposals = propose_url_inferences(conn)
+            report = {"url_path": [{"record_id": p["record_id"], "date": str(p["inferred_date"]),
+                                    "matched": p["evidence"]["matched"],
+                                    "publisher_url_agreement": p["evidence"]["publisher_url_agreement"]}
+                                   for p in proposals]}
+            searched = []
+            if args.web_search:
+                from .date_inference import web_search_inference
+                from .rag import Rag
+
+                rag = Rag(db, settings)
+                targets = [r for r in undated_records(conn) if not url_date(r["url"])
+                           and (args.record_ids is None or r["record_id"] in args.record_ids)]
+                for record in targets:
+                    outcome = web_search_inference(rag, record)
+                    if outcome.get("proposal"):
+                        proposals.append(outcome["proposal"])
+                    searched.append({"record_id": record["record_id"], "title": record["title"],
+                                     "status": outcome["status"], "cost_usd": outcome.get("cost_usd"),
+                                     "rejected": outcome.get("rejected"),
+                                     "proposal": {k: str(v) if v is not None else None for k, v in
+                                                  (outcome.get("proposal") or {}).items() if k in
+                                                  ("inferred_date", "earliest", "latest", "precision")} or None,
+                                     "evidence_url": (outcome.get("proposal") or {}).get("evidence", {}).get("evidence_url"),
+                                     "quote": (outcome.get("proposal") or {}).get("evidence", {}).get("quote")})
+                report["web_search"] = searched
+            inserted = apply_inferences(conn, proposals) if args.apply else 0
+        emit({"applied": args.apply, "inserted": inserted, "proposals": len(proposals), **report})
     elif args.command == "migration-status":
         from .migrations import migration_status
 

@@ -28,6 +28,8 @@ class Settings:
     research_agent_enabled: bool = False
     # Paid source discovery is confined to the separate maintenance MCP server.
     claims_source_search_enabled: bool = False
+    # Public semantic questions may search the web after a validated corpus miss.
+    web_search_enabled: bool = False
     # Private curated attachments can be mounted independently of application code.
     record_asset_root: str = field(default="", repr=False)
     record_asset_manifest_sha256: str = field(default="", repr=False)
@@ -53,6 +55,7 @@ class Settings:
             trusted_proxy=os.getenv("OBS_TRUSTED_PROXY", ""),
             research_agent_enabled=os.getenv("OBS_RESEARCH_AGENT_ENABLED", "false").lower() == "true",
             claims_source_search_enabled=os.getenv("OBS_CLAIMS_SOURCE_SEARCH_ENABLED", "false").lower() == "true",
+            web_search_enabled=os.getenv("OBS_WEB_SEARCH_ENABLED", "true").lower() == "true",
             record_asset_root=os.getenv("OBS_RECORD_ASSET_ROOT", ""),
             record_asset_manifest_sha256=os.getenv("OBS_RECORD_ASSET_MANIFEST_SHA256", ""),
         )

@@ -1,0 +1,33 @@
+/* Query answers separate interpretation from inspectable source evidence. */
+.query-progress { display: flex; align-items: center; gap: 12px; padding: 18px 0; color: var(--muted); font-size: 14px; }
+.query-progress-spinner { width: 20px; height: 20px; border: 2px solid #d6dfe7; border-top-color: var(--teal); border-radius: 50%; animation: query-spin .8s linear infinite; flex: 0 0 auto; }
+@keyframes query-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .query-progress-spinner { animation-duration: 2s; } }
+.grounded-answer { background: transparent; border: 0; padding: 0; margin: 28px 0; }
+.grounded-answer > h3 { font-size: 25px; margin: 12px 0 16px; }
+.answer-summary { background: #f4f8f7; border-left: 3px solid var(--teal); padding: 20px 24px; margin-bottom: 30px; }
+.answer-summary > h4 { margin: 0 0 12px; font-size: 17px; }
+.answer-summary p, .answer-group p { line-height: 1.75; max-width: 90ch; }
+.answer-summary p:last-child { margin-bottom: 0; }
+.answer-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px 36px; }
+.answer-group { min-width: 0; padding-top: 16px; border-top: 1px solid var(--line); }
+.answer-group h4 { font-size: 18px; margin: 0 0 12px; }
+.answer-reference { white-space: nowrap; font-size: .85em; font-weight: 600; text-decoration: none; padding-left: 3px; }
+.answer-reference:hover { text-decoration: underline; }
+.answer-reference:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+.answer-evidence-title { font-size: 21px; margin: 32px 0 10px; }
+.citation-quote { scroll-margin-top: 80px; }
+.citation-quote:target { background: #edf4f7; outline: 2px solid #9bb4c8; outline-offset: 8px; }
+.external-source-card { padding: 20px 0; border-top: 1px solid var(--line); }
+.external-source-card h4 { margin: 8px 0; font-size: 18px; }
+.external-source-card p { max-width: 90ch; line-height: 1.7; }
+.external-research { margin: 24px 0; border-top: 1px solid var(--line); padding-top: 20px; }
+.external-research > h4 { font-size: 18px; margin: 0 0 10px; }
+.answer-layout { background: transparent; border: 0; padding: 0; margin: 28px 0; }
+.answer-layout > h3 { font-size: 25px; margin: 12px 0 18px; }
+.answer-section { margin: 28px 0; }
+.answer-section > h4 { font-size: 18px; margin: 0 0 14px; }
+.answer-scope { border-top: 1px solid var(--line); padding-top: 18px; }
+.answer-scope p, .answer-status p { line-height: 1.7; max-width: 90ch; }
+.answer-next-step { margin-top: 24px; }
+.answer-next-step > h4 { font-size: 17px; margin: 0 0 10px; }
