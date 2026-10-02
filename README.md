@@ -23,6 +23,23 @@ Native advertising data is connected. The social media view and importer are imp
 
 Selecting a company, publisher, relationship, or article shows its specific connections and supporting records. Counts come from the database. Graph connections reflect stored source fields; they do not independently establish business relationships.
 
+## Requirements updates
+
+Recorded through 1 October 2026. These requirement revisions are separate from application release numbers. **Implemented** means the feature is available; customer acceptance is recorded separately.
+
+| Revision and source | Requirement update | Current status |
+| --- | --- | --- |
+| **R1 — Original FA26 project description** · document date not stated | Explore native and social advertising through filtered counts, company–outlet comparisons, themes where supported, and source-grounded RAG. Deliver code, deployment, documentation, and a final demonstration. | Native exploration is implemented. Real social data, independent review, and the final dual-dataset demonstration remain pending. |
+| **R2 — Meeting, 25 September 2026** | Add an interactive knowledge graph with clear source relationships. Support different years, usable exploration, maintainable migrations, and a reproducible pipeline. | Graph selection opens named relationships, distributions, and supporting articles. Import and migration mechanisms exist; large-scale performance and independent reproduction remain to be demonstrated. |
+| **R3 — Michelle's feedback email** · send date not provided | Make the six research questions easy to answer, including New York Times ad counts, ExxonMobil's publishers, and Washington Post sponsors. Calculate totals from all matching records, with clear filters and record access. | Exact counts, complete relationship lists, chart drilldowns, and record browsing are implemented. Customer usability and counting-policy review remain pending. |
+| **R4 — User interface requests** · request dates not recorded | Separate Query and Data. Organize data into overview, graph, and records; show numbers, readable relationships, and the selected object's articles. Keep source material close to the record, and secondary controls in a toolbox. | These views and selection drilldowns are implemented. Record details show available text and sources; complete PDF, screenshot, and archive coverage remains pending. |
+| **R5 — Later customer priority, relayed by the user** · documented 30 September 2026 | Bring CLAIMS integration into the current work. Reuse the supplied implementation and saved results, link them to original articles, and expose reviewed claims with their evidence. This advances work originally deferred to a future semester. | Source auditing, result import, and read-only views are implemented. All 37 candidates remain on hold for source and result review; no new real results have been published. |
+| **R6 — User query and tool requests** · consolidated 1 October 2026 | Use a consistent Summary / Evidence answer layout, model-selected data tools, annual totals and all highest-year ties, period comparisons, percentages, matching-record browsing, ambiguity handling, and optional external lookup when collection answers remain unresolved. Show actual loading stages. | These interfaces and tool paths are implemented. External findings stay separate from collection counts. Independent model-routing, evidence-support, and customer checks remain pending. |
+
+The [client requirements review](docs/CLIENT_REVIEW_V0_4_2.md) records the six research questions and review tasks. The [CLAIMS integration plan](docs/claims_integration_plan.md) and [research tools guide](docs/mcp_research_tools.md) describe the later scope and implementation. Earlier review documents retain their original release context; use the [current handoff](docs/current_handoff.md) for current delivery status. User implementation requests are distinguished from requirements stated directly in the project description, meeting, or client email.
+
+For each new meeting note, email, or user request, append a requirement revision with its source and date, changed tasks, owner, due date, acceptance check, and status. Keep unassigned owners and unagreed dates marked **TBD**. Mark a task accepted only when its named reviewer approves the result for the recorded application and data versions; tests and deployment alone do not close that task.
+
 ## Current technology
 
 | Part | Technology |
