@@ -14,6 +14,7 @@ import hashlib
 import io
 import json
 import os
+import platform
 import shutil
 import stat
 import subprocess
@@ -284,6 +285,15 @@ def test_exclusion_reason(path):
     return {'kind': 'direct_holdout', 'reason': 'Path matches a protected holdout location.'}
 
 
+def prepare_runtime_metadata():
+    """Cache stdlib OS metadata before tests and subprocess guards start.
+
+    On POSIX, platform.platform() lazily probes ``uname -p``. The SDK reads
+    this cached value for request headers even in mocked, offline tests.
+    """
+    platform.platform()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report-dir', type=Path, required=True)
@@ -298,6 +308,7 @@ def main(argv=None):
         pytest_args = pytest_args[1:]
     if any(protected_path(item.split('::', 1)[0]) for item in pytest_args if not item.startswith('-')):
         raise PermissionError('A held-out test module was requested in development.')
+    prepare_runtime_metadata()
     reads, denied = set(), []
     engineering = EngineeringExceptions()
 
@@ -340,6 +351,7 @@ def main(argv=None):
             file_hashes[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
     receipt = {'at_utc': datetime.now(timezone.utc).isoformat(), 'purpose': 'development',
                'exit_code': exit_code, 'read_paths_sha256': file_hashes, 'denied_events': denied,
+               'runtime_preparation': ['stdlib_platform_metadata'],
                'engineering_exceptions': engineering.allowed_events,
                'customer_questions_loaded': False, 'human_accuracy': None,
                'scope': 'Python process read/collection guard; no OS sandbox or unseen-data assertion'}
