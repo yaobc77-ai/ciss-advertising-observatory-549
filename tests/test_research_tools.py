@@ -209,14 +209,27 @@ def test_unique_alias_in_filters_maps_to_source_value_with_audit():
     result = catalog.call("record_statistics", {"filters": {"publishers": ["NYT"]}})
     assert result["collections"][0]["total"] == 1
     assert result["filters"]["publishers"] == ["The New York Times"]
-    assert result["alias_resolutions"] == [
-        {"field": "publishers", "requested": "NYT", "source_value": "The New York Times"}]
+    [resolution] = result["alias_resolutions"]
+    assert resolution["requested"] == "NYT" and resolution["source_values"] == ["The New York Times"]
+    assert resolution["organization"] == "outlet:nyt" and resolution["review_status"] == "ai_proposed"
+    assert resolution["registry_version"].startswith("entity-registry-v1:")
 
 
-def test_alias_matching_several_source_spellings_is_never_merged():
-    # The fixture stores both "exxonmobil" and "ExxonMobil"; neither is chosen for "Exxon Mobil".
+def test_alias_of_one_registry_organization_filters_every_listed_spelling():
+    # The fixture stores both "exxonmobil" and "ExxonMobil"; the entity registry lists both
+    # spellings for one organization, so "Exxon Mobil" counts them together and says so.
     catalog, _ = make_catalog()
     result = catalog.call("record_statistics", {"filters": {"sponsors": ["Exxon Mobil"]}})
+    assert result["status"] == "ok"
+    assert sorted(result["filters"]["sponsors"]) == ["ExxonMobil", "exxonmobil"]
+    assert catalog.alias_resolutions[0]["organization"] == "org:exxonmobil"
+
+
+def test_alias_matching_unregistered_spellings_is_never_merged():
+    catalog, db = make_catalog()
+    for row, name in zip(db.rows, ("Imaginary Petroleum", "imaginary petroleum")):
+        row["sponsor"] = name
+    result = catalog.call("record_statistics", {"filters": {"sponsors": ["Imaginary Petroleum Co"]}})
     assert result["status"] == "clarify"
     assert not catalog.alias_resolutions
 
@@ -236,10 +249,11 @@ def test_explicit_date_constraint_cannot_include_unknown_dated_records():
     assert result["filters"]["include_unknown_dates"] is False
 
 
-def test_entity_resolution_case_variants_are_separate_candidates_not_merged():
+def test_entity_resolution_case_variants_stay_separate_candidates_of_one_organization():
     catalog, _ = make_catalog()
     result = catalog.call("resolve_entity", {"query": "ExxonMobil", "entity_type": "sponsor"})
-    assert result["status"] == "clarify"
+    assert result["status"] == "ok"
+    assert {candidate["organization"]["id"] for candidate in result["candidates"]} == {"org:exxonmobil"}
     assert result["candidate_count"] == 2
     assert {candidate["source_value"] for candidate in result["candidates"]} == {"exxonmobil", "ExxonMobil"}
     assert len({candidate["entity_id"] for candidate in result["candidates"]}) == 2

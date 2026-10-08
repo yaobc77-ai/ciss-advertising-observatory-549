@@ -48,7 +48,7 @@ def edges(graph, predicate):
 def test_typed_article_centric_graph_has_provenance_and_dictionary():
     graph = build_graph([row()])
     assert {node["type"] for node in graph["nodes"]} == {
-        "Article", "TextVersion", "SponsorCandidate", "Outlet", "SourceArtifact",
+        "Article", "TextVersion", "SponsorCandidate", "Outlet", "SourceArtifact", "Organization",
     }
     assert nodes(graph, "Article")[0]["properties"]["detail_url"] == "/records/r1"
     assert nodes(graph, "SponsorCandidate")[0]["label"] == "ExxonMobil"
@@ -277,7 +277,7 @@ def test_recovery_issue_remains_visible_when_current_annotations_are_empty():
     assert version["quality_codes"] == ["body_partial_recovery"]
     assert any(warning["code"] == "historical_annotations_prior_body" for warning in graph["warnings"])
     assert "PRIVATE_ARBITRARY" not in json.dumps(graph)
-    assert graph["identity_policy"]["entity_resolution"] == "exact_source_values_only_no_alias_merging"
+    assert graph["identity_policy"]["entity_resolution"] == "exact_source_values_kept_registry_organizations_join_listed_spellings"
     assert "SponsorCandidate" in graph["node_types"]
 
 
@@ -346,3 +346,41 @@ def test_malformed_metadata_is_not_elevated_to_current_version_binding():
     assert not edges(graph, "annotates")
     assert nodes(graph, "Annotation")[0]["properties"]["basis"] == "not_recorded"
     assert "PRIVATE" not in json.dumps(graph)
+
+
+def test_registry_organizations_join_source_spellings_without_rewriting_them():
+    graph = build_graph([row()])
+    validate_graph(graph)
+    [sponsor] = nodes(graph, "SponsorCandidate")
+    assert sponsor["properties"]["source_value"] == "exxonmobil"
+    links = edges(graph, "identifies_organization")
+    assert len(links) == 1 and links[0]["provenance"]["method"] == "entity_registry"
+    assert links[0]["provenance"]["status"] == "ai_proposed"
+    organization = next(node for node in nodes(graph, "Organization") if node["id"] == links[0]["target"])
+    props = organization["properties"]
+    assert props["registry_id"] == "org:exxonmobil" and props["organization_type"] == "company"
+    # The social collection meets the native article at the organization node.
+    assert props["source_values"] == {"native.sponsor": ["exxonmobil"], "social.sponsor": ["ExxonMobil"]}
+    assert props["registry_record_counts"]["social.sponsor"] > 0
+    assert props["registry_version"].startswith("entity-registry-v1:")
+
+
+def test_unregistered_sponsor_stays_an_unresolved_candidate():
+    graph = build_graph([row(sponsor="imaginary petroleum")])
+    validate_graph(graph)
+    assert not edges(graph, "identifies_organization")
+    assert nodes(graph, "SponsorCandidate")[0]["properties"]["identity_status"] == "source_candidate_not_resolved"
+
+
+def test_supplemented_sponsor_is_labelled_and_keeps_the_source_missing():
+    from observatory.entities import registry
+    fill = next(iter(registry().supplemented.values()))
+    graph = build_graph([row(record_id=fill["record_id"], version_id=fill["version_id"], sponsor="")])
+    validate_graph(graph)
+    [link] = edges(graph, "supplemented_sponsor")
+    assert link["provenance"]["status"] == "ai_proposed"
+    assert link["provenance"]["method"].startswith("entity_registry_")
+    assert nodes(graph, "Article")[0]["properties"]["missing_sponsor"] is True
+    # A changed version no longer carries the supplement.
+    stale = build_graph([row(record_id=fill["record_id"], version_id="other-version", sponsor="")])
+    assert not edges(stale, "supplemented_sponsor")

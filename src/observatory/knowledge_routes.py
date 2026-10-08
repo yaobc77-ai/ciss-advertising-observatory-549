@@ -22,6 +22,18 @@ def register_knowledge_routes(server, service, record_details=None):
         return jsonify({key: value for key, value in graph.items()
                         if key not in {"nodes", "edges", "warnings"}})
 
+    @server.get("/api/knowledge-graph/organizations")
+    def organization_export():
+        from .knowledge_graph import organization_overview
+
+        try:
+            overview = organization_overview(service.db.source_value_counts())
+        except Exception:
+            return jsonify({"error": "The organization overview is temporarily unavailable."}), 503
+        response = jsonify(overview)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @server.post("/api/knowledge-graph")
     def knowledge_export():
         try:

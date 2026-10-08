@@ -14,6 +14,8 @@ from datetime import date
 from typing import Literal
 
 from .analytics import sponsor_display
+from .entities import field_of as entity_field
+from .entities import registry
 from .models import Filters, validate_historical_label_scope
 
 PlanStatus = Literal["ready", "clarify", "unsupported"]
@@ -57,6 +59,11 @@ _SPONSOR_SOURCE_ALIASES = (
 def _entity_keys(value: str, field_name: str) -> set[str]:
     key = _normalize(value)
     keys = {key}
+    # The shared entity registry adds the organization's names, aliases, former
+    # names and its spellings in the other collection.
+    entity = registry().entity_of(value, entity_field(field_name)) if entity_field(field_name) else None
+    if entity is not None:
+        keys.update(_normalize(form) for form in entity.surface_forms())
     if field_name == "sponsors":
         keys.add(_normalize(sponsor_display(value)))
         for source_value, aliases in _SPONSOR_SOURCE_ALIASES:
@@ -95,9 +102,18 @@ def _resolve_one(value: str, field_name: str, facets: dict) -> tuple[str, ...]:
     )
 
 
+def _one_entity(values, field_name: str) -> bool:
+    field = entity_field(field_name)
+    # Only spellings the registry lists are merged; a look-alike source value still asks.
+    entities = {getattr(registry().owner(value, field), "id", None) for value in values} if field else {None}
+    return len(entities) == 1 and None not in entities
+
+
 def _resolve_list(value: str, field_name: str, facets: dict) -> tuple[tuple[str, ...], str]:
     exact = _resolve_one(value, field_name, facets)
-    if len(exact) == 1:
+    if len(exact) == 1 or (exact and _one_entity(exact, field_name)):
+        # Spellings of one registry organization (native "exxonmobil", social
+        # "ExxonMobil") are filtered together; distinct organizations still ask.
         return exact, ""
     if len(exact) > 1:
         return (), f"The name '{value}' matches multiple source categories. Select the exact filter value."

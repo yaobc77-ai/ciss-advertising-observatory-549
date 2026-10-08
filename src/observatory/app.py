@@ -1252,7 +1252,11 @@ def _render_answer_result(result, links_enabled, service):
             return [_tools_card(result, links_enabled)]
     external = _external_research_card(result, links_enabled)
     if status == "answered" and mode == "web_supplement":
-        cards = []
+        cards = [_answer_status(
+            "Collection answer incomplete",
+            "The web sources below add context. They do not complete the answer from this collection.",
+            "Any available collection evidence is shown separately below.",
+        )]
         collection = (result.get("external_research") or {}).get("collection_answer") or {}
         local = {**result, "status": collection.get("status", "insufficient_evidence"),
                  "answer_mode": collection.get("answer_mode", "tools" if data.get("kind") in {"original_metadata", "composite"} else "rag"),

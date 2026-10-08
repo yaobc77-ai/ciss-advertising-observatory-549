@@ -159,7 +159,9 @@ def test_exact_short_name_does_not_hide_related_candidates_or_merge_unrelated_na
     result = catalog.call("resolve_entity", {"query": "Williams", "entity_type": "sponsor"})
     assert result["status"] == "clarify" and result["candidate_count"] == 4
     assert {row["source_value"] for row in result["candidates"]} == set(names[:-1])
-    assert result["candidates"][0]["source_value"] == "williams"
+    # The three registered Williams spellings share one organization; "williams plumbing" does not.
+    assert {row["organization"]["id"] for row in result["candidates"] if row["organization"]} == {"org:williams"}
+    assert next(row for row in result["candidates"] if row["source_value"] == "williams plumbing")["organization"] is None
     assert all(row["identity_status"] == "source_candidate_not_resolved" for row in result["candidates"])
     context = catalog.entity_context()
     hint = next(row for row in context["ambiguity_hints"] if row["query"] == "williams")
@@ -176,15 +178,23 @@ def test_exact_active_source_selection_remains_available():
     assert catalog.entity_context()["ambiguity_hints"] == []
 
 
-def test_short_sponsor_cannot_bypass_ambiguity_by_selecting_exact_spelling():
+def test_short_sponsor_counts_every_registered_spelling_of_its_organization():
     catalog, db = make_catalog()
     names = ["williams", "williams companies", "the williams companies, inc."]
     db.rows = [source(str(i), "The Washington Post", name) for i, name in enumerate(names)]
     result = catalog.call("record_statistics", {"filters": {"sponsors": ["williams"]}})
+    assert result["status"] == "ok" and result["collections"][0]["total"] == 3
+    assert result["alias_resolutions"][0]["organization"] == "org:williams"
+
+
+def test_short_sponsor_with_an_unregistered_look_alike_still_asks():
+    catalog, db = make_catalog()
+    names = ["williams", "williams plumbing"]
+    db.rows = [source(str(i), "The Washington Post", name) for i, name in enumerate(names)]
+    result = catalog.call("record_statistics", {"filters": {"sponsors": ["williams plumbing", "williamz"]}})
     assert result["status"] == "clarify" and "collections" not in result
-    assert all(name in result["message"] for name in names)
     explicit = catalog.call("record_statistics", {"filters": {"sponsors": names}})
-    assert explicit["status"] == "ok" and explicit["collections"][0]["total"] == 3
+    assert explicit["status"] == "ok" and explicit["collections"][0]["total"] == 2
     assert explicit["filters"]["sponsors"] == names
 
 
