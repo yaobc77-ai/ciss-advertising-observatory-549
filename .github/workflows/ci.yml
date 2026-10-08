@@ -11,6 +11,8 @@ jobs:
   offline-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/observatory-tiktoken
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v7
@@ -23,6 +25,8 @@ jobs:
           node-version: "22"
       - name: Install locked dependencies
         run: uv sync --frozen --extra test --extra mcp
+      - name: Prepare tokenizer data for offline checks
+        run: uv run --no-sync python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
       - name: Run complete development-collectable offline gate
         run: uv run --no-sync python scripts/run_project_checks.py --report-dir .runtime/project_checks_ci
       - name: Preserve offline gate scope, logs and JUnit

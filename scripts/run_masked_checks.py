@@ -234,8 +234,11 @@ class EngineeringExceptions:
                 if kind == 'cli_help':
                     parameters['cwd'] = str(policy.root)
                 cwd = parameters.get('cwd')
-                token = policy.launching.set((safe_command, os.fsdecode(cwd) if cwd is not None else None,
-                                             parameters['env']))
+                if cwd is not None:
+                    # Windows decodes cwd before its audit event; POSIX keeps a
+                    # PathLike unchanged. Pass the same spelling we approve.
+                    cwd = parameters['cwd'] = os.fsdecode(cwd)
+                token = policy.launching.set((safe_command, cwd, parameters['env']))
                 try:
                     super().__init__(safe_command, **parameters)
                     policy.allowed_events.append({'event': kind, 'command': safe_command,
