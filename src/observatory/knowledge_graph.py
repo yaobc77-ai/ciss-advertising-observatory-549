@@ -17,6 +17,7 @@ from datetime import date, datetime
 from urllib.parse import quote, urlsplit
 
 from .analytics import sponsor_display, sponsor_metadata
+from .entities import registry as entity_registry
 
 SCHEMA_VERSION = "advertising-source-graph-v2"
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
@@ -32,6 +33,8 @@ NODE_TYPES = {
                          "identity_fields": ["dataset", "source_field", "source_value"]},
     "Outlet": {"description": "An exact source publisher-field value, not a verified legal entity.",
                "identity_fields": ["dataset", "source_field", "source_value"]},
+    "Organization": {"description": "A registry organization or outlet joining exact source spellings across collections; identity is AI-proposed until reviewed.",
+                     "identity_fields": ["registry_id"]},
     "SourceArtifact": {"description": "An online URL reference or a hash-bound reviewed capture.",
                        "identity_fields": ["kind", "url_or_record_asset_hash"]},
     "Annotation": {"description": "An imported category-assignment record with explicit text scope.",
@@ -48,7 +51,7 @@ NODE_TYPES = {
                    "identity_fields": ["taxonomy_version", "sc_id"]},
 }
 IDENTITY_POLICY = {
-    "entity_resolution": "exact_source_values_only_no_alias_merging",
+    "entity_resolution": "exact_source_values_kept_registry_organizations_join_listed_spellings",
     "missing_values": "omitted_entities_with_article_missing_flags",
     "display_aliases": "presentation_only_not_identity_assertions",
     "type_hints": "provisional_not_verified_organization_types",
@@ -74,6 +77,12 @@ PREDICATES = {
         "The stored sponsor field lists this candidate. Identity and payment are not independently verified."),
     "published_in": _predicate("source lists outlet", "Article", "Outlet",
         "The stored publisher field names this outlet candidate; it does not imply endorsement."),
+    "identifies_organization": _predicate("identified as organization", "SponsorCandidate", "Organization",
+        "The entity registry lists this exact source spelling for the organization. Review status is on the edge."),
+    "identifies_outlet": _predicate("identified as outlet", "Outlet", "Organization",
+        "The entity registry lists this exact publisher spelling for the outlet."),
+    "supplemented_sponsor": _predicate("supplemented sponsor", "Article", "Organization",
+        "The source lists no sponsor; the registry supplements one from stated evidence. The source field stays missing."),
     "has_source_reference": _predicate("has original reference", "Article", "SourceArtifact",
         "A source URL, not a guaranteed immutable or currently available capture."),
     "has_archive_reference": _predicate("has archive reference", "Article", "SourceArtifact",
@@ -208,6 +217,15 @@ def build_graph(rows, *, links_enabled=True, attachments_by_record=None, claims2
             nodes[identifier] = item
         return identifier
 
+    def organization(entity, record_id):
+        return node("Organization", (entity.id,), entity.name, {
+            "registry_id": entity.id, "name": entity.name, "organization_type": entity.type,
+            "aliases": list(entity.aliases), "former_names": list(entity.former_names),
+            "source_values": {key: list(values) for key, values in entity.source_values.items()},
+            "registry_record_counts": dict(entity.record_counts), "basis": entity.basis,
+            "review_status": entity.review_status, "registry_version": entity_registry().version,
+        }, record_id)
+
     def edge(source, target, predicate, record_id, version_id, field, *,
              method="source_field_projection", status="source_recorded_unverified", annotation_id=None):
         provenance = {"record_id": record_id, "version_id": version_id,
@@ -277,6 +295,16 @@ def build_graph(rows, *, links_enabled=True, attachments_by_record=None, claims2
             entity = node(kind, (dataset, field, raw), sponsor_display(raw) if field == "sponsor" else raw,
                           properties, record_id)
             edge(article, entity, predicate, record_id, version_id, field)
+            owner = entity_registry().for_source(dataset, field, raw)
+            if owner is not None:
+                edge(entity, organization(owner, record_id),
+                     "identifies_organization" if field == "sponsor" else "identifies_outlet",
+                     record_id, version_id, field, method="entity_registry", status=owner.review_status)
+        fill = entity_registry().supplemented.get((dataset, record_id, "sponsor"))
+        if fill and _missing(row.get("sponsor")) and fill.get("version_id") == version_id:
+            owner = entity_registry().entities[fill["organization"]]
+            edge(article, organization(owner, record_id), "supplemented_sponsor", record_id, version_id, "sponsor",
+                 method="entity_registry_" + fill["method"], status=fill["review_status"])
 
         for field, kind, predicate in (("url", "web_reference", "has_source_reference"),
                                       ("archive_url", "archive_reference", "has_archive_reference")):
@@ -478,3 +506,36 @@ def validate_graph(graph, *, rows=None):
                 ):
                     raise ValueError("Evidence does not match its source text")
     return []
+
+
+ORGANIZATION_NOTE = (
+    "Organizations join exact source spellings across collections. Native articles and social "
+    "posts are separate units and are never summed. Trade associations and events are listed "
+    "with their own type; whether they belong in a company count awaits the client's decision. "
+    "Identities are AI-proposed until a named reviewer approves them. A collected company post "
+    "is not a verified paid advertisement."
+)
+
+
+def organization_overview(counts):
+    """Every registry organization and outlet with countable records per collection.
+
+    ``counts`` maps (dataset, field, exact spelling) to countable current records,
+    so organizations found only in the social collection appear as well.
+    """
+    current = entity_registry()
+    items = []
+    for entity in current.entities.values():
+        field = "sponsor" if entity.kind == "organization" else "publisher"
+        per_collection = {}
+        for key, values in entity.source_values.items():
+            dataset = key.split(".")[0]
+            per_collection[dataset] = per_collection.get(dataset, 0) + sum(
+                counts.get((dataset, field, value), 0) for value in values)
+        items.append({**entity.public(), "kind": entity.kind, "aliases": list(entity.aliases),
+                      "former_names": list(entity.former_names),
+                      "source_values": {key: list(values) for key, values in entity.source_values.items()},
+                      "countable_records": per_collection, "basis": entity.basis})
+    items.sort(key=lambda item: (-sum(item["countable_records"].values()), item["id"]))
+    return {"registry_version": current.version, "review": dict(current.review),
+            "note": ORGANIZATION_NOTE, "organizations": items}

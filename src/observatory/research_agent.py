@@ -9,6 +9,7 @@ web application's transport, so no remote MCP server or account is required.
 import hashlib
 import json
 import re
+from copy import deepcopy
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Literal
@@ -26,7 +27,7 @@ from .question_policy import (
     statistics_request_preserves_question,
 )
 
-POLICY_VERSION = "research-tools-v14"
+POLICY_VERSION = "research-tools-v15"
 MAX_INPUT_BYTES = 60_000
 MAX_ARGUMENT_BYTES = 8_000
 MAX_INTERMEDIATE_BYTES = 16_000
@@ -114,9 +115,21 @@ def _step_definitions(definitions, contract, tasks, completed, selected_record=N
                    "get_graph_schema", "request_clarification"}
     elif contract.get("original_metadata_only"):
         allowed = {"find_records", "resolve_entity", "get_record_metadata", "request_clarification"}
-    return [item for item in definitions if (allowed is None or item["name"] in allowed)
+    definitions = [item for item in definitions if (allowed is None or item["name"] in allowed)
             and not (selected_record and item["name"] == "find_records")
             and not (item["name"] == "get_record_metadata" and not (selected_record or trusted_record_id))]
+    if selected_record or trusted_record_id:
+        definitions = deepcopy(definitions)
+        for item in definitions:
+            if item["name"] in {"get_record_metadata", "get_record", "get_record_sources"}:
+                # The executor owns this identity once a unique source is bound.
+                # Keep other parameters available; never make the model recopy IDs.
+                schema = item["parameters"]
+                schema["properties"].pop("record_id", None)
+                schema["required"] = [key for key in schema.get("required", []) if key != "record_id"]
+                item["description"] = (item.get("description", "")
+                                       + " The executor supplies the already bound record ID; do not provide record_id.")
+    return definitions
 
 
 def _selected_record(result):
@@ -707,8 +720,11 @@ class ResearchAgent:
                     trace.update(status="unavailable", blocked_by="statistics_scope_validation_unavailable")
                     run.failure_reason = "statistics_scope_validation_unavailable"
                     return _complete_plan(run, tasks, completed, run.failure_reason) if tasks else run
+            scope_diagnostic = {}
             if name == "record_statistics" and not statistics_request_preserves_question(
-                    current_question, validation_context, args, run.base_filters):
+                    current_question, validation_context, args, run.base_filters,
+                    diagnostics=scope_diagnostic):
+                trace["scope_validation"] = {"stage": "request", **scope_diagnostic}
                 trace.update(status="clarify", blocked_by="statistics_question_scope_missing")
                 run.route = "clarify"
                 run.failure_reason = "research_plan_predicate_missing" if tasks else "statistics_question_scope_missing"
@@ -724,12 +740,21 @@ class ResearchAgent:
 
             if name in {"get_record_metadata", "get_record", "get_record_sources"}:
                 bound_id = selected_record["record_id"] if selected_record else trusted_record_id
-                if bound_id and args.get("record_id") != bound_id:
+                filter_ids = (args.get("filters") or {}).get("record_ids")
+                if bound_id and ("record_id" in args and args["record_id"] != bound_id
+                                 or filter_ids and filter_ids != [bound_id]):
                     trace.update(status="clarify", blocked_by="research_record_binding_mismatch")
                     run.route, run.failure_reason = "clarify", "research_record_binding_mismatch"
                     run.result = {"status": "clarify", "message":
                         "The source read changed the matched record. Select the intended record before continuing."}
                     return _complete_plan(run, tasks, completed, run.failure_reason) if tasks else run
+                if bound_id:
+                    args = {**args, "record_id": bound_id}
+                    trace["execution_arguments"] = args
+                    trace["record_binding"] = {
+                        "source": "unique_title_match" if selected_record else "active_record_filter",
+                        "record_id": bound_id,
+                    }
 
             try:
                 if progress:
@@ -798,11 +823,16 @@ class ResearchAgent:
                     trace.update(status="invalid_result", blocked_by="research_result_scope_mismatch")
                     run.failure_reason = "research_plan_result_scope_mismatch" if tasks else "research_result_scope_mismatch"
                     return _complete_plan(run, tasks, completed, run.failure_reason) if tasks else run
+                scope_diagnostic = {}
+                active_preserved = name != "record_statistics" or _result_preserves_active_filters(
+                    result.get("filters"), run.base_filters, args.get("filters") or {})
                 if name == "record_statistics" and (
-                        not _result_preserves_active_filters(result.get("filters"), run.base_filters, args.get("filters") or {})
-                        or not statistics_request_preserves_question(
+                        not active_preserved or not statistics_request_preserves_question(
                             current_question, validation_context,
-                            {**args, "filters": result.get("filters") or {}}, run.base_filters)):
+                            {**args, "filters": result.get("filters") or {}}, run.base_filters,
+                            diagnostics=scope_diagnostic)):
+                    trace["scope_validation"] = {"stage": "result", **scope_diagnostic} if active_preserved else {
+                        "stage": "result", "reason": "active_filters_changed"}
                     trace.update(status="invalid_result", blocked_by="statistics_result_scope_missing")
                     run.failure_reason = "research_plan_result_predicate_missing" if tasks else "statistics_result_scope_missing"
                     return _complete_plan(run, tasks, completed, run.failure_reason) if tasks else run

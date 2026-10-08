@@ -18,3 +18,8 @@ Start with [README](../README.md), then choose the document for your task.
 | [tests](../tests) | Development checks |
 
 Source datasets and private review materials are distributed separately.
+
+## Collaboration and organization identity
+
+- [Git collaboration](git_collaboration.md): synchronizing teammate changes and publishing through review.
+- [Organization identities](organization_identity.md): registered aliases, source scope and review status.

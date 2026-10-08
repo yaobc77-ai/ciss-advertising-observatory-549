@@ -1,0 +1,2797 @@
+{
+ "schema": "observatory-entity-registry-v1",
+ "version": "entity-registry-v1",
+ "review": {
+  "status": "ai_proposed",
+  "reviewer": null,
+  "note": "Proposed by an AI assistant from source values; no named human has reviewed these identities."
+ },
+ "types": [
+  "company",
+  "trade_association",
+  "event"
+ ],
+ "organizations": [
+  {
+   "id": "org:abu_dhabi_national_oil_company",
+   "name": "Abu Dhabi National Oil Company",
+   "type": "company",
+   "aliases": [
+    "ADNOC"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Abu Dhabi National Oil Company"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 404
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:adani_enterprises",
+   "name": "Adani Enterprises",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Adani Enterprises"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 159
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:adaro_energy",
+   "name": "Adaro Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Adaro Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 13
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:afpm",
+   "name": "American Fuel & Petrochemical Manufacturers",
+   "type": "trade_association",
+   "aliases": [
+    "AFPM",
+    "American Fuel and Petrochemical Manufacturers"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "afpm"
+    ],
+    "social.sponsor": [
+     "American Fuel and Petrochemical Manufacturers (AFPM)"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 6,
+    "social.sponsor": 745
+   },
+   "basis": "Native abbreviation and social full name with the same abbreviation.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:alliance_resource_partners",
+   "name": "Alliance Resource Partners",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Alliance Resource Partners"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:alpha_metallurgical_resources",
+   "name": "Alpha Metallurgical Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Alpha Metallurgical Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 32
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:american_gas_association",
+   "name": "American Gas Association (AGA)",
+   "type": "trade_association",
+   "aliases": [
+    "AGA"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "American Gas Association (AGA)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 488
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:anglo_american",
+   "name": "Anglo American",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Anglo American"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 534
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:antero_resources",
+   "name": "Antero Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Antero Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 94
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:apa_corporation",
+   "name": "APA Corporation",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "APA Corporation"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 53
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:api",
+   "name": "American Petroleum Institute",
+   "type": "trade_association",
+   "aliases": [
+    "API",
+    "美国石油学会"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "api"
+    ],
+    "social.sponsor": [
+     "American Petroleum Institute (API)"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 8,
+    "social.sponsor": 3517
+   },
+   "basis": "Native abbreviation and social full name with the same abbreviation.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:arc_resources",
+   "name": "ARC Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "ARC Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 23
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:arcelormittal",
+   "name": "ArcelorMittal",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "ArcelorMittal"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 44
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:arpel",
+   "name": "ARPEL",
+   "type": "trade_association",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "ARPEL"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 27
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:asia_natural_gas_energy_association",
+   "name": "Asia Natural Gas & Energy Association (ANGEA)",
+   "type": "trade_association",
+   "aliases": [
+    "ANGEA"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Asia Natural Gas & Energy Association (ANGEA)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 5
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:australian_energy_producers",
+   "name": "Australian Energy Producers (AEP)",
+   "type": "trade_association",
+   "aliases": [
+    "AEP"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Australian Energy Producers (AEP)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 15
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:bapco_energies",
+   "name": "Bapco Energies",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Bapco Energies"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 9
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:basf",
+   "name": "BASF",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "BASF"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 138
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:bhp",
+   "name": "BHP",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "BHP"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 394
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:bp",
+   "name": "BP",
+   "type": "company",
+   "aliases": [
+    "British Petroleum",
+    "bp plc",
+    "英国石油"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "bp"
+    ],
+    "social.sponsor": [
+     "BP"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 13,
+    "social.sponsor": 1897
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:bumi_resources",
+   "name": "Bumi Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Bumi Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:canadian_association_of_petroleum_producers",
+   "name": "Canadian Association of Petroleum Producers (CAPP)",
+   "type": "trade_association",
+   "aliases": [
+    "CAPP"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Canadian Association of Petroleum Producers (CAPP)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 79
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:canadian_fuels_association",
+   "name": "Canadian Fuels Association (CFA)",
+   "type": "trade_association",
+   "aliases": [
+    "CFA"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Canadian Fuels Association (CFA)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 21
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:canadian_natural_resources",
+   "name": "Canadian Natural Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Canadian Natural Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 188
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:cenovus_energy",
+   "name": "Cenovus Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Cenovus Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 104
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ceraweek",
+   "name": "CERAWeek",
+   "type": "event",
+   "aliases": [
+    "CERAWeek",
+    "CERA Week",
+    "CERAWeek by S&P Global"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "cera"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 41
+   },
+   "basis": "Conference by S&P Global; all 41 'cera' records are WSJ partner pages under /ceraweek/.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:chesapeake_energy",
+   "name": "Chesapeake Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Chesapeake Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 99
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:chevron",
+   "name": "Chevron",
+   "type": "company",
+   "aliases": [
+    "Chevron Corporation",
+    "雪佛龙"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "chevron"
+    ],
+    "social.sponsor": [
+     "Chevron"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 8,
+    "social.sponsor": 1075
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:chn_energy",
+   "name": "CHN Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "CHN Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 120
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:cnooc",
+   "name": "CNOOC",
+   "type": "company",
+   "aliases": [
+    "中海油",
+    "中国海油"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "CNOOC"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 124
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:cnpc",
+   "name": "CNPC",
+   "type": "company",
+   "aliases": [
+    "中石油",
+    "中国石油天然气集团"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "CNPC"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 49
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:coal_india",
+   "name": "Coal India",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Coal India"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 693
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:conocophillips",
+   "name": "ConocoPhillips",
+   "type": "company",
+   "aliases": [
+    "Conoco",
+    "康菲"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "ConocoPhillips"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 403
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:consol_energy",
+   "name": "CONSOL Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "CONSOL Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 9
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:devon_energy",
+   "name": "Devon Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Devon Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 90
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:domestic_energy_producers_alliance",
+   "name": "Domestic Energy Producers Alliance (DEPA)",
+   "type": "trade_association",
+   "aliases": [
+    "DEPA"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Domestic Energy Producers Alliance (DEPA)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:dtek",
+   "name": "DTEK",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "DTEK"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 19
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ecopetrol",
+   "name": "Ecopetrol",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Ecopetrol"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 2
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:en_group",
+   "name": "En+ Group",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "En+ Group"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:enbridge",
+   "name": "Enbridge",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "enbridge"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 3
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:energy_resources_aoteara",
+   "name": "Energy Resources Aoteara",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Energy Resources Aoteara"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 65
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:energy_workforce_technology_council",
+   "name": "Energy Workforce & Technology Council",
+   "type": "trade_association",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Energy Workforce & Technology Council"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 11
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:eni",
+   "name": "Eni",
+   "type": "company",
+   "aliases": [
+    "ENI",
+    "埃尼"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "eni"
+    ],
+    "social.sponsor": [
+     "Eni"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 1,
+    "social.sponsor": 173
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:eqt_corporation",
+   "name": "EQT Corporation",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "EQT Corporation"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 183
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:equinor",
+   "name": "Equinor",
+   "type": "company",
+   "aliases": [
+    "艾奎诺",
+    "挪威国家石油"
+   ],
+   "former_names": [
+    "Statoil"
+   ],
+   "source_values": {
+    "native.sponsor": [
+     "statoil"
+    ],
+    "social.sponsor": [
+     "Equinor"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 28,
+    "social.sponsor": 420
+   },
+   "basis": "Statoil ASA was renamed Equinor ASA in May 2018; native records list the former name.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:european_biogas_association",
+   "name": "European Biogas Association",
+   "type": "trade_association",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "European Biogas Association"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 40
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:evraz",
+   "name": "EVRAZ",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "EVRAZ"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 15
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:exelon",
+   "name": "Exelon",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "exelon"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 1
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:exxaro_resources_ltd",
+   "name": "Exxaro Resources Ltd",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Exxaro Resources Ltd"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 337
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:exxonmobil",
+   "name": "ExxonMobil",
+   "type": "company",
+   "aliases": [
+    "Exxon",
+    "Exxon Mobil",
+    "XOM",
+    "埃克森美孚",
+    "埃克森"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "exxonmobil"
+    ],
+    "social.sponsor": [
+     "ExxonMobil"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 15,
+    "social.sponsor": 2975
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:gazprom",
+   "name": "Gazprom",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Gazprom"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 311
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:glencore",
+   "name": "Glencore",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Glencore"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 659
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:gulf_petrochemicals_and_chemicals_association",
+   "name": "Gulf Petrochemicals and Chemicals Association (GPCA)",
+   "type": "trade_association",
+   "aliases": [
+    "GPCA"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Gulf Petrochemicals and Chemicals Association (GPCA)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 592
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:hess_corporation",
+   "name": "Hess Corporation",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Hess Corporation"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 145
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:inpex",
+   "name": "INPEX",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "INPEX"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 49
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:international_association_of_oil_gas_producers",
+   "name": "International Association of Oil & Gas Producers (IOGP)",
+   "type": "trade_association",
+   "aliases": [
+    "IOGP"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "International Association of Oil & Gas Producers (IOGP)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 76
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:jsw",
+   "name": "JSW",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "JSW"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 304
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:kiewit_mining_group",
+   "name": "Kiewit Mining Group",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Kiewit Mining Group"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 148
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:kuwait_petroleum_corp",
+   "name": "Kuwait Petroleum Corp.",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Kuwait Petroleum Corp."
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 50
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:libya_national_oil_corp",
+   "name": "Libya National Oil Corp.",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Libya National Oil Corp."
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 32
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:lukoil",
+   "name": "Lukoil",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Lukoil"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 48
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:lw_bogdanka",
+   "name": "LW Bogdanka",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "LW Bogdanka"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 1
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:marathon_oil",
+   "name": "Marathon Oil",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Marathon Oil"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 671
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:mitsubishi_corporation",
+   "name": "Mitsubishi Corporation",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Mitsubishi Corporation"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 87
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:mubadala",
+   "name": "Mubadala",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Mubadala"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 29
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:naftogaz",
+   "name": "Naftogaz",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Naftogaz"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 48
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:national_iranian_oil_company",
+   "name": "National Iranian Oil Company",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "National Iranian Oil Company"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 2
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:nextera_energy",
+   "name": "NextEra Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "nextera energy"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 1
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:nigerian_gas_association",
+   "name": "Nigerian Gas Association",
+   "type": "trade_association",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Nigerian Gas Association"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 112
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:nigerian_national_petroleum_corp",
+   "name": "Nigerian National Petroleum Corp.",
+   "type": "company",
+   "aliases": [
+    "NNPC"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Nigerian National Petroleum Corp."
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 559
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:occidental_petroleum",
+   "name": "Occidental Petroleum",
+   "type": "company",
+   "aliases": [
+    "Occidental",
+    "Oxy"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Occidental Petroleum"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 155
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:offshore_energies_uk",
+   "name": "Offshore Energies UK (OEUK)",
+   "type": "trade_association",
+   "aliases": [
+    "OEUK"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Offshore Energies UK (OEUK)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 178
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:omv",
+   "name": "OMV",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "OMV"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 189
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ongc",
+   "name": "ONGC",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "ONGC"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 1515
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:orlen",
+   "name": "Orlen",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Orlen"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 3
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ovintiv",
+   "name": "Ovintiv",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Ovintiv"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 98
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:peabody_energy",
+   "name": "Peabody Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Peabody Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 195
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:pemex",
+   "name": "Pemex",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Pemex"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 70
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:pertamina",
+   "name": "Pertamina",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Pertamina"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 18
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:petrobras",
+   "name": "Petrobras",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Petrobras"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:petroecuador",
+   "name": "PetroEcuador",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "PetroEcuador"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 4
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:petroleos_de_venezuela",
+   "name": "Petroleos de Venezuela",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Petroleos de Venezuela"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 111
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:petroleum_development_oman",
+   "name": "Petroleum Development Oman",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Petroleum Development Oman"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 171
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:petronas",
+   "name": "Petronas",
+   "type": "company",
+   "aliases": [
+    "PETRONAS",
+    "马来西亚国家石油"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "petronas"
+    ],
+    "social.sponsor": [
+     "Petronas"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 17,
+    "social.sponsor": 851
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:pge_group",
+   "name": "PGE Group",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "PGE Group"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 5
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:pioneer_natural_resources",
+   "name": "Pioneer Natural Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Pioneer Natural Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 20
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ptt",
+   "name": "PTT",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "ptt"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 1
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:qatarenergy",
+   "name": "QatarEnergy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "QatarEnergy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 175
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:repsol",
+   "name": "Repsol",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Repsol"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 52
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:rio_tinto",
+   "name": "Rio Tinto",
+   "type": "company",
+   "aliases": [
+    "Rio Tinto"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Rio Tinto (1959-2018)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 546
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:rosneft",
+   "name": "Rosneft",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Rosneft"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 27
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ruhrkohle_ag",
+   "name": "Ruhrkohle AG (RAG)",
+   "type": "company",
+   "aliases": [
+    "RAG"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Ruhrkohle AG (RAG)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 2
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:rwe",
+   "name": "RWE",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "RWE"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 182
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:samruk_kazyna",
+   "name": "Samruk-Kazyna",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Samruk-Kazyna"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 3
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:santos",
+   "name": "Santos",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Santos"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 25
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:sasol",
+   "name": "Sasol",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Sasol"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 1967
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:saudi_aramco",
+   "name": "Saudi Aramco",
+   "type": "company",
+   "aliases": [
+    "Aramco",
+    "沙特阿美"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Saudi Aramco"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 627
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:sev_en_group",
+   "name": "Sev.en Group",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Sev.en Group"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 6
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:severstal",
+   "name": "Severstal",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Severstal"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 2
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:shell",
+   "name": "Shell",
+   "type": "company",
+   "aliases": [
+    "Royal Dutch Shell",
+    "Shell plc",
+    "壳牌"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "shell"
+    ],
+    "social.sponsor": [
+     "Shell"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 10,
+    "social.sponsor": 3137
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:singareni_collieries",
+   "name": "Singareni Collieries",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Singareni Collieries"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 193
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:sinopec",
+   "name": "Sinopec",
+   "type": "company",
+   "aliases": [
+    "中国石化",
+    "中石化"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Sinopec"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 404
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:sonatrach",
+   "name": "Sonatrach",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Sonatrach"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:southern_company",
+   "name": "Southern Company",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "southern company"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 5
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:southwestern_energy",
+   "name": "Southwestern Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Southwestern Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 15
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:state_power_investment_group",
+   "name": "State Power Investment Group",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "State Power Investment Group"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 56
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:suncor_energy",
+   "name": "Suncor Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Suncor Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 480
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:teck_resources",
+   "name": "Teck Resources",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Teck Resources"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 79
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:the_energy_institute",
+   "name": "The Energy Institute (EI)",
+   "type": "trade_association",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "The Energy Institute (EI)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 459
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:totalenergies",
+   "name": "TotalEnergies",
+   "type": "company",
+   "aliases": [
+    "TotalEnergies SE",
+    "道达尔能源",
+    "道达尔"
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "totalenergies"
+    ],
+    "social.sponsor": [
+     "TotalEnergies"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 113,
+    "social.sponsor": 3852
+   },
+   "basis": "Case-insensitive identical spelling across collections.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:tourmaline_oil",
+   "name": "Tourmaline Oil",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Tourmaline Oil"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 31
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:tullow_oil",
+   "name": "Tullow Oil",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Tullow Oil"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 24
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:vale",
+   "name": "Vale",
+   "type": "company",
+   "aliases": [
+    "Vale"
+   ],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Vale (2007-2022)"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 206
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:vistra",
+   "name": "Vistra",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Vistra"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 96
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:williams",
+   "name": "The Williams Companies",
+   "type": "company",
+   "aliases": [
+    "Williams Companies",
+    "Williams Companies, Inc."
+   ],
+   "former_names": [],
+   "source_values": {
+    "native.sponsor": [
+     "the williams companies, inc.",
+     "williams",
+     "williams companies"
+    ]
+   },
+   "record_counts": {
+    "native.sponsor": 3
+   },
+   "basis": "Three native spellings of the same company name; the bare 'williams' value is listed by one record.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:wolverine_fuels",
+   "name": "Wolverine Fuels",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Wolverine Fuels"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 5
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:woodside_energy",
+   "name": "Woodside Energy",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "Woodside Energy"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 19
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "org:ypf",
+   "name": "YPF",
+   "type": "company",
+   "aliases": [],
+   "former_names": [],
+   "source_values": {
+    "social.sponsor": [
+     "YPF"
+    ]
+   },
+   "record_counts": {
+    "social.sponsor": 8
+   },
+   "basis": "Single source spelling.",
+   "review_status": "ai_proposed"
+  }
+ ],
+ "outlets": [
+  {
+   "id": "outlet:cnbc",
+   "name": "CNBC",
+   "aliases": [],
+   "source_values": {
+    "native.publisher": [
+     "CNBC"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:wsj",
+   "name": "The Wall Street Journal",
+   "aliases": [
+    "WSJ",
+    "Wall Street Journal",
+    "wsj.com",
+    "华尔街日报"
+   ],
+   "source_values": {
+    "native.publisher": [
+     "The Wall Street Journal"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:forbes",
+   "name": "Forbes",
+   "aliases": [],
+   "source_values": {
+    "native.publisher": [
+     "Forbes"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:nyt",
+   "name": "The New York Times",
+   "aliases": [
+    "NYT",
+    "New York Times",
+    "NYTimes",
+    "nytimes.com",
+    "纽约时报"
+   ],
+   "source_values": {
+    "native.publisher": [
+     "The New York Times"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:wapo",
+   "name": "The Washington Post",
+   "aliases": [
+    "WaPo",
+    "Washington Post",
+    "washingtonpost.com",
+    "华盛顿邮报"
+   ],
+   "source_values": {
+    "native.publisher": [
+     "The Washington Post"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:politico",
+   "name": "Politico",
+   "aliases": [
+    "POLITICO"
+   ],
+   "source_values": {
+    "native.publisher": [
+     "Politico"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:the_atlantic",
+   "name": "The Atlantic",
+   "aliases": [],
+   "source_values": {
+    "native.publisher": [
+     "The Atlantic"
+    ]
+   },
+   "review_status": "ai_proposed"
+  },
+  {
+   "id": "outlet:business_insider",
+   "name": "Business Insider",
+   "aliases": [],
+   "source_values": {
+    "native.publisher": [
+     "Business Insider"
+    ]
+   },
+   "review_status": "ai_proposed"
+  }
+ ],
+ "supplemented_values": [
+  {
+   "dataset": "native",
+   "record_id": "0a562ee8-feff-58cd-963b-861b7a441ad7",
+   "version_id": "900b420826cbf22eda24b98c70dfa7c1101c9226095139dc5405f7a3c875409e",
+   "field": "sponsor",
+   "organization": "org:ceraweek",
+   "method": "url_program_path",
+   "basis": "Title 'Paid Program: CERAWeek Connection' and URL path /ceraweek/ on partners.wsj.com, shared by all 41 records listing 'cera'.",
+   "review_status": "ai_proposed"
+  }
+ ],
+ "out_of_scope_records": [
+  {
+   "dataset": "social",
+   "record_id": "social-post:0723b93c0891e21c69edbdceb2c3c215fe3bf077be4de6b8d1bce0e0155f8de8",
+   "version_id": "de1295d1ba78b93f951373e4b5624e8e98e19f173a7e3dd338a16788a1648ec6",
+   "reason": "no_company_or_account",
+   "post_author_handle": "esl",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:0bbcd3f5f3e4dc61a5f12bee9760553adea9e7bfc0e9e33261eb27726209b432",
+   "version_id": "153fa7a4e44f10653b9b518cd981a3aefa1ae0753022e02d777c9e1d8368b36a",
+   "reason": "no_company_or_account",
+   "post_author_handle": "rarimo_protocol",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:1238c5e8a7ef5890ddc4e1d65bdbf3e141aa808cce0b1137cdae1222b06d1fd6",
+   "version_id": "7239df3390ae89ac8e2a73e47395a142628fee007a4b7b060ebe80a2cb687e4e",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:155cddff5b7a8e2f6f5c08b689050b26b85ab8801cd1bd76f859baa7dd0c35be",
+   "version_id": "fb6c08f0d3c9a3dd2a3156381a380707812e082a3328659e8a3aaeaf26062859",
+   "reason": "no_company_or_account",
+   "post_author_handle": "topofminds",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:15ee81b0bc42de3c02f32339fea9fb9d414f88a1feb1f55300d2ff538032737f",
+   "version_id": "e24d651cbcfe3d6804d8eb01286282e8cb0d6bedec1de5a3f490ba652f9c49dc",
+   "reason": "no_company_or_account",
+   "post_author_handle": "ebnet",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:20c83f0f2bd28e445d35c1a2ef1f56d6ca8f429a218fba4686e805a925e2f2cf",
+   "version_id": "8e593286528f4994d38556b6d0cd3008ca9042b9834bb0d7ae807bf711207a40",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:21a17b3d46199ec6ace22ebdef324b9ea480e3ffb031f8c8dd47bf81099286fe",
+   "version_id": "c6b088863ac99bf6876c6bd4ba1fcb4fb75e0efdaab5d2e67ec826c8309f23b0",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:240fdd8e951c89c210b54aea4d41315cb5d5c8d7c15c019cc6cf9c981c245401",
+   "version_id": "448b036919bb37b4de2de95841488b0d32a70335f8e0929c948542d5aa471e0e",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:294f7bad34335f917add20bc73d93391dab893ae02b744151ff0f105b725df98",
+   "version_id": "ac67d2184b99bdb690dcbc326ff87ea3cf645d0426711f6f295119e5ad5ebe6a",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:2aaa7a306f734ef41b098eb667399c2db51908f69264d02051a7ca0329e7b28c",
+   "version_id": "cba874d135c2bc7ddb9ac010a61b4aeeb29866d3ba9ae8dc9ca67463a79a6412",
+   "reason": "no_company_or_account",
+   "post_author_handle": "axiata",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:2c1e634217133fe42ed5bc3904d1e3f6659e7bde759d8b3218a0968ec7811cfd",
+   "version_id": "456c09a75231feb89bd5c752887ac064146cb570d2eae10d504a83c4d1793287",
+   "reason": "no_company_or_account",
+   "post_author_handle": "brayoustore",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:2d97d2ed8222c07fc722d4c2af07944bc90097b18476a19462d8cb4cb8e9ebe2",
+   "version_id": "f4e1bf3881065dc068ac73e977d602625074ce7c4972cd2478f96a1eb59c58ea",
+   "reason": "no_company_or_account",
+   "post_author_handle": "sunnie_jay",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:32d4cc4082878d71056c28eb824661da2cb7499b16edc0e418de6e9195c5b9fd",
+   "version_id": "08cced1f6505561d4997812829ace493a4c1a92fe8d893e782bf36af8ca3c614",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:33eadc3f5773507921edc72d796e27c13dc6a0d14467b49e4e66bd53f23e63e5",
+   "version_id": "8366130d9c1d31d0431058de63281039bca364df9a9878043b50fc8f9190c827",
+   "reason": "no_company_or_account",
+   "post_author_handle": "kiki_le_singe",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:347356ce1d4a71d537aa1d88b34da1f76d88081e5d1e5088d36d0e80023e9752",
+   "version_id": "2b6d87989a64539685ce6e98d27016c8f5c14d4308da9c210609c76083ba9783",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:38625056b175d0191b3d0dc43e3e3296ca6d9f32d22cfdacf5987fa6080146d9",
+   "version_id": "6bdf7f4934bda21db28dde7d6eda931925f7786baaa97ba55ddb3c0a4b8cbbf0",
+   "reason": "no_company_or_account",
+   "post_author_handle": "sbly_homehacks",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:39b8dd542b2122bc5e6f46a2475aa5903f62399256f85a0d0b3c7152f13f548f",
+   "version_id": "becd6c9079ab8b7dbba65809389d970c40c478362a30285fa3bf38c4c2c50750",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:3a9707eaa9f027f24b5f90e711081a2e31888deca05cdee49cf825a77aee45f9",
+   "version_id": "f76883f41815125198a5dad40647525fcecaae3a3250eb1aa92667f713b123ac",
+   "reason": "no_company_or_account",
+   "post_author_handle": "jimmyjoyfood",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:3f7b2e5bb96ceffc7262e4d9a156358e9cd99ad24b8f8c570e189d8d7568cd17",
+   "version_id": "95e6aeca4dd60a3ca7d533461171fc93f50d4932e8ce7427e2a5eafcec9809d1",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:432914ce3c85199f683787b0ced68ee3b46f18bcbb24055aa8dc1a8e685ede17",
+   "version_id": "02b13ca729839b83b5835d9b405fb46ee7c24f2f7f2cd33c5aed69375bcebc3e",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:4354d7a1f6a6cc45be30205a059ecae299c5c1d6c3a209aa06f8716c75309da7",
+   "version_id": "dedeb6253681674d69d2a54dc3384ccc93ec51e161596225b29a19ec358ae72d",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:48af7899cc33574a7826b5e44b7a1945c10291b27871e8b22559f8176e3a581f",
+   "version_id": "2e76deba87d95ec2ed7a2e4b2f7548d93ce0516da27cc3f23c57faca20fe9dd6",
+   "reason": "no_company_or_account",
+   "post_author_handle": "roqtechnology",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:4a152534791a88b1b3dc5303210d052a494b9afbf8c21246ceeb673644b66307",
+   "version_id": "2177b6d77b77dca98963b813858043601313d7a22cca469929bbfdbd815f8c71",
+   "reason": "no_company_or_account",
+   "post_author_handle": "surveycompareuk",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:4f36037d2646cd16e5625af3bab6edcf8f5495cb21381559e160a054f1924156",
+   "version_id": "0680e273b7ee14827c57eda381c77b5efd8171696fd4b2f7ceb106b9f780ce5d",
+   "reason": "no_company_or_account",
+   "post_author_handle": "mrdriver_io",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:530ef54b5476a104704e90752736911d18a90ac9c78adede47dcfb42232c3098",
+   "version_id": "c85de0fa6e83fda589bd0cd83f098dff6fad3c94f43f97683b68e10e07f4c6d9",
+   "reason": "no_company_or_account",
+   "post_author_handle": "codiumai",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:53df6b33df0b77bb77e7d4e1d874a7a5f871dd06ecef276372b7a54313551551",
+   "version_id": "0286adccbf9ba3d64f2d3f136fed5018654950d6df9f501eb714d56c1e4850be",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:62cebdce66ab277fcaffded5f9af4190ae7964a098f73d8e574888c129aef38a",
+   "version_id": "b70a27ca676baf724f03ae1bd0686d1a7a7bb25f5815c82f5f88565d219aaac4",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:68500480bce41fddcbce701876a7c43b84f522e0f9a64dc694fb6f76a7142844",
+   "version_id": "3201e67fdb1c972332850113fbd4ff074e5fd1c3f97f23c4e0f978989c06e0c4",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:6c860485da17f645f14ecaad0330537dfd6d9e68f9c81c9f8fc41e98e084d90d",
+   "version_id": "19a0d4f86810494ed96e5e1de33a0085839b69cb841cb0abe97fed6664df9722",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:709c98b63e142d8e1745492087c7719a08b50325acbc0ae9ab58d7f6b556eb73",
+   "version_id": "0a56518eb8a63d9075e93b8959a258c2d7eac016e66d81fdab182e0dc251bf8a",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:77fa532d96ef1196996eb8e2b2211b9f6263e944cf08077f8fad7bd2869584a5",
+   "version_id": "80b701995aadfa7f59d6cf44b3c3aa4ff1354187da7057d0c9e4952466daa028",
+   "reason": "no_company_or_account",
+   "post_author_handle": "abudhabigp",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:78316482a9447c9642c1f54d8a6374f1ede58d9ec80e413b9e6fba99c595688e",
+   "version_id": "65dfe96a4038c8510b406a52f910f3594142d8a99ca9ef05baa3682d4f0804bf",
+   "reason": "no_company_or_account",
+   "post_author_handle": "huntresslabs",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:7b8bf6d553dba3680c10c15bc5abca143865f49a7b43e9d7a51654d0d6347bf8",
+   "version_id": "40e5e7cdbd0c827cb609f0a80b34339f02a996976549d48e7a7e4f5e0a138068",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:7da3bda92e572e5a8a13b3b3e4e9c8adab840507182049703822d8fe9c2e2ba7",
+   "version_id": "c6e48b0240716ab17437cff73e0879abcea37783f40f7a9559142af390ab4e2e",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:7e9cc8350e26164fa235b29630ea128c4b4bcc99cb928c169827bd587e4744df",
+   "version_id": "a3be28fbaf43ece6c6ca4f48aeef078ed8c6372ae82d9b1c426554d31746bc95",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:82360a930103adc0d12ea89d6c8b4e160c7e5a84de37cb841a7c7c6f8ff58a60",
+   "version_id": "7a3fc2397c557396a1ad0cbdcbe2de16078f3992cbc4b29887f7a09293744012",
+   "reason": "no_company_or_account",
+   "post_author_handle": "bunnycdn",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:85722888e22e83295994256286adff85f903acd92657552b730e185cb812fec3",
+   "version_id": "2005bfa4fbbd748c9f5aebb749f4d45f2920bb34229f6fe27dd122e531bd5da9",
+   "reason": "no_company_or_account",
+   "post_author_handle": "cronos_chain",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:89c68660a0ff8785b6d1e8283feb473dcb644bb915514d23336b37c6ee5a334e",
+   "version_id": "01024fcd2478ca7107cce0f270dd297a671b6980e0b5c87bc105736f06727da7",
+   "reason": "no_company_or_account",
+   "post_author_handle": "hippo_report",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:8f673d7d4affd4e837a63d83bae6dfcfc0791728c051dd23beedfed1a63af952",
+   "version_id": "29ded227b775fec3c2fb24c21bd4e1e1729c3068e56c80c0671aa1c2a536ee36",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:9a27b9cbecd1f186326dc9ea607afd14eb54b540f581796936005fcb1c401eeb",
+   "version_id": "52c72e40ddfe8c317f2ea20dcb1740a65b329ed877980b4a802b9cbbdef2f907",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:9ff64f524be6b8c87749bddf9365abb5f09eee5beed5d8ebf4ccbf1541afd2bf",
+   "version_id": "6fbcfd8d20b14dc7f5c0dcc428451b1b9660e8bcae69c579d8904a1c055667b9",
+   "reason": "no_company_or_account",
+   "post_author_handle": "epicgames",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:aaaea3bd3c7d9c1acadf9deb8d3a95cb2e92994f8c0778c7f72af28b9667bd17",
+   "version_id": "0324c93ea1e4129f5141ab713c8db83582499429df53d14e44d8add3b981081e",
+   "reason": "no_company_or_account",
+   "post_author_handle": "aitoolreport",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:ace5db5cef443bce3e58e3638d69934d1d9d784b95816220b7804cc7b3406da3",
+   "version_id": "aa84b5246b1f6e4baa8cd3f8a9d8d0ece1105457698107c44c0cdf25b0f57ef4",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:add78bfe19a0369d6eda599aaa3e1a6879421f4514e6a295e02f007afce15ab0",
+   "version_id": "1a03456f904f99372affb2647b442214bc53bb6261b15dde771f9fadf9043678",
+   "reason": "no_company_or_account",
+   "post_author_handle": "ecza_gov",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:b5837ac148dae77c0dc0ab1869e0601aa043bff903ff9dd632a57a0729d4e834",
+   "version_id": "13c66b4b5a192e12c5ee8f7b9853a78a07ea707fe07ff8158ed280b068b1f9c6",
+   "reason": "no_company_or_account",
+   "post_author_handle": "murkyware",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:bb3762ca59afd55b30bb97dfe06913da9c8607c3f95d0b49bc8084b2c36aad35",
+   "version_id": "af26b88453801a0b71fb4d037f1fb1bf8149481824c5d4b8953ec4978f50e2a1",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:bd0e0cb4e8d09b7b3d7a70ebf64cfd08a86b4d3679ade55fae68769954adf917",
+   "version_id": "82be04261f06ccc32b3299ce6f67f51336e023b1e0fc0637ab058a2a0548b5d4",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:be5b91bbacef178cb638fc2f0264d28174dc70490033772d2f250ec72e250af0",
+   "version_id": "b7bba0ee9accaa23fad2df81d25cf7a984582923711ce0d8f32b2824e8ee0fd7",
+   "reason": "no_company_or_account",
+   "post_author_handle": "bunnycdn",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:c24b06345854f3adcddeac66ba2278a30cd5a13bb19509667c51a5b179dabe5e",
+   "version_id": "26dd1254c2f3e1dd3886a0ea3602b5c6c4f6e2ac5df079248c85c8547544126b",
+   "reason": "no_company_or_account",
+   "post_author_handle": "state_survival",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:c598452f086c6a4a36e1379656299b5a4a16bae76716ea0b1d4a5844e6b47780",
+   "version_id": "c093fbe65b65cd07b527e9ba91fde85da0a38193af51eb13fefbfd9f7debbbd8",
+   "reason": "no_company_or_account",
+   "post_author_handle": "callofwar1942",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:c7071e074fadcd9f382c31ae810aa5b295ea50be997c8da3e11ec08113719a37",
+   "version_id": "4f1e5ff57b7fc6d5f23f5f21893a39c262e30b40f4cb20e56ec6399116981c6a",
+   "reason": "no_company_or_account",
+   "post_author_handle": "cronos_chain",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:c995f3344bc6b5c9a69a6d9621f4c3a741927d9554efead5ed94c7613d7e06e9",
+   "version_id": "cc7b2b3f680b04e032a1e06c33849f18c2fce0e40c72d5f1a0b4e7a79d8780c4",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:cb4f1b583b5832bbce8ebdda7b750cbf1aa3af8444ed5cb73f41de5a8269ca99",
+   "version_id": "9238084b106c02b632eed8ace9c0c57b0e96b98b4b4d8dcd039c12440f921c20",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:ccd1e2a27b7327fb3f0229d7b2c909b38c8fa6c7d1ca8a019d97a3ba90690fe0",
+   "version_id": "71f50103e55c0ce13380de66cddac61a745d5dd40a07ccd051a32ff59e01823d",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dailystuffmag",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:d010edba9a284eb1e9c73adaf9685367e499f8ac5bc4d0a653a0c06ac23dcb49",
+   "version_id": "225b61a6509b4bbc6c7d8c27514520682d7c35fd5b014a628e0b53c734f63cc0",
+   "reason": "no_company_or_account",
+   "post_author_handle": "moneywisecom",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:d76374a20073bc153b48c18a0d445e34aa84a700ea832ce2677966b3d172312f",
+   "version_id": "1a9f0b1f9b88959fb21f45babc0c2b83e442c16413549b0e8be36ba7cf3b7bcd",
+   "reason": "no_company_or_account",
+   "post_author_handle": "salonpas",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:db6493e32513f8a769606cf447efa87cfcaa6b0759ae63ee5ad7c829f55de459",
+   "version_id": "6251f446113b61ba0b42fe0e6a956e217b758b0cdd6f5b05741da20c225727fd",
+   "reason": "no_company_or_account",
+   "post_author_handle": "stormshotmoti",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:decbcd3d9960bf1b410d7c414908c14dba3ae74a45815d128847db27c83b5eb9",
+   "version_id": "43ec2053ade92d817f451c91f29adafd46d907b830722499d430b308ea800f7c",
+   "reason": "no_company_or_account",
+   "post_author_handle": "huntresslabs",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:dfc659ff21bac8f84ffb3e7d2785f722930b35af45161a67028edd31729caa18",
+   "version_id": "42ff4ae9a8dbba7e1829d47700076bd372c322f0bed8142f4474c87ee0f531e1",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:e0a229003dede588745172b228df504a79cdd376c249e90a9f8a8861a7c8e523",
+   "version_id": "0dd3f1d0a6d51eccbb6e22fc2f32862e0dc028022ccaea668b7c5a4487b8c76d",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:e96a4563802fcbbec822b6a5a1106379f423d5eb839732ce738f050ac5c45141",
+   "version_id": "29170c145623af165c788d3388cd1f14c710a8cd0036bfd7c21f0e2cdb2b502d",
+   "reason": "no_company_or_account",
+   "post_author_handle": "tnluk",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:ebcbef75f69e0701c1d0494d57e6391c535376ed31db48967d6d9f3b73e2be1a",
+   "version_id": "4e31e729c0fa5450a9715cb58634ea28851d63d361509dc68f854bd99cfcd918",
+   "reason": "no_company_or_account",
+   "post_author_handle": "codiumai",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:f95ae469bddabfae3473833f710449fc7be7f9b84e63c688fbbbcab057e4f9b9",
+   "version_id": "8dcadb096e90c2076a6814f7a468d1af56d62f830aa108458b8a38a5002eff11",
+   "reason": "no_company_or_account",
+   "post_author_handle": "dominosmy",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:fc3c5ed45067d7b2c9d56c8f51cb7fb00dfb9c7c3819e4df33a293969339c0d6",
+   "version_id": "4fa245cc806a8f2d9f95046f085a6c1439fdff8939f95bfe7c221e22022647c6",
+   "reason": "no_company_or_account",
+   "post_author_handle": "nordaceofficial",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  },
+  {
+   "dataset": "social",
+   "record_id": "social-post:ffdbe72f3093a6aaf604d8b1bbff324c71f2816ff16af62f12f05cb80c32efcb",
+   "version_id": "a8350d6c3184ffc867ea29964cd462379f858fcc8840a4cfdb99c181229a61e9",
+   "reason": "no_company_or_account",
+   "post_author_handle": "atgtickets",
+   "basis": "The source lists no company or account and the post URL belongs to an account outside the collected organizations."
+  }
+ ]
+}

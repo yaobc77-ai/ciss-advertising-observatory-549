@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 from .budget import LimitReached, price
 from .db import Database
 from .models import Answer, Filters
-from .rag import Rag
+from .rag import AnswerValidationError, Rag
 from .structured_queries import QuestionPlan, plan_question, validate_share_scope
 
 log = logging.getLogger(__name__)
@@ -640,7 +640,17 @@ class Service:
         reason = (result.answer or "").strip()
         research["collection_answer"] = {
             "status": result.status, "answer_mode": result.answer_mode,
-            "answer": result.answer, "failure_reason": result.failure_reason,
+            "answer": result.answer, "failure_reason": result.failure_reason, "complete": False,
+        }
+        # `answered` remains the legacy delivery status. It cannot certify a
+        # collection task when the supplied content is an external supplement.
+        result.research_trace["collection_completion"] = {
+            "complete": False, "status": "incomplete", "answer_status": result.status,
+            "answer_mode": result.answer_mode, "failure_reason": result.failure_reason,
+        }
+        result.research_trace["answer_provenance"] = {
+            "source_kind": "external_web", "role": "supplement",
+            "status_meaning": "response_available", "collection_task_completed": False,
         }
         result.status = "answered"
         result.answer_mode = "web_supplement"
@@ -649,6 +659,7 @@ class Service:
         if sources:
             result.answer += "\n\nWeb sources:\n" + "\n".join(
                 f"[{s.get('source_id')}] {s.get('title') or s['url']} - {s['url']}" for s in sources)
+        result.answer += "\n\nThe collection task remains incomplete; the web findings are external context."
         if reason:
             result.answer += "\n\nWhy the collection could not answer: " + reason
         return result
@@ -803,14 +814,12 @@ class Service:
                 # passed the query's before/after guard, not a model-supplied ID.
                 result.structured_result = {**result.structured_result, "data_version": version}
             result.cost_usd += run.cost_usd
-            withheld_web = result.research_trace.get("external_web")
-            media_trace = result.research_trace.get("media_retrieval")
+            downstream_trace = result.research_trace
             result.research_trace = run.audit()
             result.research_trace["data_version"] = version
-            if withheld_web:
-                result.research_trace["external_web"] = withheld_web
-            if media_trace:
-                result.research_trace["media_retrieval"] = media_trace
+            for key in ("external_web", "media_retrieval", "generation_failure"):
+                if key in downstream_trace:
+                    result.research_trace[key] = downstream_trace[key]
             if result.external_research:
                 external = result.external_research
                 result.research_trace["external_web"] = {key: external.get(key) for key in (
@@ -1427,7 +1436,7 @@ class Service:
                 "Data changed during retrieval; retry on a consistent version": "data_changed_during_retrieval",
                 "Data changed during generation; retry on a consistent version": "data_changed_during_generation",
             }
-            reason = known.get(str(exc), type(exc).__name__)
+            reason = exc.reason if isinstance(exc, AnswerValidationError) else known.get(str(exc), type(exc).__name__)
             if reason in {"media_evidence_mismatch", "duplicate_evidence_identity", "evidence_version_mismatch"}:
                 evidence, media_evidence = [], []
             result = Answer(
@@ -1436,6 +1445,8 @@ class Service:
                 evidence=evidence,
                 media_evidence=media_evidence,
                 failure_reason=reason,
+                research_trace=({"generation_failure": exc.details}
+                                if isinstance(exc, AnswerValidationError) else {}),
             )
         finally:
             if reservation and not dispatched:

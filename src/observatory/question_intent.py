@@ -14,6 +14,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
+from .entities import mentioned_in
 from .models import Filters
 from .research_tools import (
     FiltersRequest,
@@ -241,7 +242,13 @@ def _check_literal_names(filters: FiltersRequest | None, question: str, base: Fi
     for dimension in ("publishers", "sponsors", "platforms", "accounts", "keywords", "labels", "record_ids"):
         trusted = {value.casefold() for value in getattr(base, dimension)}
         for value in getattr(filters, dimension) or []:
-            if not _has_literal(value, question) and value.casefold() not in trusted:
+            if value.casefold() in trusted:
+                continue
+            # Accept recorded entity names here; canonical source expansion and
+            # intersection with the active selection remain the catalog's job.
+            mentioned = (mentioned_in(value, question, dimension) if dimension in ("publishers", "sponsors")
+                         else _has_literal(value, question))
+            if not mentioned:
                 raise IntentCompileError("intent_nonliteral_filter", f"The {dimension} filter is neither literal user text nor an active value")
 
 

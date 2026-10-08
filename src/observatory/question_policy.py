@@ -17,7 +17,7 @@ from .structured_queries import (
     canonical_source_values,
 )
 
-POLICY_VERSION = "question-task-v7"
+POLICY_VERSION = "question-task-v8"
 
 # There is no trusted calendar reference in the tool contract. A relative
 # interval therefore needs clarification, even if a model guessed endpoints.
@@ -146,10 +146,12 @@ def _literal_date_scope(text: str) -> tuple[str | None, str | None] | None:
     None means there is no supported explicit scope. Multiple or invalid
     ranges fail rather than being narrowed to a convenient subset.
     """
+    if _unsupported_subyear_dates(text):
+        raise ValueError("Unsupported sub-year date expression")
     token = rf"(?<![A-Za-z0-9_-])({_YEAR_OR_DAY})(?![A-Za-z0-9_-])"
     ranges = list(re.finditer(
         rf"{token}\s*(?:年\s*)?(?:to|through|and|[–—]|至|到)\s*{token}(?:年)?"
-        rf"|\b(?:in|during)\s+({ _YEAR_OR_DAY })\s*-\s*({ _YEAR_OR_DAY })\b", text, re.I))
+        rf"|\b(?:in|during|from)\s+({_YEAR_OR_DAY})\s*-\s*({_YEAR_OR_DAY})(?![A-Za-z0-9_-])", text, re.I))
     if ranges:
         if len(ranges) != 1:
             raise ValueError("Multiple date ranges require period comparison")
@@ -190,8 +192,8 @@ def _literal_date_scope(text: str) -> tuple[str | None, str | None] | None:
     raise ValueError("Unsupported wording around an explicit date token")
 
 
-def _unsupported_period_dates(text: str) -> bool:
-    """Keep unsupported sub-year/open periods out of the annual heuristic."""
+def _unsupported_subyear_dates(text: str) -> bool:
+    """Do not let a partial numeric date disappear or become a whole year."""
     months = (r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|"
               r"Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)")
     if re.search(rf"\b{months}\.?\s+(?:\d{{1,2}}(?:st|nd|rd|th)?\s*,?\s*)?\d{{4}}\b"
@@ -208,6 +210,13 @@ def _unsupported_period_dates(text: str) -> bool:
             _date_endpoint(value, False)
         except ValueError:
             return True
+    return False
+
+
+def _unsupported_period_dates(text: str) -> bool:
+    """Keep unsupported sub-year/open periods out of the annual heuristic."""
+    if _unsupported_subyear_dates(text):
+        return True
     closed = list(re.finditer(
         rf"\bfrom\s+{_YEAR_OR_DAY}\s+(?:to|through)\s+{_YEAR_OR_DAY}\b", text, re.I))
     for match in re.finditer(r"\b(?:before|after|since|until|from|through)\s+(?=\d{4}\b)"
@@ -217,14 +226,20 @@ def _unsupported_period_dates(text: str) -> bool:
     return False
 
 
+def _scope_failure(diagnostics, reason, **details):
+    if diagnostics is not None:
+        diagnostics.update(reason=reason, **details)
+    return False
+
+
 def literal_scope_preserved(question: str, context: dict, supplied_filters: dict, base_filters: dict,
-                            *, check_dates: bool = True) -> bool:
+                            *, check_dates: bool = True, diagnostics: dict | None = None) -> bool:
     """Check visible literal entities and explicit date tokens, not inferred intent."""
     effective = {**base_filters, **{key: value for key, value in supplied_filters.items() if value is not None}}
     dataset = effective_dataset_scope(supplied_filters.get("dataset"), base_filters.get("dataset", "all"))
     explicit = question_contract(question).get("explicit_datasets", [])
     if dataset is None or explicit and dataset != ("all" if len(explicit) > 1 else explicit[0]):
-        return False
+        return _scope_failure(diagnostics, "dataset_scope_mismatch")
     for key, choose in (("date_from", max), ("date_to", min)):
         bounds = [str(value) for value in (base_filters.get(key), supplied_filters.get(key)) if value]
         effective[key] = choose(bounds) if bounds else None
@@ -253,7 +268,7 @@ def literal_scope_preserved(question: str, context: dict, supplied_filters: dict
         same_namespace = {str(m[3]["value"]).strip().casefold() for m in mentions
                           if m[0] == start and m[1] == end and m[2] == dimension}
         if len(same_namespace) > 1:
-            return False  # A shared alias cannot choose the first source value.
+            return _scope_failure(diagnostics, "ambiguous_entity_alias", dimension=dimension)
         if len(namespaces) > 1:
             prefix = question[max(0, start - 70):start]
             roles = {key for key, pattern in {
@@ -265,7 +280,7 @@ def literal_scope_preserved(question: str, context: dict, supplied_filters: dict
                 roles = {m[2] for m in mentions if m[0] == start and m[1] == end
                          and str(m[3]["value"]).casefold() in {str(v).casefold() for v in base_filters.get(m[2]) or []}}
             if len(roles) != 1:
-                return False  # The model cannot choose a namespace for the user.
+                return _scope_failure(diagnostics, "ambiguous_entity_namespace")
             if dimension not in roles:
                 continue
         covered.update(range(start, end))
@@ -279,28 +294,29 @@ def literal_scope_preserved(question: str, context: dict, supplied_filters: dict
         selected = {str(canonical).strip().casefold() for value in effective.get(dimension) or []
                     for canonical in (canonical_source_values(value, dimension, known) or [value])}
         if wanted != selected:
-            return False
+            return _scope_failure(diagnostics, "entity_scope_mismatch", dimension=dimension)
     if not check_dates:
         return True
     # Entity-name dates do not become publication-date constraints.
     date_text = ''.join(char if index not in covered else ' ' for index, char in enumerate(question))
     if _RELATIVE_CALENDAR.search(date_text):
-        return False
+        return _scope_failure(diagnostics, "relative_date_requires_reference")
     try:
         scope = _literal_date_scope(date_text)
     except (ValueError, OverflowError):
-        return False
+        return _scope_failure(diagnostics, "unsupported_date_expression")
     for key, choose, endpoint in (("date_from", max, scope[0] if scope else None),
                                   ("date_to", min, scope[1] if scope else None)):
         bounds = [str(value) for value in (base_filters.get(key), endpoint) if value]
         expected = choose(bounds) if bounds else None
         if effective.get(key) != expected:
-            return False
+            return _scope_failure(diagnostics, "date_endpoint_mismatch", dimension=key,
+                                  expected=expected, actual=effective.get(key))
     return True
 
 
 def statistics_request_preserves_question(question: str, context: dict, arguments: dict,
-                                         base_filters: dict) -> bool:
+                                         base_filters: dict, *, diagnostics: dict | None = None) -> bool:
     """Check literal scope plus requested time operation; never supply a count.
 
     This is a bounded omission guard, not general semantic interpretation. The
@@ -317,14 +333,14 @@ def statistics_request_preserves_question(question: str, context: dict, argument
         question, re.I))
     presence = filters.get("date_presence") or base_filters.get("date_presence") or "any"
     if missing_date and presence != "missing":
-        return False
+        return _scope_failure(diagnostics, "date_presence_mismatch")
     if known_date and not missing_date and presence != "known":
         range_excludes_missing = bool(filters.get("date_from") or filters.get("date_to"))
         if not range_excludes_missing and filters.get("include_unknown_dates", base_filters.get("include_unknown_dates", True)):
-            return False
+            return _scope_failure(diagnostics, "date_presence_mismatch")
     wants_share = bool(re.search(r"\b(?:percentage|percent|proportion|share)\b|百分比|占比", question, re.I))
     if wants_share and arguments.get("measure") != "share":
-        return False
+        return _scope_failure(diagnostics, "share_measure_missing")
     grouping_prompt = r"\b(?:which|what|list|show|how\s+many)\s+(?:(?:all|the|distinct|different|source-listed)\s+)*"
     requested_groups = {dimension for dimension, (names, extra) in {
         "publishers": (r"publishers|outlets|newspapers", r"\bby\s+(?:publisher|outlet)\b|哪些媒体|列出.{0,12}媒体"),
@@ -333,7 +349,7 @@ def statistics_request_preserves_question(question: str, context: dict, argument
         "accounts": (r"accounts", r"\bby\s+account\b|哪些账号"),
     }.items() if re.search(grouping_prompt + r"(?:" + names + r")\b|" + extra, question, re.I)}
     if requested_groups and (len(requested_groups) != 1 or arguments.get("group_by") not in requested_groups):
-        return False
+        return _scope_failure(diagnostics, "grouping_mismatch")
     entities = dict(filters)
     denominator = arguments.get("denominator_filters") or {}
     if arguments.get("measure") == "share" and denominator:
@@ -348,9 +364,10 @@ def statistics_request_preserves_question(question: str, context: dict, argument
         target = re.search(r"\b(?:are|were|is|was)\s+(.+)$|(?:其中|当中).{0,8}?(?:有|是)(.+)$", question, re.I)
         if target and not literal_scope_preserved(
                 next(part for part in target.groups() if part is not None), context, filters,
-                {**base_filters, **denominator}, check_dates=False):
+                {**base_filters, **denominator}, check_dates=False, diagnostics=diagnostics):
             return False
-    if not literal_scope_preserved(question, context, entities, base_filters, check_dates=False):
+    if not literal_scope_preserved(question, context, entities, base_filters, check_dates=False,
+                                   diagnostics=diagnostics):
         return False
 
     # A literal stored name containing a year is not a date constraint.
@@ -364,27 +381,35 @@ def statistics_request_preserves_question(question: str, context: dict, argument
             if value:
                 time_text = re.sub(re.escape(value), " ", time_text, flags=re.I)
     if _RELATIVE_CALENDAR.search(time_text):
-        return False
+        return _scope_failure(diagnostics, "relative_date_requires_reference")
     yearly = bool(re.search(r"\b(?:by|per|each)\s+(?:publication\s+)?year\b|\byearly\b|按年|每年|逐年", time_text, re.I))
     highest_year = bool(re.search(
         r"\b(?:which|what)\b.{0,60}\byears?\b.{0,70}\b(?:most|highest|largest|maximum|greatest)\b"
         r"|\b(?:most|highest|largest|maximum|greatest)\b.{0,70}\byears?\b|哪.{0,8}年.{0,12}(?:最多|最高)", time_text, re.I))
     if (yearly or highest_year) and arguments.get("group_by") != "years":
-        return False
+        return _scope_failure(diagnostics, "year_grouping_missing")
     if highest_year and arguments.get("ranking") != "highest":
-        return False
+        return _scope_failure(diagnostics, "year_ranking_missing")
 
     iso_dates = re.findall(r"\b\d{4}-\d{2}-\d{2}\b", time_text)
     years_only = re.sub(r"\b\d{4}-\d{2}-\d{2}\b", " ", time_text)
     years = re.findall(r"\b(?:19|20)\d{2}\b", years_only)
     comparing = bool(re.search(r"\b(?:compare|versus|vs)\b|比较|对比", time_text, re.I))
-    expects_periods = comparing and (len(iso_dates) >= 2 or len(set(years)) >= 2)
+    try:
+        single_scope = _literal_date_scope(time_text)
+    except (ValueError, OverflowError):
+        single_scope = None
+    # A named grouping/collection comparison can share one explicit interval.
+    # Without that other comparison axis, do not replace a comparison by a total.
+    other_comparison = bool(requested_groups) or len(question_contract(question)["explicit_datasets"]) > 1
+    shared_interval = single_scope is not None and other_comparison
+    expects_periods = comparing and not shared_interval and (len(iso_dates) >= 2 or len(set(years)) >= 2)
     periods = arguments.get("periods") or []
     if expects_periods or periods:
         if _unsupported_period_dates(time_text):
-            return False
+            return _scope_failure(diagnostics, "unsupported_period_expression")
         if not expects_periods or not 2 <= len(periods) <= 3:
-            return False
+            return _scope_failure(diagnostics, "period_comparison_mismatch")
         if len(iso_dates) in (4, 6):
             expected = list(zip(iso_dates[::2], iso_dates[1::2]))
         elif len(iso_dates) == 2:
@@ -392,15 +417,17 @@ def statistics_request_preserves_question(question: str, context: dict, argument
         elif len(years) in (2, 3) and len(set(years)) == len(years):
             expected = [(year + "-01-01", year + "-12-31") for year in years]
         else:
-            return False  # Unsupported period wording needs clarification.
+            return _scope_failure(diagnostics, "unsupported_period_expression")
         requested = [(period.get("date_from"), period.get("date_to")) for period in periods]
         clipped = [(max(lower, base_filters.get("date_from") or lower),
                     min(upper, base_filters.get("date_to") or upper)) for lower, upper in expected]
         actual = [(max(str(lower), base_filters.get("date_from") or str(lower)),
                    min(str(upper), base_filters.get("date_to") or str(upper)))
                   for lower, upper in requested if lower and upper]
-        return len(actual) == len(requested) == len(clipped) and sorted(actual) == sorted(clipped)
-    return literal_scope_preserved(question, context, entities, base_filters)
+        if not (len(actual) == len(requested) == len(clipped) and sorted(actual) == sorted(clipped)):
+            return _scope_failure(diagnostics, "period_endpoint_mismatch")
+        return True
+    return literal_scope_preserved(question, context, entities, base_filters, diagnostics=diagnostics)
 
 
 def entity_dates_used_as_filters(question: str, context: dict, args: dict) -> bool:

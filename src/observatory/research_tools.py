@@ -33,6 +33,8 @@ from pydantic import (
 from .analytics import LABEL_NOTE, sponsor_display
 from .chunking import retrieval_spans
 from .date_inference import BASIS_NOTE
+from .entities import expand as expand_entity
+from .entities import registry as entity_registry
 from .evaluation_mask import evaluation_active
 from .knowledge_graph import (
     IDENTITY_POLICY,
@@ -598,6 +600,24 @@ class ToolCatalog:
             known.update(v for v in self.service.facets(name).get(dimension, []) if v and v != "(Unknown)")
         result = []
         for value in values:
+            if value in result:
+                continue  # already included by an earlier organization expansion
+            # A registry organization expands to every spelling it lists within
+            # this scope, so native "exxonmobil" and social "ExxonMobil" are
+            # filtered together; the mapping and registry version are recorded.
+            entity, spellings = expand_entity(value, dimension, known)
+            if selected and spellings:
+                # An explicit active selection is never widened by the registry.
+                spellings = [spelling for spelling in spellings if spelling in selected]
+            if entity is not None and spellings:
+                if spellings != [value]:
+                    item = {"field": dimension, "requested": value, "source_values": spellings,
+                            "organization": entity.id, "organization_type": entity.type,
+                            "review_status": entity.review_status, "registry_version": entity_registry().version}
+                    if item not in self.alias_resolutions:
+                        self.alias_resolutions.append(item)
+                result.extend(spelling for spelling in spellings if spelling not in result)
+                continue
             query = _normal(value).removeprefix("the ")
             related = sorted(candidate for candidate in known if _related_name(query, {
                 _normal(candidate), _normal(candidate).removeprefix("the ")})
@@ -780,13 +800,21 @@ class ToolCatalog:
         candidates.sort(key=lambda item: (item["match"] != "exact_or_display",
                                            item["dataset"], item["source_value"]))
         limit = request.limit or 10
+        organizations = set()
+        if request.entity_type != "account":
+            for candidate in candidates:
+                owner = entity_registry().owner(candidate["source_value"], request.entity_type)
+                candidate["organization"] = owner.public() if owner else None
+                organizations.add(owner.id if owner else None)
+        one_organization = len(candidates) > 1 and len(organizations) == 1 and None not in organizations
         spelling_groups = _source_spelling_groups(candidate["source_value"] for candidate in candidates)
         combined_single_group = filters.dataset == "all" and request.entity_type == "sponsor" and len(spelling_groups) == 1
-        unambiguous = len(candidates) == 1 or combined_single_group
+        unambiguous = len(candidates) == 1 or combined_single_group or one_organization
         result = {"status": "ok" if unambiguous else "clarify",
                 "candidates": candidates[:limit], "candidate_count": len(candidates),
                 "truncated": len(candidates) > limit,
-                "message": "Use the exact source value in filters." if unambiguous
+                "message": ("All candidates are spellings of one registry organization; filter by its name to include every spelling."
+                            if one_organization else "Use the exact source value in filters.") if unambiguous
                 else "Choose a source candidate; ambiguous names are never merged." if candidates
                 else "No matching source candidate was found. Clarify the name or collection."}
         if filters.dataset == "all" and request.entity_type == "sponsor":

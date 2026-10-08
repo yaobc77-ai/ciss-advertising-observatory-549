@@ -30,6 +30,44 @@ from .source_text_quality import text_quality_context
 
 MAX_QUOTE_WORDS = 60
 MAX_SUPPORT_PASSAGES = 5
+MAX_CLAIMS = 6
+MAX_SUMMARY_POINTS = 3
+MAX_ANSWER_SECTIONS = 6
+
+
+class AnswerValidationError(ValueError):
+    """A completed provider response rejected by local answer validation.
+
+    Keep the original exception for local callers, but expose only fixed codes
+    and stages through the service. A parseable response is not a valid answer.
+    """
+
+    def __init__(self, error, *, stage):
+        super().__init__(str(error))
+        reasons = {
+            "Contradictory answer status": "answer_status_contradictory",
+            "Incomplete answer structure": "answer_structure_incomplete",
+            "Invalid passage support": "passage_support_invalid",
+            "Unrelated passage support": "passage_support_unrelated",
+            "Incomplete sentence support": "sentence_support_incomplete",
+            "Unverifiable citation": "citation_mismatch",
+            "Citation exceeds short-quote limit": "quote_too_long",
+            "Missing or excessive claims": "invalid_claim_count",
+            "Unverifiable answer-structure citation": "answer_structure_mismatch",
+            "Empty or excessive summary point": "answer_summary_invalid",
+            "Citation numbers must use structured references": "answer_inline_citation_invalid",
+            "Invalid answer-section heading": "answer_section_heading_invalid",
+            "Summary omits an answer section": "answer_summary_coverage_mismatch",
+            "Answer sections must cover each claim exactly once": "answer_section_coverage_mismatch",
+            "Empty claim": "answer_claim_empty",
+            "Duplicate answer evidence identity": "duplicate_evidence_identity",
+        }
+        self.reason = reasons.get(str(error), "answer_validation_failed")
+        self.details = {
+            "stage": stage, "reason": self.reason, "provider_status": "completed",
+            "parsed_output_available": True, "usage_settled": True,
+            "error_type": type(error).__name__,
+        }
 
 
 class GroundedQuote(BaseModel):
@@ -363,11 +401,11 @@ def selection_schema(catalog):
             "coverage or factual truth. Use insufficient_evidence when no requested part is "
             "supportable; nonempty evidence or a shared topic does not justify answered."
         ))),
-        claims=(list[claim], ...),
+        claims=(list[claim], Field(max_length=MAX_CLAIMS)),
         # Defaults preserve historical local fixtures. Responses' strict schema
         # conversion still makes these fields required for new API requests.
-        summary=(list[summary], Field(default_factory=list)),
-        sections=(list[section], Field(default_factory=list)),
+        summary=(list[summary], Field(default_factory=list, max_length=MAX_SUMMARY_POINTS)),
+        sections=(list[section], Field(default_factory=list, max_length=MAX_ANSWER_SECTIONS)),
     )
 
 
@@ -826,6 +864,14 @@ class Rag:
                     evidence=evidence,
                     media_evidence=media,
                     cost_usd=float(actual),
+                    failure_reason="generation_response_incomplete",
+                    research_trace={"generation_failure": {
+                        "stage": "provider_output", "reason": "generation_response_incomplete",
+                        "provider_status": response.status if response.status in {
+                            "completed", "incomplete", "failed", "cancelled", "queued", "in_progress"
+                        } else "unknown",
+                        "parsed_output_available": parsed is not None, "usage_settled": True,
+                    }},
                 )
             if progress:
                 try:
@@ -834,10 +880,14 @@ class Rag:
                     # Progress is optional UI observation. A disconnected
                     # browser cannot turn a settled answer into an API failure.
                     pass
-            return validate_answer(
-                materialize_selections(parsed, catalog), evidence, float(actual),
-                target=target, media_evidence=media,
-            )
+            try:
+                grounded = materialize_selections(parsed, catalog)
+            except ValueError as exc:
+                raise AnswerValidationError(exc, stage="selection_materialization") from exc
+            try:
+                return validate_answer(grounded, evidence, float(actual), target=target, media_evidence=media)
+            except ValueError as exc:
+                raise AnswerValidationError(exc, stage="answer_validation") from exc
         except Exception as exc:
             self.budget.uncertain(rid, type(exc).__name__)
             raise
@@ -859,12 +909,12 @@ def validate_answer(parsed, evidence, cost=0.0, *, target=None, media_evidence=(
             media_evidence=media,
             cost_usd=cost,
         )
-    if not 1 <= len(parsed.claims) <= 6:
+    if not 1 <= len(parsed.claims) <= MAX_CLAIMS:
         raise ValueError("Missing or excessive claims")
     summary = getattr(parsed, "summary", [])
     sections = getattr(parsed, "sections", [])
     if summary or sections:
-        if not 1 <= len(summary) <= 3 or not 1 <= len(sections) <= 6:
+        if not 1 <= len(summary) <= MAX_SUMMARY_POINTS or not 1 <= len(sections) <= MAX_ANSWER_SECTIONS:
             raise ValueError("Incomplete answer structure")
         valid_refs = set(range(1, len(parsed.claims) + 1))
 

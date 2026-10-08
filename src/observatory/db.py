@@ -690,6 +690,22 @@ class Database:
         # Only allowlisted identifiers and a fixed direction enter SQL text.
         return f"{sort_by} {direction} NULLS LAST,record_id ASC"
 
+    def source_value_counts(self):
+        """Countable current records per collection and exact sponsor/publisher spelling."""
+        where, params = self.where(Filters(dataset="all"))
+        sql = ("SELECT r.dataset,v.payload->>'sponsor' AS sponsor,v.payload->>'publisher' AS publisher,"
+               "count(*) AS n FROM records r JOIN record_versions v ON v.version_id=r.current_version "
+               f"WHERE {where} GROUP BY 1,2,3")
+        counts = {}
+        with self.connect() as conn:
+            conn.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
+            for row in conn.execute(sql, params).fetchall():
+                for field in ("sponsor", "publisher"):
+                    if row[field]:
+                        key = (row["dataset"], field, row[field])
+                        counts[key] = counts.get(key, 0) + row["n"]
+        return counts
+
     def facets(self, dataset):
         """Fetch distinct filter options, without transferring article rows."""
         select, params = self._public_query(Filters(dataset=dataset))
