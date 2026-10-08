@@ -59,12 +59,13 @@ def test_records_expose_date_basis_to_tools():
     assert rows["k1"]["date_basis"] == "source"
 
 
-def test_inferred_dates_are_opt_in_for_tools():
+def test_inferred_dates_are_opt_in_through_the_trusted_selection():
     catalog, _ = make_catalog()
     default = catalog.narrow(None)
     assert default.include_inferred_dates is False
     from observatory.research_tools import FiltersRequest
-    opted = catalog.narrow(FiltersRequest(include_inferred_dates=True))
+    opted_catalog, _ = make_catalog(Filters(include_inferred_dates=True))
+    opted = opted_catalog.narrow(FiltersRequest(include_inferred_dates=True))
     assert opted.include_inferred_dates is True
 
 

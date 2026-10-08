@@ -126,7 +126,7 @@ def test_dual_collection_totals_keep_native_and_social_units_visible(statistics_
     response = submit(statistics_ui, answer)
     rendered = json.dumps(response)
     assert "Native ad records: 263 matching" in rendered
-    assert "Social ad records: 0 matching" in rendered
+    assert "Company posts: 0 matching" in rendered  # not verified paid ads
     assert "Native articles and social posts are separate units" in rendered
     browser = next(node for node in component_tree(response)
                    if node["type"] == "Details" and node["props"].get("className") == "statistics-records")
@@ -160,7 +160,7 @@ def test_empty_share_is_undefined_and_collections_remain_separate(statistics_ui)
     rendered = json.dumps(submit(statistics_ui, answer))
     assert "25.00%" in rendered
     assert "Undefined" in rendered and "empty selection" in rendered
-    assert "Native ad records" in rendered and "Social ad records" in rendered
+    assert "Native ad records" in rendered and "Company posts" in rendered
     assert "0.00%" not in rendered
 
 

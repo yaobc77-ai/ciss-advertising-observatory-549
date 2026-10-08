@@ -88,7 +88,12 @@ def load_input_bytes(data: bytes) -> list[InputParagraph]:
 
 def validate_retained_inputs(paragraphs: list[InputParagraph], cleaned_path: Path) -> dict:
     """Check selected retained groups against their upstream cleaned manifest."""
-    with cleaned_path.open(encoding="utf-8-sig", newline="") as stream:
+    return validate_retained_input_bytes(paragraphs, cleaned_path.read_bytes())
+
+
+def validate_retained_input_bytes(paragraphs: list[InputParagraph], data: bytes) -> dict:
+    """Validate a frozen cleaned CSV without rereading a mutable source path."""
+    with io.StringIO(data.decode("utf-8-sig"), newline="") as stream:
         reader = csv.DictReader(stream)
         if reader.fieldnames != ["id", "text"]:
             raise ValueError("Expected the upstream cleaned article-id/text CSV.")

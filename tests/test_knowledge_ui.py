@@ -158,7 +158,7 @@ def test_filters_preserved_and_new_scope_clears_selection(knowledge_app):
     result = explore(knowledge_app, data, "native-network-data.data")
     assert result["knowledge-offset"]["data"] == 0
     assert result["knowledge-selection"]["data"] is None
-    assert knowledge_app[2].calls[0][0] == {**filters, "date_to": None, "date_presence": "any", "include_inferred_dates": False}
+    assert knowledge_app[2].calls[0][0] == {**filters, "date_to": None, "date_presence": "any", "include_inferred_dates": False, "accounts": []}
 
 
 @pytest.mark.parametrize("filters", [{"dataset": "social"}, {"date_from": "invalid"}])

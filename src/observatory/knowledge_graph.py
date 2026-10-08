@@ -58,6 +58,7 @@ IDENTITY_POLICY = {
 _BODY_LIMITATIONS = {
     "body_partial_recovery", "body_truncated_suspected", "body_short", "body_footer_only",
     "body_question_only", "body_garbled", "body_video_placeholder", "body_numeric",
+    "body_source_partial", "body_source_completeness_unestablished",
 }
 
 

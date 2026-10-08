@@ -16,6 +16,7 @@ from collections.abc import Callable
 STAGES = {
     "interpreting": "Interpreting your question",
     "database": "Searching the advertising database",
+    "media": "Searching saved image and video evidence",
     "web": "Searching web sources",
     "organizing": "Organizing a source-grounded answer",
     "citations": "Checking citations against sources",

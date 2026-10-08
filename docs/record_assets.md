@@ -1,96 +1,46 @@
-# Reviewed record attachments
+# Record attachments
 
-Article text lives in PostgreSQL. PDFs and display previews are separate files;
-publishing the application code does not deploy those files. A healthy website
-therefore does not prove that its attachments are available.
+Article text lives in PostgreSQL. PDFs and previews are separate files. Publishing application code does not deploy them.
 
-## Build a private bundle
+## Build a bundle
 
-Select record IDs that already appear in `config/native_body_recoveries.json`.
-The builder checks the reviewed PDF, extraction and optional first-page preview
-hashes. It copies only those selected captures into a new directory, without
-changing the database or the original files.
+Use source-reviewed records and their pinned captures. The builder checks the PDF, extraction, and optional preview hashes without changing source files or the database.
 
-```powershell
-uv run python scripts/build_record_asset_bundle.py build `
-  --source-root . `
-  --destination .runtime/record-assets-release `
-  --record-id d340f887-efa7-5746-aaf8-14aabba6b63f
+```sh
+uv run python scripts/build_record_asset_bundle.py build --source-root . --destination /path/to/new-record-assets --record-id RECORD_ID
 ```
 
-Save the returned `manifest_sha256`. Each bundle contains `record_assets.json`,
-hash-named PDFs under `pdfs/`, and optional PNG previews under `previews/`.
-The manifest binds each capture to its record ID, original URL and exact body
-hash. It contains no unreviewed archive candidates or source CSVs.
-The existing recovery manifest records AI engineering review, not customer
-approval. Exporting a bundle does not change that review status.
+Use an existing record ID with a configured recovery binding. Save the returned manifest hash. The bundle contains `record_assets.json`, hash-named PDFs, and optional previews.
 
-## Configure the running application
+## Configure storage
 
-Copy the selected private bundle to a persistent deployment volume or another
-explicitly managed directory. Provisioning that storage and publishing the
-selected files are separate deployment actions. Set both server variables:
+Copy the bundle to persistent storage and set:
 
 ```text
-OBS_RECORD_ASSET_ROOT=/mounted/record-assets-release
-OBS_RECORD_ASSET_MANIFEST_SHA256=<manifest_sha256 returned by the builder>
+OBS_RECORD_ASSET_ROOT=/mounted/record-assets
+OBS_RECORD_ASSET_MANIFEST_SHA256=ACTUAL_MANIFEST_HASH
 ```
 
-Check the deployed files before restarting the application:
+The application validates the configured bundle at startup. Missing files, unsafe paths, or mismatched hashes disable attachments while ordinary browsing remains available.
 
-Run this inside the running container, using its installed package:
+Each request checks its file and current record binding again. A valid bundle does not fill missing archive links or approve an advertiser's claims.
+
+## Update and verify
+
+1. Build a new bundle directory.
+2. Verify its manifest and files.
+3. Update both server variables and restart.
+4. Open the record, PDF, and preview in the deployed application.
+5. Keep the previous bundle until the new responses are verified.
+
+The read-only HTTP checker can verify a pinned bundle against a deployment:
 
 ```sh
-/app/.venv/bin/python -c "from pathlib import Path; from observatory.asset_bundle import load_bundle; print('verified assets:', len(load_bundle(Path('/mounted/record-assets-release'), 'ACTUAL_MANIFEST_HASH')))"
+uv run python scripts/verify_record_assets_http.py --root /path/to/bundle --manifest-sha256 ACTUAL_MANIFEST_HASH --base-url https://your-application.example --other-record-id ANOTHER_RECORD_ID --out /path/to/new-check.json
 ```
 
-Replace the path and hash with the mounted release's values. The production
-image contains the installed package, not the repository's `scripts/`
-directory. Volumes are available in running containers; a build or pre-deploy
-command cannot validate their contents.
+The other record must exist on the deployment. Returned bytes and hashes, browser presentation, and storage persistence require distinct checks. A healthy application does not establish attachment availability.
 
-The application validates the entire configured bundle at startup. A missing
-file, changed manifest, unsafe path or mismatched hash disables attachments;
-article text and browsing remain available. It does not fall back to another
-archive. Record detail JSON reports `record_asset_status` as `bundle_verified`
-or `bundle_unavailable`. Each PDF and preview is checked again when requested,
-and the current record URL and body hash must still match the reviewed binding.
+Image descriptions and video transcripts are derived evidence. They retain their source type and location and are not substituted for original article text.
 
-Without `OBS_RECORD_ASSET_ROOT`, local development retains the existing project
-manifest and archive paths. The source-link switch also disables bundle links.
-Creating a bundle does not fill `archive_url`, verify the current online page,
-approve an advertiser's claims or authorize publication of any source file.
-
-For an update, build and check a new bundle directory, update both variables and
-restart. Keep the prior bundle until the deployed record/PDF/preview requests
-are verified. Check both returned bytes and hashes; startup status alone is
-not end-to-end deployment acceptance.
-
-## Verify public attachment responses
-
-Run the read-only checker from a source checkout that has the pinned private
-bundle. It does not load deployment credentials or call a model:
-
-```sh
-uv run python scripts/verify_record_assets_http.py \
-  --root /path/to/private-bundle \
-  --manifest-sha256 ACTUAL_MANIFEST_HASH \
-  --base-url https://your-application.example \
-  --other-record-id ANOTHER_EXISTING_PUBLIC_RECORD_ID \
-  --out reports/record-assets-http-new.json
-```
-
-For the existing local source workspace, add `--expected-status local_workspace`.
-The output must be a new file. The checker verifies the independently computed
-body hash, exact record binding, PDF and download bytes, preview bytes, and
-404 responses for unknown assets and cross-record access. The other record
-must first have a successful public detail response. It follows no redirects
-or arbitrary URLs returned by the API. Failed checks exit with code 1 and save
-a sanitized report when output storage is available. Preflight parameter or
-existing-output errors exit with code 2 before any GET; output-file errors also
-exit with code 2 and may prevent the receipt from being saved.
-
-The report deliberately leaves the remote manifest, browser display and storage
-persistence unverified. Check the mounted manifest separately with the installed
-package, inspect the record in a browser, and repeat file validation in a new
-deployment. Preserve both deployment identities and file hashes.
+See [operations](operations.md) and [the data dictionary](data_dictionary.md).

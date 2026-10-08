@@ -83,7 +83,7 @@ def test_record_paging_preserves_whole_selection_statistics_and_filter_reset():
     values = defaults("native") | {"native-page-size.value": 20}
     first = callback(app, client, "native-grid.rowData", values, "native-page-size.value")
     assert len(first["native-grid"]["rowData"]) == 20
-    assert first["native-record-count"]["children"].startswith("45 eligible")
+    assert first["native-record-count"]["children"].startswith("45 records")
     assert first["native-matrix"]["rowData"][-1]["total"] == 45
     assert first["native-page-prev"]["disabled"]
     second = callback(app, client, "native-grid.rowData", values | {

@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from observatory.models import Filters
-from observatory.structured_queries import plan_question
+from observatory.structured_queries import plan_question, validate_share_scope
 
 
 @pytest.fixture
@@ -58,7 +58,9 @@ def test_intersection_preserves_other_filters_and_input(facets):
         date_from=date(2020, 6, 1), date_to=date(2022, 3, 31),
     )
     original = scope.model_dump()
-    plan = plan_question("How many ads from NYT and WaPo in 2021?", scope, facets)
+    # Naming a publisher outside the active selection asks instead of silently dropping it.
+    assert plan_question("How many ads from NYT and WaPo in 2021?", scope, facets).status == "clarify"
+    plan = plan_question("How many ads from WaPo in 2021?", scope, facets)
     assert plan.status == "ready"
     assert plan.filters.publishers == ["The Washington Post"]
     assert plan.filters.sponsors == scope.sponsors
@@ -183,3 +185,18 @@ def test_no_date_request_preserves_unknown_date_policy(facets):
     plan = plan_question("How many ads from NYT?", Filters(include_unknown_dates=False), facets)
     assert plan.filters.include_unknown_dates is False
     assert not any("requested date range" in note for note in plan.scope_notes)
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_scope_validator_rejects_changed_publication_date_basis(enabled):
+    trusted = Filters(include_inferred_dates=enabled)
+    candidate = trusted.model_copy(update={"include_inferred_dates": not enabled})
+    with pytest.raises(ValueError, match="publication-date basis"):
+        validate_share_scope(candidate, trusted)
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_scope_validator_allows_narrowing_with_matching_publication_date_basis(enabled):
+    trusted = Filters(include_inferred_dates=enabled)
+    candidate = trusted.model_copy(update={"publishers": ["The New York Times"]})
+    validate_share_scope(candidate, trusted)

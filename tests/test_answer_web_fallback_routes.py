@@ -57,7 +57,7 @@ def _evidence_service(*, web_status=None, generated=None):
     service.settings.research_agent_enabled = True
     service.research_agent = Agent(ResearchRun(
         route="evidence",
-        result={"filters": Filters().model_dump(mode="json"), "search_query": "emissions proposal"},
+        result={"filters": Filters(include_inferred_dates=True).model_dump(mode="json"), "search_query": "emissions proposal"},
     ))
     if web_status:
         class UnsuccessfulWeb(Web):
@@ -140,7 +140,7 @@ def test_collection_changed_during_web_is_not_promoted_or_searched_again():
 def test_exact_collection_count_is_complete_without_web_or_content_generation(total):
     data = {
         "status": "ok", "kind": "count", "method": "database", "group_by": None,
-        "filters": Filters().model_dump(mode="json"),
+        "filters": Filters(include_inferred_dates=True).model_dump(mode="json"),
         "collections": [{"dataset": "native", "total": total}], "groups": [], "records": [],
     }
     service, _, web = always(ResearchRun(route="statistics", result=data))

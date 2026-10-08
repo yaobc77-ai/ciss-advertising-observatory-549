@@ -1,0 +1,962 @@
+{
+  "schema_version": "semantic-codebook-v1",
+  "codebook_version": "semantic-support-v1",
+  "frozen_date": "2026-10-08",
+  "status": "engineering_frozen_human_review_pending",
+  "customer_approved": false,
+  "gold": false,
+  "human_reviewers": "TBD",
+  "human_reviewed_real_materials": 0,
+  "purpose": "Claim-level evidence support coding independently designed without client task texts, references, paraphrases or per-task outputs.",
+  "source_independence": "All rule examples are invented here for operations and boundary teaching; no test directory is a label source.",
+  "historical_labels": "12 native and 13 social historical labels have insufficient complete reviewed definitions; auxiliary unreviewed only.",
+  "support_states": [
+    "supports",
+    "partial",
+    "unsupported",
+    "contradicted",
+    "uncertain"
+  ],
+  "rules": [
+    {
+      "rule_id": "S1",
+      "name": "supports：完整支持",
+      "operation": "同一主体、时间、范围、数量、条件和模态都得到原文直接支持或明确无跳步蕴含。保留可能、试点、引述等限制。支持来源陈述不等于证明外部真伪。",
+      "examples": [
+        {
+          "source": "银鹭实验室说：“试点可能减少用水。”",
+          "candidate_claim": "银鹭实验室称试点可能减少用水。",
+          "expected": "supports",
+          "reason": "完整保留表达主体、试点范围及可能性。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "银鹭实验室说：“试点可能减少用水。”",
+          "candidate_claim": "试点已经保证减少用水。",
+          "expected": "unsupported",
+          "reason": "可能被改成保证，额外确定性没有依据。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "S2",
+      "name": "partial：部分支持",
+      "operation": "复合命题有可定位的实质部分得到支持，但至少一项必要部分缺失或范围被夸大。列出支持部分和未支持部分；已明确冲突的部分必须单列矛盾，不用部分支持掩盖。",
+      "examples": [
+        {
+          "source": "桃湾园区在东楼安装了计量表。没有提供西楼资料。",
+          "candidate_claim": "桃湾园区东楼和西楼都安装了计量表。",
+          "expected": "partial",
+          "reason": "东楼有据；西楼未提供。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "桃湾园区在东楼和西楼均安装了计量表。",
+          "candidate_claim": "桃湾园区两栋楼都安装了计量表。",
+          "expected": "supports",
+          "reason": "两项必要事实均被说明。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "S3",
+      "name": "unsupported：证据不支持",
+      "operation": "来源可读取且身份范围明确，但不能支持命题的任何必要实质部分。主题相关或词项出现不足以支持因果、数字或立场。限定为所供材料内无支持；不能据此推断现实世界为假。",
+      "examples": [
+        {
+          "source": "岸松社介绍了一个雨水收集装置。",
+          "candidate_claim": "装置使成本下降了一半。",
+          "expected": "unsupported",
+          "reason": "没有成本、基准或比例依据。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "岸松社介绍了一个雨水收集装置。",
+          "candidate_claim": "本文提到了雨水收集装置。",
+          "expected": "supports",
+          "reason": "限定提及命题有明确文字。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "S4",
+      "name": "contradicted：明确矛盾",
+      "operation": "相同主体、对象、时段、范围和定义下，来源明确否定或给出不能同时为真的事实。指出冲突原句；未提及、范围不同、旧新版本不同不直接算矛盾。",
+      "examples": [
+        {
+          "source": "蓝铃协会说明：“本次试验没有测量排放。”",
+          "candidate_claim": "本次试验测量了排放。",
+          "expected": "contradicted",
+          "reason": "同一次试验的有无测量直接冲突。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "蓝铃协会说明：“去年没有测量排放，今年已开始测量。”",
+          "candidate_claim": "今年开始测量排放。",
+          "expected": "supports",
+          "reason": "去年与今年不应混为同一时段。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "S5",
+      "name": "uncertain：无法可靠判断",
+      "operation": "关键身份、来源完整性、表达指代或适用范围未解决，因而不能确定支持关系。写出缺口及所需材料；不要强行转成不支持或反对。未知独立于无结果。",
+      "examples": [
+        {
+          "source": "原句只保存为：“他们在该处……”，后文缺失。",
+          "candidate_claim": "北岚工坊在那里建成了项目。",
+          "expected": "uncertain",
+          "reason": "主体、动作及位置均不可定位。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "北岚工坊明确说项目尚未建成。",
+          "candidate_claim": "北岚工坊项目已经建成。",
+          "expected": "contradicted",
+          "reason": "材料完整且明确冲突，应判矛盾而非不确定。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "L1",
+      "name": "提及层",
+      "operation": "mentioned要求在所声明来源范围内有确切词项、概念或经人工说明的同义表达；not_observed仅表示完整所供范围内未观察到，必须保存该范围和提取限制。相关链接、标题与正文分开；未读图片或视频保留未知。",
+      "examples": [
+        {
+          "source": "正文：“我们安装了屋顶集水槽。”",
+          "candidate_claim": "该段提到雨水收集。",
+          "expected": "mentioned",
+          "reason": "有清楚的概念表达；保留原句说明同义判断。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "正文只谈水泵；相关链接标题为“集水槽指南”。",
+          "candidate_claim": "正文提到集水槽。",
+          "expected": "not_observed",
+          "reason": "链接提及不能转为正文提及；声明只审完整所供正文。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "L2",
+      "name": "表达主体与推广立场层",
+      "operation": "分别记录谁表达、文章如何处理、该表达的favorable/opposed/neutral/mixed/uncertain。引述某公司积极宣传不自动等于作者认可；广告身份或公司名称也不能推断立场。",
+      "examples": [
+        {
+          "source": "暮鸢公司称装置“值得推广”；作者接着质疑其证据。",
+          "candidate_claim": "暮鸢公司积极推广该装置。",
+          "expected": "favorable",
+          "reason": "表达主体是公司；文章处理为quotes_distances。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "暮鸢公司称装置“值得推广”；作者接着质疑其证据。",
+          "candidate_claim": "作者认可该装置。",
+          "expected": "unsupported",
+          "reason": "公司引述与作者态度不可互换。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "L3",
+      "name": "外部真伪层",
+      "operation": "默认not_checked。只有另外提供、版本和原句可定位且对同一命题适用的独立核实材料，才可记录corroborated/refuted；冲突或不足用uncertain。原文中的主张、历史标签和引用位置不算外部核实。",
+      "examples": [
+        {
+          "source": "榆舟团队宣称其装置节能30%；未附独立核实。",
+          "candidate_claim": "现实节能幅度已被核实为30%。",
+          "expected": "not_checked",
+          "reason": "仅知道团队声称，不足以核实效果。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "另附虚构独立测试报告，记录同装置同条件节能30%，范围明确。",
+          "candidate_claim": "该条件下的30%节能得到独立报告支持。",
+          "expected": "corroborated",
+          "reason": "须引用单独external_evidence来源及范围；本例仍是虚构教学材料。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "P1",
+      "name": "原文与位置绑定",
+      "operation": "保存record_id/version_id/body_hash；社交观察额外保存三项观察绑定。所有quote必须严格等于body[start:end]，坐标为Python Unicode字符半开区间，不跨缺口、不改字、不换成显示正文。每条原句保存表达主体和文章处理方式。",
+      "examples": [
+        {
+          "source": "原文：苔鹿站说“可能改善”。候选引文定位到“可能改善”。",
+          "candidate_claim": "原句与精确字符切片一致。",
+          "expected": "valid_locator",
+          "reason": "可能一词保留，使用该正文的Unicode字符坐标。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "原文：苔鹿站说“可能改善”。候选引文写“已经改善”。",
+          "candidate_claim": "把改写当原句保存。",
+          "expected": "invalid_locator",
+          "reason": "程序拒绝不匹配切片；语义判断不能修补原句。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "P2",
+      "name": "逐命题与总体范围",
+      "operation": "先将候选答案拆为稳定claim_id，逐条编码；保留候选摘要、证据、限制。完整名单、总数或否定全库命题需要可对账完整成员及范围，top-K片段不能证明。v1不将状态加权为一个自动总体准确率。",
+      "examples": [
+        {
+          "source": "完整给定虚构范围只有两份记录，IDs均核对；两份均出现仪表。",
+          "candidate_claim": "这个给定两份记录范围都提到仪表。",
+          "expected": "supports",
+          "reason": "范围及所有成员齐全且逐项可审。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "检索只返回两条提到仪表的片段；完整库大小未给出。",
+          "candidate_claim": "所有记录都提到仪表。",
+          "expected": "uncertain",
+          "reason": "top-K不建立全库范围或完整成员。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    },
+    {
+      "rule_id": "B1",
+      "name": "双人盲标与第三方裁决",
+      "operation": "A/B是不同具名真人，独立保存且看不到对方标签；裁决者第三人，双方完成后读取当前审核哈希并说明裁决理由。AI不冒充真人。历史12原生/13社交标签只作未审辅助，默认不展示给盲标者；不得当完整codebook或客户批准。",
+      "examples": [
+        {
+          "source": "两名独立真人提交后，第三人引用双方审核哈希解释分歧。",
+          "candidate_claim": "独立双标流程完成。",
+          "expected": "eligible_for_adjudication",
+          "reason": "仍非gold，客户和语义验收另行记录。",
+          "provenance": "fictional_independent"
+        },
+        {
+          "source": "同一个AI角色先写A再改名写B，或B看过A标签。",
+          "candidate_claim": "形成两份标签就算真人独立审核。",
+          "expected": "invalid_blind_review",
+          "reason": "不是具名真人独立双标；不得报真人一致率。",
+          "provenance": "fictional_independent"
+        }
+      ]
+    }
+  ],
+  "agreement_policy": {
+    "unit": "case_id + claim_id, latest complete A/B pair",
+    "axes": [
+      "support",
+      "mention",
+      "stance",
+      "external_truth"
+    ],
+    "raw_agreement": "equal labels / all paired claim units; uncertain is a real category",
+    "cohen_kappa": "(p_o - p_e)/(1 - p_e); p_e=sum marginal proportions products; null if no pairs or p_e=1",
+    "coverage": "paired cases/total cases and paired claims/total claims; unpaired units never silently disappear",
+    "adjudication": "reported separately; never changes the original A/B agreement",
+    "accuracy": "not computed from agreement; human accuracy and gold require independent accepted references",
+    "thresholds": "TBD; no pass threshold or customer target invented"
+  },
+  "packet_schema": {
+    "$defs": {
+      "CandidateAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "summary": {
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "summary",
+          "evidence",
+          "limitations"
+        ],
+        "title": "CandidateAnswer",
+        "type": "object"
+      },
+      "CandidateClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "text": {
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "layer": {
+            "enum": [
+              "mention",
+              "stance",
+              "in_document",
+              "external_truth"
+            ],
+            "title": "Layer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "claim_id",
+          "text",
+          "layer"
+        ],
+        "title": "CandidateClaim",
+        "type": "object"
+      },
+      "ReviewSource": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "original_text",
+              "external_evidence",
+              "synthetic_independent"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "record_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "version_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Version Id",
+            "type": "string"
+          },
+          "body_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Body Hash",
+            "type": "string"
+          },
+          "body": {
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
+            "type": "string"
+          },
+          "source_observation_id": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Observation Id"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Version Id"
+          },
+          "source_body_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Body Hash"
+          }
+        },
+        "required": [
+          "source_id",
+          "kind",
+          "record_id",
+          "version_id",
+          "body_hash",
+          "body"
+        ],
+        "title": "ReviewSource",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "schema_version": {
+        "const": "semantic-review-packet-v1",
+        "default": "semantic-review-packet-v1",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "case_id": {
+        "maxLength": 240,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "title": "Case Id",
+        "type": "string"
+      },
+      "provenance": {
+        "enum": [
+          "synthetic_independent",
+          "independent_source_packet"
+        ],
+        "title": "Provenance",
+        "type": "string"
+      },
+      "task": {
+        "minLength": 1,
+        "title": "Task",
+        "type": "string"
+      },
+      "sources": {
+        "items": {
+          "$ref": "#/$defs/ReviewSource"
+        },
+        "minItems": 1,
+        "title": "Sources",
+        "type": "array"
+      },
+      "claims": {
+        "items": {
+          "$ref": "#/$defs/CandidateClaim"
+        },
+        "minItems": 1,
+        "title": "Claims",
+        "type": "array"
+      },
+      "candidate_answer": {
+        "$ref": "#/$defs/CandidateAnswer"
+      },
+      "source_scope": {
+        "minLength": 1,
+        "title": "Source Scope",
+        "type": "string"
+      },
+      "extraction_limitations": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Extraction Limitations",
+        "type": "array"
+      },
+      "historical_auxiliary": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Historical Auxiliary",
+        "type": "array"
+      },
+      "status": {
+        "const": "unreviewed",
+        "default": "unreviewed",
+        "title": "Status",
+        "type": "string"
+      },
+      "gold": {
+        "const": false,
+        "default": false,
+        "title": "Gold",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "case_id",
+      "provenance",
+      "task",
+      "sources",
+      "claims",
+      "candidate_answer",
+      "source_scope",
+      "extraction_limitations"
+    ],
+    "title": "ReviewPacket",
+    "type": "object"
+  },
+  "review_schema": {
+    "$defs": {
+      "ClaimJudgment": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "support": {
+            "enum": [
+              "supports",
+              "partial",
+              "unsupported",
+              "contradicted",
+              "uncertain"
+            ],
+            "title": "Support",
+            "type": "string"
+          },
+          "mention": {
+            "enum": [
+              "mentioned",
+              "not_observed",
+              "uncertain"
+            ],
+            "title": "Mention",
+            "type": "string"
+          },
+          "stance": {
+            "enum": [
+              "favorable",
+              "opposed",
+              "neutral",
+              "mixed",
+              "uncertain"
+            ],
+            "title": "Stance",
+            "type": "string"
+          },
+          "external_truth": {
+            "enum": [
+              "not_checked",
+              "corroborated",
+              "refuted",
+              "uncertain"
+            ],
+            "title": "External Truth",
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/$defs/LocatedQuotation"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "claim_id",
+          "support",
+          "mention",
+          "stance",
+          "external_truth",
+          "summary",
+          "reason",
+          "evidence",
+          "limitations"
+        ],
+        "title": "ClaimJudgment",
+        "type": "object"
+      },
+      "LocatedQuotation": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0,
+            "title": "Start",
+            "type": "integer"
+          },
+          "end": {
+            "exclusiveMinimum": 0,
+            "title": "End",
+            "type": "integer"
+          },
+          "quote": {
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "expression_subject": {
+            "minLength": 1,
+            "title": "Expression Subject",
+            "type": "string"
+          },
+          "article_handling": {
+            "enum": [
+              "asserts",
+              "quotes_endorses",
+              "quotes_distances",
+              "quotes_neutral",
+              "mixed",
+              "uncertain"
+            ],
+            "title": "Article Handling",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "start",
+          "end",
+          "quote",
+          "expression_subject",
+          "article_handling"
+        ],
+        "title": "LocatedQuotation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "case_id": {
+        "maxLength": 240,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "title": "Case Id",
+        "type": "string"
+      },
+      "packet_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Packet Sha256",
+        "type": "string"
+      },
+      "codebook_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Codebook Sha256",
+        "type": "string"
+      },
+      "reviewer_id": {
+        "maxLength": 240,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "title": "Reviewer Id",
+        "type": "string"
+      },
+      "reviewer_kind": {
+        "const": "human",
+        "title": "Reviewer Kind",
+        "type": "string"
+      },
+      "independent_human_attestation": {
+        "const": true,
+        "title": "Independent Human Attestation",
+        "type": "boolean"
+      },
+      "judgments": {
+        "items": {
+          "$ref": "#/$defs/ClaimJudgment"
+        },
+        "minItems": 1,
+        "title": "Judgments",
+        "type": "array"
+      }
+    },
+    "required": [
+      "case_id",
+      "packet_sha256",
+      "codebook_sha256",
+      "reviewer_id",
+      "reviewer_kind",
+      "independent_human_attestation",
+      "judgments"
+    ],
+    "title": "ReviewSubmission",
+    "type": "object"
+  },
+  "adjudication_schema": {
+    "$defs": {
+      "ClaimJudgment": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "support": {
+            "enum": [
+              "supports",
+              "partial",
+              "unsupported",
+              "contradicted",
+              "uncertain"
+            ],
+            "title": "Support",
+            "type": "string"
+          },
+          "mention": {
+            "enum": [
+              "mentioned",
+              "not_observed",
+              "uncertain"
+            ],
+            "title": "Mention",
+            "type": "string"
+          },
+          "stance": {
+            "enum": [
+              "favorable",
+              "opposed",
+              "neutral",
+              "mixed",
+              "uncertain"
+            ],
+            "title": "Stance",
+            "type": "string"
+          },
+          "external_truth": {
+            "enum": [
+              "not_checked",
+              "corroborated",
+              "refuted",
+              "uncertain"
+            ],
+            "title": "External Truth",
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/$defs/LocatedQuotation"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "claim_id",
+          "support",
+          "mention",
+          "stance",
+          "external_truth",
+          "summary",
+          "reason",
+          "evidence",
+          "limitations"
+        ],
+        "title": "ClaimJudgment",
+        "type": "object"
+      },
+      "LocatedQuotation": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "maxLength": 240,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0,
+            "title": "Start",
+            "type": "integer"
+          },
+          "end": {
+            "exclusiveMinimum": 0,
+            "title": "End",
+            "type": "integer"
+          },
+          "quote": {
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "expression_subject": {
+            "minLength": 1,
+            "title": "Expression Subject",
+            "type": "string"
+          },
+          "article_handling": {
+            "enum": [
+              "asserts",
+              "quotes_endorses",
+              "quotes_distances",
+              "quotes_neutral",
+              "mixed",
+              "uncertain"
+            ],
+            "title": "Article Handling",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "start",
+          "end",
+          "quote",
+          "expression_subject",
+          "article_handling"
+        ],
+        "title": "LocatedQuotation",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "case_id": {
+        "maxLength": 240,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "title": "Case Id",
+        "type": "string"
+      },
+      "packet_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Packet Sha256",
+        "type": "string"
+      },
+      "codebook_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Codebook Sha256",
+        "type": "string"
+      },
+      "reviewer_id": {
+        "maxLength": 240,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "title": "Reviewer Id",
+        "type": "string"
+      },
+      "reviewer_kind": {
+        "const": "human",
+        "title": "Reviewer Kind",
+        "type": "string"
+      },
+      "independent_human_attestation": {
+        "const": true,
+        "title": "Independent Human Attestation",
+        "type": "boolean"
+      },
+      "judgments": {
+        "items": {
+          "$ref": "#/$defs/ClaimJudgment"
+        },
+        "minItems": 1,
+        "title": "Judgments",
+        "type": "array"
+      },
+      "review_a_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Review A Sha256",
+        "type": "string"
+      },
+      "review_b_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Review B Sha256",
+        "type": "string"
+      },
+      "adjudication_reason": {
+        "minLength": 1,
+        "title": "Adjudication Reason",
+        "type": "string"
+      }
+    },
+    "required": [
+      "case_id",
+      "packet_sha256",
+      "codebook_sha256",
+      "reviewer_id",
+      "reviewer_kind",
+      "independent_human_attestation",
+      "judgments",
+      "review_a_sha256",
+      "review_b_sha256",
+      "adjudication_reason"
+    ],
+    "title": "AdjudicationSubmission",
+    "type": "object"
+  }
+}

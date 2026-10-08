@@ -237,6 +237,7 @@ def defaults(dataset):
             f"{dataset}-unknown-dates.value": ["include"],
             f"{dataset}-metric.value": "count",
             "page-location.pathname": "/data",
+            "active-dataset.value": dataset,
         }
     )
     return values
@@ -331,7 +332,9 @@ def test_layout_has_both_panels_original_fields_and_record_archive_access(applic
     assert changed["native-filter-panel"]["style"] == {"display": "none"}
     assert changed["social-filter-panel"]["style"] == {"display": "none"}
     assert changed["shared-filters"]["style"] == {"display": "none"}
-    assert len(changed) == 6  # Switching tabs must never reset any filter values.
+    assert changed["all-panel"]["style"] == {"display": "none"}
+    assert changed["all-filter-panel"]["style"] == {"display": "none"}
+    assert len(changed) == 8  # Switching collections must never reset filter values.
 
 
 def test_filter_chart_and_export_use_same_records(application):
@@ -380,6 +383,7 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
             dataset=dataset,
             date=dates[index],
             platform="Platform B" if index == 1 else "Platform A",
+            account="Account B" if index == 1 else "Account A",
         )
 
     def browse_once(filters):
@@ -395,7 +399,7 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
     monkeypatch.setattr(
         service,
         "health",
-        lambda: {"record_counts": {dataset: len(source_rows)}},
+        lambda: {"status": "ok", "record_counts": {dataset: len(source_rows)}},
     )
     result = callback(
         app,
@@ -421,7 +425,7 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
         for card in cards
     }
     assert summary == {
-        "Selected records": "3",
+        "Unique posts" if dataset == "social" else "Selected records": "3",
         "Searchable records": "2",
         "Unknown dates": str(dates.count(None)),
     }
@@ -430,7 +434,7 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
             "primary",
             ("Outlet A", "Outlet B")
             if dataset == "native"
-            else ("Platform A", "Platform B"),
+            else ("Account A", "Account B"),
         ),
         ("sponsors", ("Sponsor A", "Sponsor B")),
     ):
@@ -440,6 +444,12 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
         assert displayed == pytest.approx(dict(zip(names, expected, strict=True)))
         assert sum(item[0] for item in bars["customdata"]) == len(rows)
         assert sum(item[1] for item in bars["customdata"]) == pytest.approx(100)
+    if dataset == "social":
+        bars = result["social-platforms-chart"]["figure"]["data"][0]
+        expected = [2, 1] if metric == "count" else [200 / 3, 100 / 3]
+        assert dict(zip(bars["y"], bars["x"], strict=True)) == pytest.approx(
+            dict(zip(("Platform A", "Platform B"), expected, strict=True))
+        )
     timeline = result[f"{dataset}-timeline-chart"]["figure"]
     if all(date is None for date in dates):
         assert timeline["data"][0]["x"] == ["Unknown"]
@@ -449,9 +459,13 @@ def test_collection_uses_one_snapshot_for_rows_and_statistics(
         assert timeline["data"][0]["y"] == [2, 1]
     assert timeline["data"][0]["type"] == "bar"
     assert result[f"{dataset}-record-count"]["children"].startswith(
-        "3 eligible records"
+        "3 unique posts" if dataset == "social" else "3 records"
     )
-    assert result[f"{dataset}-status"]["children"] is None
+    if dataset == "social":
+        notice = json.dumps(result["social-status"]["children"])
+        assert "Collected company posts" in notice and "paid advertising is not verified" in notice
+    else:
+        assert result["native-status"]["children"] is None
     assert SECRET not in json.dumps(result)
 
 
@@ -487,7 +501,7 @@ def test_social_absence_is_explicit_and_has_no_fake_rows(application):
         app, client, "social-grid.rowData", defaults("social"), "social-platforms.value"
     )
     assert result["social-grid"]["rowData"] == []
-    assert "not connected" in json.dumps(result)
+    assert "No admitted company social posts" in json.dumps(result)
 
 
 def test_free_search_never_calls_paid_answer_and_uses_active_filters(application):
@@ -525,7 +539,7 @@ def test_all_scope_does_not_silently_carry_collection_filters(application):
     filters = service.search_calls[-1][1]
     assert filters.dataset == "all"
     assert filters.sponsors == filters.platforms == filters.publishers == []
-    assert "all eligible records" in json.dumps(result)
+    assert "all available records" in json.dumps(result)
     assert "Example platform" not in json.dumps(result)
 
 
@@ -642,7 +656,7 @@ def test_collection_exception_is_sanitized(application):
     assert "temporarily unavailable" in json.dumps(result)
 
 
-def test_three_route_views_have_unique_ids_and_persisted_shared_controls(application):
+def test_route_views_have_unique_ids_and_persisted_shared_controls(application):
     app, client, service = application
     nodes = list(component_tree(client.get("/_dash-layout").json))
     ids = [node["props"]["id"] for node in nodes if "id" in node["props"]]
@@ -650,7 +664,7 @@ def test_three_route_views_have_unique_ids_and_persisted_shared_controls(applica
     components = {
         node["props"]["id"]: node["props"] for node in nodes if "id" in node["props"]
     }
-    for route in ("query", "data", "wireframe"):
+    for route in ("query", "data", "wireframe", "evaluation"):
         assert f"{route}-page" in components
         assert components[f"nav-{route}"]["href"] == f"/{route}"
         assert client.get(f"/{route}").status_code == 200
@@ -662,12 +676,17 @@ def test_three_route_views_have_unique_ids_and_persisted_shared_controls(applica
         "search-scope",
         "native-dates",
     ):
-        assert components[identity]["persistence"] is True
+        if identity == "active-dataset":
+            # Versioned persistence resets the old native-only default once,
+            # then preserves the user's selection within the new workspace.
+            assert components[identity]["persistence"] == "combined-collections-v1"
+        else:
+            assert components[identity]["persistence"] is True
         assert components[identity]["persistence_type"] == "session"
     assert service.answer_calls == service.search_calls == []
     wireframe = json.dumps(components["wireframe-page"])
     assert "wire-screen" in wireframe and "wire-flow" in wireframe
-    assert "awaiting dataset" in wireframe
+    assert "no admitted records" in wireframe
     assert "PostgreSQL" in wireframe
     assert SECRET not in wireframe
 
@@ -680,6 +699,8 @@ def test_three_route_views_have_unique_ids_and_persisted_shared_controls(applica
         ("/query/", "query"),
         ("/data", "data"),
         ("/wireframe", "wireframe"),
+        ("/evaluation", "evaluation"),
+        ("/evaluation/", "evaluation"),
         ("/missing", "not-found"),
     ],
 )
@@ -694,7 +715,7 @@ def test_routes_switch_visible_page_without_touching_controls_or_results(
         {"page-location.pathname": pathname},
         "page-location.pathname",
     )
-    for target in ("query", "data", "wireframe", "not-found"):
+    for target in ("query", "data", "wireframe", "evaluation", "not-found"):
         assert result[f"{target}-page"]["hidden"] == (target != page)
     assert result["collection-workspace"]["hidden"] == (page not in ("query", "data"))
     assert result["observatory-app"]["className"] == f"view-{page}"
@@ -714,7 +735,7 @@ def test_routes_switch_visible_page_without_touching_controls_or_results(
     assert service.search_calls == service.answer_calls == []
 
 
-@pytest.mark.parametrize("pathname", ["/data", "/wireframe", "/missing", None])
+@pytest.mark.parametrize("pathname", ["/data", "/wireframe", "/evaluation", "/missing", None])
 @pytest.mark.parametrize("button", ["search-free", "answer-paid"])
 def test_hidden_query_actions_cannot_call_service(application, pathname, button):
     app, client, service = application
@@ -866,7 +887,7 @@ def test_route_navigation_never_dispatches_or_clears_existing_paid_answer(applic
     answer = callback(
         app, client, "research-results.children", values, "answer-paid.n_clicks"
     )
-    for path in ("/data", "/wireframe", "/query"):
+    for path in ("/data", "/wireframe", "/evaluation", "/query"):
         result = callback(
             app,
             client,
@@ -890,7 +911,7 @@ def test_route_navigation_never_dispatches_or_clears_existing_paid_answer(applic
     assert "page-location" in {item["id"] for item in research_spec["state"]}
 
 
-@pytest.mark.parametrize("pathname", ["/query", "/wireframe", None])
+@pytest.mark.parametrize("pathname", ["/query", "/wireframe", "/evaluation", None])
 def test_export_is_available_only_on_data_page(application, pathname):
     app, client, service = application
     callback(

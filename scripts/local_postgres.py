@@ -230,33 +230,14 @@ def update_env():
 
 
 def setup_test_db():
-    """Create only the fixed test database; existing test contents are preserved."""
-    verify_server()
-    settings = private_settings()
-    with connection("postgres", admin=True) as conn:
-        role = conn.execute(
-            "SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication FROM pg_roles WHERE rolname=%s",
-            (settings["app_user"],),
-        ).fetchone()
-        if role is None or any(role):
-            raise RuntimeError("The expected restricted application role is missing or has elevated privileges; run or review project setup first.")
-        owner = conn.execute(
-            "SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname=%s", (TEST_DATABASE,)
-        ).fetchone()
-        if owner is None:
-            conn.execute(sql.SQL("CREATE DATABASE {} OWNER {}").format(
-                sql.Identifier(TEST_DATABASE), sql.Identifier(settings["app_user"])
-            ))
-        elif owner[0] != settings["app_user"]:
-            raise RuntimeError("The existing obs_test database has a different owner; no database or connection setting was changed.")
-    with connection(TEST_DATABASE, admin=True) as conn:
-        conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
-    with connection(TEST_DATABASE) as conn:
-        vector = conn.execute("SELECT extversion FROM pg_extension WHERE extname='vector'").fetchone()
-        if not vector or conn.execute("SELECT current_database()").fetchone()[0] != TEST_DATABASE:
-            raise RuntimeError("The fixed test database could not be verified; its existing contents were retained.")
-    update_database_env("OBS_TEST_DATABASE_URL", TEST_DATABASE)
-    print("obs_test is ready with pgvector; existing contents were preserved. OBS_TEST_DATABASE_URL was written to the ignored .env (credentials hidden); the main database URL was left unchanged.")
+    """Compatibility entry point for an independent, workspace-private cluster."""
+    if __package__:
+        from .private_test_postgres import PrivateTestCluster
+    else:
+        from private_test_postgres import PrivateTestCluster
+
+    result = PrivateTestCluster().setup()
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 def start():

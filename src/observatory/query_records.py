@@ -1,5 +1,7 @@
 """Page all records in a submitted statistics answer, without another model call."""
 
+import re
+
 from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 from flask import current_app
@@ -7,9 +9,10 @@ from itsdangerous import BadData, URLSafeSerializer
 
 from .models import Filters
 from .network_ui import record_cards
+from .structured_queries import validate_share_scope
 
 PAGE_SIZE = 10
-NAMES = {"native": "native ad records", "social": "social ad records"}
+NAMES = {"native": "native ad records", "social": "company social posts"}
 
 
 def _serializer():
@@ -18,6 +21,27 @@ def _serializer():
 
 def _valid_version(value):
     return isinstance(value, str) and bool(value) and value != "unavailable"
+
+
+def _historical_guard(filters, supplied):
+    """Keep a source-state guard inside the signed submitted selection."""
+    if supplied is None:
+        if filters.dataset == "social" and filters.labels:
+            raise ValueError("Historical source-state version is missing")
+        return None
+    if not isinstance(supplied, dict) or set(supplied) != {"filters", "source_state_version"}:
+        raise ValueError("Invalid historical source-state guard")
+    scope = Filters.model_validate(supplied["filters"])
+    version = supplied["source_state_version"]
+    if scope.dataset != "social" or not isinstance(version, str) or not re.fullmatch(r"[0-9a-f]{64}", version):
+        raise ValueError("Invalid historical source-state scope or version")
+    validate_share_scope(filters, scope)
+    return {"filters": scope.model_dump(mode="json"), "source_state_version": version}
+
+
+def _historical_current(service, guard):
+    return (guard is None or service.db.social_source_state_version(
+        Filters.model_validate(guard["filters"])) == guard["source_state_version"])
 
 
 def _notice(message):
@@ -66,20 +90,28 @@ def statistics_records_panel(data, service, links_enabled):
             return _notice("The saved record selection cannot be verified. Submit the question again before browsing matching records.")
         if health["data_version"] != version:
             return _notice("The collection changed since this answer. Submit the question again to inspect matching records.")
+        guard = _historical_guard(filters, data.get("historical_source_state_guard"))
+        if data.get("kind") == "social_historical_labels" and guard is None:
+            raise ValueError("Historical distributions require their source-state guard")
+        if not _historical_current(service, guard):
+            return _notice("Historical source states changed since this answer. Submit the question again to inspect matching records.")
+        counts = health.get("countable_record_counts", health.get("record_counts", {}))
         totals = {}
         for item in data["collections"]:
             dataset, total = item["dataset"], item["total"]
             if (dataset not in NAMES or dataset in totals or filters.dataset not in {"all", dataset}
                     or type(total) is not int or total < 0):
                 raise ValueError("invalid collection totals")
-            # An unloaded collection must not acquire a zero-record browser.
-            if health.get("record_counts", {}).get(dataset, 0):
+            # Active but unadmitted records must not acquire a zero-record browser.
+            if counts.get(dataset, 0):
                 totals[dataset] = total
         if not totals:
-            return _notice("No connected collection is available for record browsing.")
+            return _notice("No admitted collection is available for record browsing.")
         dataset = next(iter(totals))
         payload = {"schema": 1, "filters": filters.model_dump(mode="json"),
                    "collections": totals, "data_version": version}
+        if guard is not None:
+            payload["historical_source_state_guard"] = guard
         token = _serializer().dumps(payload)
         options = [{"label": f"{NAMES[name].capitalize()} ({total:,})", "value": name}
                    for name, total in totals.items()]
@@ -127,6 +159,7 @@ def register_query_records(app, service, links_enabled):
             filters = Filters.model_validate(payload["filters"])
             totals = payload["collections"]
             version = payload["data_version"]
+            guard = _historical_guard(filters, payload.get("historical_source_state_guard"))
             if (not isinstance(totals, dict) or dataset not in NAMES or dataset not in totals
                     or filters.dataset not in {"all", dataset} or not _valid_version(version)
                     or type(totals[dataset]) is not int or totals[dataset] < 0
@@ -147,6 +180,11 @@ def register_query_records(app, service, links_enabled):
                 return _unavailable("Records are temporarily unavailable. Use First page to try again.", offset, retry=True)
             if before.get("data_version") != version:
                 return _unavailable("The collection changed since this answer. Submit the question again to inspect matching records.")
+            counts = before.get("countable_record_counts", before.get("record_counts", {}))
+            if not counts.get(dataset, 0):
+                return _unavailable("This collection has no admitted records. Submit the question again after records are admitted.")
+            if not _historical_current(service, guard):
+                return _unavailable("Historical source states changed since this answer. Submit the question again to inspect matching records.")
             # Full saved numerator scope, with native/social counting units kept separate.
             page = service.page(filters.model_copy(update={"dataset": dataset}), offset=offset, limit=PAGE_SIZE)
             after = service.health()
@@ -154,6 +192,11 @@ def register_query_records(app, service, links_enabled):
                 return _unavailable("Records are temporarily unavailable. Use First page to try again.", offset, retry=True)
             if after.get("data_version") != version or page.get("total") != totals[dataset]:
                 return _unavailable("The collection changed since this answer. Submit the question again to inspect matching records.")
+            counts = after.get("countable_record_counts", after.get("record_counts", {}))
+            if not counts.get(dataset, 0):
+                return _unavailable("This collection has no admitted records. Submit the question again after records are admitted.")
+            if not _historical_current(service, guard):
+                return _unavailable("Historical source states changed during the read. Submit the question again to inspect matching records.")
             rows, total, offset = page["rows"], page["total"], page["offset"]
             if (not isinstance(rows, list) or type(total) is not int or total < 0
                     or type(offset) is not int or offset < 0 or offset % PAGE_SIZE

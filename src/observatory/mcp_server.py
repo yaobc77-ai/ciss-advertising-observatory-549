@@ -23,6 +23,7 @@ from mcp.types import (
 
 from .models import Filters
 from .research_tools import ToolCatalog, WebGapRequest
+from .tool_result_contract import checked_catalog_result, result_schema
 
 
 def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
@@ -38,7 +39,8 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
 
     async def list_tools(context, params):
         listed = [Tool(name=definition["name"], description=definition["description"],
-                                          input_schema=definition["inputSchema"], annotations=ToolAnnotations(
+                                          input_schema=definition["inputSchema"],
+                                          output_schema=result_schema(definition["name"]), annotations=ToolAnnotations(
             read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False,
         )) for definition in catalog.mcp_definitions()]
         if maintenance_enabled:
@@ -68,6 +70,12 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
             result = await anyio.to_thread.run_sync(catalog.search_external_sources, params.arguments or {})
         else:
             result = await anyio.to_thread.run_sync(catalog.call, params.name, params.arguments or {})
+            if params.name in {item["name"] for item in catalog.mcp_definitions()}:
+                try:
+                    result = checked_catalog_result(params.name, result)
+                except (TypeError, ValueError):
+                    result = {"tool": params.name, "status": "unavailable",
+                              "message": "The tool result failed its output contract; no payload was substituted."}
         return CallToolResult(
             structured_content=result,
             content=[TextContent(type="text", text=json.dumps(result, ensure_ascii=False, allow_nan=False))],
@@ -76,11 +84,12 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
 
     return Server(
         "Advertising Observatory", version="0.1.0",
-        instructions=("Read-only tools for eligible advertising records. Respect filters, candidate identity "
+        instructions=("Read-only tools for native advertising records and collected company social posts. Social posts are not verified paid ads; count one platform/canonical original URL, not source observations. Paused social text is withheld from model tools and remains available only for human review. Respect filters, candidate identity "
                       "and source-version limitations. Counts come from record_statistics; graph pages and "
                       "retrieved passages do not establish full-corpus totals. Historical categories do not "
                       "establish verified greenwashing. CLAIMS2 reads return published NC/SC assignments, "
                       "review states and source evidence; unmatched records are not classified negatives. "
+                      "Unpublished decisions are not a web-search miss. "
                       "No SQL, arbitrary URLs, local paths, classification or corpus writes are exposed. "
                       "An optional find_claims_source_candidates maintenance tool may be present only by "
                       "explicit opt-in. It searches unchanged legacy excerpts locally first, then at most "
@@ -89,7 +98,11 @@ def build_mcp_server(catalog: ToolCatalog, *, source_search=None):
                       "treat candidate identities as approved sources. An optional search_external_sources "
                       "tool is separate public research: it needs a single-use empty-database-search ticket, "
                       "charges the API budget, and returns labeled external references, never corpus counts. "
-                      "For company comparisons use separate comparison_scopes in search_records."),
+                      "For company comparisons use separate comparison_scopes in search_records. "
+                      "get_media_evidence reads only fixed operator-mounted materials under current filters "
+                      "and retrievable permission. Preserve text, OCR, visual description and subtitle origins "
+                      "and their character/image/time locations. No supplied media is missing_material, not "
+                      "evidence of absence. It never executes OCR, transcription or a paid model."),
         on_list_tools=list_tools, on_call_tool=call_tool,
     )
 

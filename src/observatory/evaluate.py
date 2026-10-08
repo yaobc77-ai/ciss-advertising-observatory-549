@@ -513,20 +513,27 @@ def summarize_results(rows, paid):
     return summaries
 
 
+def serialized_filters_match(actual, expected):
+    """Require complete JSON scope evidence; never fill omitted answer fields."""
+    wanted = expected.model_dump(mode="json")
+    if not isinstance(actual, dict) or actual.keys() != wanted.keys():
+        return False
+    for key, value in wanted.items():
+        candidate = actual[key]
+        if isinstance(value, list):
+            if (not isinstance(candidate, list) or any(type(item) is not str for item in candidate)
+                    or set(candidate) != set(value)):
+                return False
+        elif type(candidate) is not type(value) or candidate != value:
+            return False
+    return True
+
+
 def count_answer_checks(result, case, expected_collections):
     """Score structured database totals and scope, never model-written numbers."""
     data = result.structured_result or {}
     returned = {}
-    try:
-        actual_filters = Filters.model_validate(data["filters"]).model_dump(mode="json")
-        expected_filters = case.filters.model_dump(mode="json")
-        scope_valid = all(
-            set(value) == set(expected_filters[key]) if isinstance(value, list)
-            else value == expected_filters[key]
-            for key, value in actual_filters.items()
-        )
-    except (KeyError, TypeError, ValueError):
-        scope_valid = False
+    scope_valid = serialized_filters_match(data.get("filters"), case.filters)
     try:
         for collection in data["collections"]:
             dataset, total = collection["dataset"], collection["total"]
@@ -535,7 +542,7 @@ def count_answer_checks(result, case, expected_collections):
             returned[dataset] = total
     except (KeyError, TypeError, ValueError):
         returned = {}
-    route_valid = (result.status == "answered" and result.answer_mode == "statistics"
+    route_valid = (result.status == "answered" and not result.failure_reason and result.answer_mode == "statistics"
                    and data.get("method") == "database")
     return {"answer_count_exact": route_valid and scope_valid and returned == expected_collections,
             "answer_count_scope_valid": scope_valid, "answer_count_route_valid": route_valid,

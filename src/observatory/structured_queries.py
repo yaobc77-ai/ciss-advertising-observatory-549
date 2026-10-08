@@ -14,10 +14,10 @@ from datetime import date
 from typing import Literal
 
 from .analytics import sponsor_display
-from .models import Filters
+from .models import Filters, validate_historical_label_scope
 
 PlanStatus = Literal["ready", "clarify", "unsupported"]
-PlanKind = Literal["count", "share", "list_publishers", "list_sponsors"]
+PlanKind = Literal["count", "share", "list_publishers", "list_sponsors", "list_accounts"]
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class QuestionPlan:
 
     @property
     def group_by(self) -> str | None:
-        return {"list_publishers": "publishers", "list_sponsors": "sponsors"}.get(self.kind)
+        return {"list_publishers": "publishers", "list_sponsors": "sponsors", "list_accounts": "accounts"}.get(self.kind)
 
 
 def _normalize(value: str) -> str:
@@ -47,12 +47,21 @@ _PUBLISHER_ALIASES = (
     ("wallstreetjournal", "thewallstreetjournal", "wsj", "wsjcom", "华尔街日报"),
 )
 
+# Lookup aliases for an exact spelling recorded in the supplied social source.
+# This does not establish company identity or merge different source categories.
+_SPONSOR_SOURCE_ALIASES = (
+    ("Canadian Association of Petroleum Producers (CAPP)", ("CAPP",)),
+)
+
 
 def _entity_keys(value: str, field_name: str) -> set[str]:
     key = _normalize(value)
     keys = {key}
     if field_name == "sponsors":
         keys.add(_normalize(sponsor_display(value)))
+        for source_value, aliases in _SPONSOR_SOURCE_ALIASES:
+            if key == _normalize(source_value):
+                keys.update(_normalize(alias) for alias in aliases)
     else:
         for aliases in _PUBLISHER_ALIASES:
             if key in aliases:
@@ -304,6 +313,9 @@ def plan_question(question: str, filters: Filters, facets: dict) -> QuestionPlan
         intersection = [value for value in values if not active or value in active]
         if not intersection:
             return QuestionPlan("clarify", kind=kind, message=f"The requested {field_name} do not intersect the active filters. Adjust the selection first.")
+        if set(intersection) != set(values):
+            return QuestionPlan("clarify", kind=kind,
+                                message=f"Some requested {field_name} are outside the active filters. Clarify the selection instead of silently dropping source names.")
         setattr(narrowed, field_name, intersection)
         matched_entities[field_name] = tuple(intersection)
     if lower is not None:
@@ -332,9 +344,15 @@ def validate_share_scope(numerator: Filters, denominator: Filters) -> None:
     The denominator must be copied from the caller's selection, never generated
     from question targets. Dataset-specific denominators are evaluated separately.
     """
+    for scope in (numerator, denominator):
+        if scope.accounts and scope.dataset != "social":
+            raise ValueError("Account filters require the social collection")
+        validate_historical_label_scope(scope.dataset, scope.labels)
     if denominator.dataset != "all" and numerator.dataset != denominator.dataset:
         raise ValueError("The percentage numerator cannot widen the collection")
-    for dimension in ("publishers", "sponsors", "platforms", "keywords", "labels", "record_ids"):
+    if numerator.include_inferred_dates != denominator.include_inferred_dates:
+        raise ValueError("The publication-date basis must match the trusted selection")
+    for dimension in ("publishers", "sponsors", "platforms", "accounts", "keywords", "labels", "record_ids"):
         active, target = getattr(denominator, dimension), getattr(numerator, dimension)
         if active and (not target or not set(target).issubset(active)):
             raise ValueError("The percentage numerator cannot widen active filters")

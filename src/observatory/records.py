@@ -19,6 +19,7 @@ from urllib.parse import urlsplit
 from flask import abort, jsonify, request, send_file
 
 from observatory.asset_bundle import PDF_MAGIC, PNG_MAGIC, load_bundle, verified_bytes
+from observatory.social_annotations import social_annotation_details
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +40,9 @@ _QUALITY_NOTES = {
     "body_related_navigation": "Related links or navigation remain in the stored text and are excluded from retrieval.",
     "body_navigation_intervals_reviewed": "Only reviewed text intervals are used for retrieval; the original extraction is shown unchanged below.",
     "body_partial_recovery": "The PDF provides a partial text recovery. Some page-edge text and image content are missing from retrieval.",
+    "body_source_partial": "The saved text is a partial capture of the original source. Missing content has not been reconstructed.",
+    "body_source_completeness_unestablished": "The saved text has not been verified as a complete original source. Missing text, images or video may affect content findings.",
+    "body_saved_text_reviewed": "This text was adopted from a supplied TXT under a recorded engineering review. Quotations refer to that saved text; they do not verify the original webpage, OCR accuracy, video or advertiser claims.",
     "historical_annotations_prior_body": "Historical labels describe an earlier body version and do not label the recovered text.",
     "duplicate_body": "Another record has identical captured text; record counts are not unique text counts.",
 }
@@ -133,7 +137,14 @@ class RecordDetails:
                 v.payload->>'archive_url' AS archive_url,
                 (v.payload->>'retrievable')::boolean AS retrievable,
                 v.payload->'issues' AS issues,v.payload->'retrieval_ranges' AS retrieval_ranges,
-                v.payload->'retrieval_end' AS retrieval_end
+                v.payload->'retrieval_end' AS retrieval_end,
+                CASE WHEN r.dataset='social' THEN v.payload END AS social_source_payload,
+                CASE WHEN r.dataset='social' THEN jsonb_build_object(
+                    'social_admission',v.payload#>'{raw,social_admission}',
+                    'source_variants',v.payload#>'{raw,source_variants}') END AS social_admission_payload,
+                COALESCE((SELECT jsonb_agg(jsonb_build_object('ordinal',a.ordinal,
+                    'payload',a.payload) ORDER BY a.ordinal)
+                    FROM annotations a WHERE a.version_id=v.version_id),'[]'::jsonb) AS annotations
                 FROM records r JOIN record_versions v ON v.version_id=r.current_version
                 WHERE r.record_id=%s AND r.active AND (v.payload->>'countable')::boolean""",
                 (record_id,),
@@ -221,12 +232,12 @@ class RecordDetails:
         body = row.get("body") or ""
         codes = {i.get("code") for i in (row.get("issues") or []) if isinstance(i, dict)}
         notes = [_QUALITY_NOTES[code] for code in sorted(codes - {None}) if code in _QUALITY_NOTES]
-        partial = bool(codes & {"body_truncated_suspected", "body_partial_recovery", "body_short"})
+        partial = bool(codes & {"body_truncated_suspected", "body_partial_recovery", "body_source_partial", "body_short"})
         attachments = self._attachments(row)
         candidate_count = len(self._candidates.get(row.get("url"), set()))
         original = _safe_url(row.get("url")) if self.settings.show_source_links else ""
         archive = _safe_url(row.get("archive_url")) if self.settings.show_source_links else ""
-        return {
+        result = {
             **{key: row.get(key) for key in _PUBLIC_FIELDS},
             "body": body, "body_hash": row.get("body_hash"),
             "body_characters": len(body), "body_label": "Stored source text",
@@ -243,6 +254,44 @@ class RecordDetails:
             "record_asset_status": self.asset_status,
             "detail_url": f"/records/{row['record_id']}",
         }
+        if row.get("dataset") == "social":
+            from .social_admission import public_social_admission
+
+            result["body_note"] = ("This is the unchanged post text captured in the current source version. "
+                                   "It does not establish a complete post or full coverage of media and referenced posts.")
+            result["social_historical_annotation"] = social_annotation_details(row)
+            admission = public_social_admission(row.get("social_admission_payload"),
+                                                 current_body=body, current_url=row.get("url"))
+            if admission:
+                if not self.settings.show_source_links:
+                    for variant in admission["variants"]:
+                        variant["url"] = variant["archive_url"] = ""
+                result["social_admission"] = admission
+                if "body" in admission["conflicting_fields"]:
+                    result["body_label"] = "One supplied source observation — conflicting text"
+                    result["body_note"] = ("Source observations of this original post contain different text. "
+                                           "The text below is one preserved observation, selected by source ID for display only. "
+                                           "It is not an adjudicated post text and is paused for RAG retrieval. Read all variants below.")
+                if "sponsor" in admission["conflicting_fields"] or "account" in admission["conflicting_fields"]:
+                    result["quality_notes"].append("Source observations disagree on company or account. Affected fields are displayed as unknown; the source variants below retain each observation.")
+            from .social_source_binding import public_observations
+            from .social_source_retrieval import source_version_id
+
+            payload = row.get("social_source_payload")
+            if (isinstance(payload, dict) and row.get("retrievable") is True
+                    and source_version_id(payload) == row.get("version_id")):
+                observations = public_observations(payload)
+                result["source_observation_retrieval"] = {
+                    "status": "enabled_source_observations", "observations": len(observations),
+                    "semantic_completeness_verified": False,
+                }
+                if admission and "body" in admission["conflicting_fields"]:
+                    result["body_note"] = ("Each preserved source observation is searchable separately. "
+                                           "The text below is one observation selected for display only. "
+                                           "Different text versions have not been adjudicated; extra text may include linked previews. "
+                                           "Quotes identify their source observation. Read all variants below.")
+                result["quality_notes"].append("Searchable saved observations do not establish a complete original post, image/video contents, or verified paid advertising.")
+        return result
 
     def summaries(self, rows):
         """Small browse-table projection; only reviewed record IDs need a DB read."""

@@ -149,6 +149,10 @@ def test_new_api_schema_requires_summary_and_sections():
 def test_insufficient_evidence_never_publishes_summary_or_sections():
     payload = selected()
     payload["status"] = "insufficient_evidence"
+    # A refusal that still carries content is rejected rather than silently emptied.
+    with pytest.raises(ValueError, match="Contradictory answer status"):
+        validate_payload(payload)
+    payload.update(claims=[], summary=[], sections=[])
     answer = validate_payload(payload)
     assert answer.status == "insufficient_evidence"
     assert answer.summary == answer.sections == answer.cited_claims == []
@@ -331,5 +335,5 @@ def test_all_content_question_forms_generate_and_persist_cited_structure(
     saved = connection.__enter__.return_value.execute.call_args.args[1][2].obj
     assert saved["summary"] == summary
     assert saved["sections"] == sections
-    assert saved["claims"] == payload["claims"]
+    assert saved["claims"] == [{"support_passage_ids": [], **claim} for claim in payload["claims"]]
     rag.budget.uncertain.assert_not_called()

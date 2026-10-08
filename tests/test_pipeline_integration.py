@@ -12,7 +12,12 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from observatory.config import Settings
 from observatory.db import Database
 from observatory.import_records import load_records
-from observatory.migrations import MIGRATION_DIRECTORY, migration_status, run_migrations
+from observatory.migrations import (
+    MIGRATION_DIRECTORY,
+    discover_migrations,
+    migration_status,
+    run_migrations,
+)
 from observatory.models import Filters
 
 pytestmark = pytest.mark.integration
@@ -74,7 +79,7 @@ def test_migrations_adopt_existing_data_then_are_idempotent(db, tmp_path):
     with db.connect() as conn:
         # Simulate the pre-migration installation: schema and corpus already exist.
         conn.execute("DELETE FROM schema_migrations")
-        assert run_migrations(conn)["applied"] == [1, 2, 3, 4]
+        assert run_migrations(conn)["applied"] == [m.version for m in discover_migrations()]
     db.initialize()
     with db.connect() as conn:
         assert run_migrations(conn)["applied"] == []
@@ -91,13 +96,14 @@ def test_migration_tamper_blocks_before_applying_new_sql(db, tmp_path):
         with db.connect() as conn:
             run_migrations(conn, tmp_path)
     with db.connect() as conn:
-        assert migration_status(conn)["current_version"] == 4
+        assert migration_status(conn)["current_version"] == len(discover_migrations())
 
 
 def test_failed_migration_rolls_back_sql_and_tracker(db, tmp_path):
     for file in MIGRATION_DIRECTORY.glob("*.sql"):
         (tmp_path / file.name).write_bytes(file.read_bytes())
-    (tmp_path / "0005_failure.sql").write_text(
+    next_version = len(discover_migrations()) + 1
+    (tmp_path / f"{next_version:04d}_failure.sql").write_text(
         "CREATE TABLE prototype_rollback_probe(id integer); SELECT 1/0;", encoding="utf-8",
     )
     with pytest.raises(psycopg.errors.DivisionByZero):
@@ -105,4 +111,4 @@ def test_failed_migration_rolls_back_sql_and_tracker(db, tmp_path):
             run_migrations(conn, tmp_path)
     with db.connect() as conn:
         assert conn.execute("SELECT to_regclass('prototype_rollback_probe') AS name").fetchone()["name"] is None
-        assert migration_status(conn)["current_version"] == 4
+        assert migration_status(conn)["current_version"] == len(discover_migrations())

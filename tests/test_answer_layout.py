@@ -112,6 +112,23 @@ def test_general_rag_findings_keep_server_date_basis_warnings(warning):
     assert "What the advertisements emphasize" not in text
 
 
+@pytest.mark.parametrize("structured", [False, True])
+def test_retrieved_ad_list_limits_are_visible_without_model_disclosure(structured):
+    result = {"answer": "The advertiser discusses a future project."}
+    if structured:
+        result.update(
+            summary=[{"text": "The advertiser discusses a future project.", "citation_indices": [1]}],
+            sections=[{"title": "Project", "citation_indices": [1]}],
+            cited_claims=[{"text": result["answer"], "citation_indices": [1]}],
+            citations=[{"evidence_id": "e", "quote": "future project"}],
+        )
+    text = serialized(html.Div(_grounded_answer_content(result, result["answer"])))
+    assert "not a complete list of matching ads" in text
+    assert "Missing results do not establish absence" in text
+    assert "does not independently verify" in text
+    assert "not a complete list" not in result["answer"]
+
+
 def submit_result(result, *, keyword=False, empty_search=False):
     service = FakeService()
     service.answer = lambda *args, **kwargs: result

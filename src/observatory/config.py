@@ -26,6 +26,8 @@ class Settings:
     trusted_proxy: str = ""
     # Explicit opt-in preserves the deterministic baseline for reproducible checks.
     research_agent_enabled: bool = False
+    # One typed interpretation compiled to existing reads; opt in after validation.
+    question_intent_enabled: bool = False
     # Paid source discovery is confined to the separate maintenance MCP server.
     claims_source_search_enabled: bool = False
     # Public semantic questions may search the web after a validated corpus miss.
@@ -33,6 +35,18 @@ class Settings:
     # Private curated attachments can be mounted independently of application code.
     record_asset_root: str = field(default="", repr=False)
     record_asset_manifest_sha256: str = field(default="", repr=False)
+    # A curated frozen-run report is mounted separately; never accept UI uploads.
+    evaluation_report_path: str = field(default="", repr=False)
+    evaluation_report_sha256: str = field(default="", repr=False)
+    evaluation_plan_sha256: str = field(default="", repr=False)
+    # Reviewed native content decisions are mounted by the server operator.
+    content_publication_path: str = field(default="", repr=False)
+    content_publication_sha256: str = field(default="", repr=False)
+    content_review_sha256: str = field(default="", repr=False)
+    # Fixed local media evidence prepared and mounted by the server operator.
+    media_bundle_path: str = field(default="", repr=False)
+    media_bundle_sha256: str = field(default="", repr=False)
+    media_asset_root: str = field(default="", repr=False)
 
     @classmethod
     def from_env(cls):
@@ -54,8 +68,18 @@ class Settings:
             secure_cookies=os.getenv("OBS_SECURE_COOKIES", "false").lower() == "true",
             trusted_proxy=os.getenv("OBS_TRUSTED_PROXY", ""),
             research_agent_enabled=os.getenv("OBS_RESEARCH_AGENT_ENABLED", "false").lower() == "true",
+            question_intent_enabled=os.getenv("OBS_QUESTION_INTENT_ENABLED", "false").lower() == "true",
             claims_source_search_enabled=os.getenv("OBS_CLAIMS_SOURCE_SEARCH_ENABLED", "false").lower() == "true",
             web_search_enabled=os.getenv("OBS_WEB_SEARCH_ENABLED", "true").lower() == "true",
             record_asset_root=os.getenv("OBS_RECORD_ASSET_ROOT", ""),
             record_asset_manifest_sha256=os.getenv("OBS_RECORD_ASSET_MANIFEST_SHA256", ""),
+            evaluation_report_path=os.getenv("OBS_EVALUATION_REPORT_PATH", ""),
+            evaluation_report_sha256=os.getenv("OBS_EVALUATION_REPORT_SHA256", ""),
+            evaluation_plan_sha256=os.getenv("OBS_EVALUATION_PLAN_SHA256", ""),
+            content_publication_path=os.getenv("OBS_CONTENT_PUBLICATION_PATH", ""),
+            content_publication_sha256=os.getenv("OBS_CONTENT_PUBLICATION_SHA256", ""),
+            content_review_sha256=os.getenv("OBS_CONTENT_REVIEW_SHA256", ""),
+            media_bundle_path=os.getenv("OBS_MEDIA_BUNDLE_PATH", ""),
+            media_bundle_sha256=os.getenv("OBS_MEDIA_BUNDLE_SHA256", ""),
+            media_asset_root=os.getenv("OBS_MEDIA_ASSET_ROOT", ""),
         )

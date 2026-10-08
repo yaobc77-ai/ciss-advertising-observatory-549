@@ -281,6 +281,18 @@ def test_recovery_issue_remains_visible_when_current_annotations_are_empty():
     assert "SponsorCandidate" in graph["node_types"]
 
 
+@pytest.mark.parametrize("code", ["body_source_partial", "body_source_completeness_unestablished"])
+def test_saved_text_limit_survives_graph_projection_without_inventing_pdf(code):
+    source = row(issues=[{"code": code, "source": "private-review", "detail": "private-review"}])
+    graph = build_graph([source])
+    version = nodes(graph, "TextVersion")[0]["properties"]
+    assert version["quality_codes"] == [code]
+    assert version["completeness"] == "not_established"
+    assert version["body_status"] == "partial_or_quality_limited"
+    assert not edges(graph, "derived_from")
+    assert "private-review" not in json.dumps(graph)
+
+
 def test_annotation_edges_keep_safe_source_digest_row_and_basis():
     source = row()
     source["annotations"] = [annotation(source, source_sha256="f" * 64, source_row=9,

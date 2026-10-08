@@ -92,7 +92,7 @@ def test_matrix_links_titles_and_preserves_every_filter(matrix_app):
     assert applied.model_dump() == {
         **filters, "dataset": "native", "publishers": ["Outlet A"], "sponsors": ["Sponsor A"],
         "date_from": date(2024, 1, 1), "date_to": date(2024, 12, 31), "date_presence": "any",
-        "include_inferred_dates": False,
+        "include_inferred_dates": False, "accounts": [],
     }
     anchors = [node["props"] for node in component_tree(response["matrix-records"]) if node.get("type") == "A"]
     assert any(a["children"] == "A capture proposal" and a["href"] == "/records/native-a" for a in anchors)

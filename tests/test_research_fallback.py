@@ -5,16 +5,18 @@ from types import SimpleNamespace
 import pytest
 
 from observatory.config import Settings
-from observatory.models import Answer, Filters
+from observatory.models import Answer, Evidence, Filters
 from observatory.research_agent import ResearchRun
 from observatory.service import Service
 
 
 class DB:
     def __init__(self, *, has_evidence=False):
-        from test_research_service import evidence
-
-        self.evidence = [evidence()] if has_evidence else []
+        text = "The Cedar cooperative describes a solar workshop."
+        self.evidence = [Evidence(
+            evidence_id="cedar-passage-1", record_id="cedar-record-1", version_id="cedar-v1",
+            dataset="native", title="Cedar workshop", text=text, start=0, end=len(text),
+        )] if has_evidence else []
         self.version = "corpus-v1"
         self.saved = []
         self.reads = []

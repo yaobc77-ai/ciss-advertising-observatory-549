@@ -1,6 +1,7 @@
 """Service statistics answers count eligible records without evidence/model calls."""
 
 import json
+from collections import Counter
 from datetime import date
 from types import SimpleNamespace
 
@@ -14,6 +15,7 @@ PRIVATE = "private://credential@local/raw-source"
 PUBLIC_FIELDS = {
     "record_id", "version_id", "dataset", "title", "date", "publisher", "sponsor",
     "url", "archive_url", "retrievable", "date_basis", "inferred_date", "inferred_tier",
+    "account", "platform", "effective_date", "source_date",
 }
 
 def record(identity, dataset, publisher, sponsor, *, when="2021-03-04", retrievable=True, **extra):
@@ -37,7 +39,8 @@ class StatisticsOnlyDB:
         self.version = "source-v1"
 
     def health(self):
-        return {"status": "ok", "data_version": self.version}
+        return {"status": "ok", "data_version": self.version,
+                "record_counts": dict(Counter(row["dataset"] for row in self.rows))}
 
     def facets(self, dataset):
         self.facet_calls.append(dataset)
@@ -74,7 +77,13 @@ class StatisticsOnlyDB:
             rows.append(dict(original))
         return {"stats": summarize(rows), "page": {"rows": rows[offset:offset + limit]}}
 
+    def save_answer(self, question, filters, result, data_version):
+        # Every final answer is written once to the audit log; it is never read back as a cache.
+        self.saved_answers = getattr(self, "saved_answers", []) + [result]
+
     def __getattr__(self, name):
+        if name.startswith("__") or name == "saved_answers":
+            raise AttributeError(name)
         self.forbidden_calls.append(name)
         raise AssertionError(f"Statistics route must not use {name}")
 
@@ -176,7 +185,8 @@ def test_both_collections_keep_units_and_same_named_groups_separate(rows):
     same_named_groups = [group for group in answer.structured_result["groups"] if group["name"] == "The New York Times"]
     assert [(group["dataset"], group["count"]) for group in same_named_groups] == [("native", 1), ("social", 2)]
     assert [scope.dataset for scope in db.dashboard_calls] == ["native", "social"]
-    assert "native ad records" in answer.answer and "social ad records" in answer.answer
+    assert "native ad records" in answer.answer and "company social posts" in answer.answer
+    assert "social ad records" not in answer.answer
     assert not rag.calls and not db.forbidden_calls
 
 
@@ -187,7 +197,7 @@ def test_active_entity_and_date_intersections_reach_database(rows):
         date_from=date(2021, 2, 1), date_to=date(2023, 1, 1), keywords=["energy"],
     )
     original = scope.model_dump()
-    answer = service.answer("How many ads from NYT and WaPo in 2021?", scope, "visitor")
+    answer = service.answer("How many ads from NYT in 2021?", scope, "visitor")
     assert answer.status == "answered"
     used = db.dashboard_calls[0]
     assert used.publishers == ["The New York Times"]

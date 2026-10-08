@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import inspect
+import math
 import os
 import re
 import secrets
@@ -24,12 +25,28 @@ from observatory.analytics import (
     sponsor_display,
     sponsor_publisher_csv,
 )
+from observatory.evaluation_report import published_report
+from observatory.evaluation_ui import evaluation_panel
 from observatory.models import Filters
+from observatory.social_annotations import SCHEME, STATUS, social_state_options
+from observatory.social_label_ui import (
+    clicked_social_state,
+    public_social_states,
+    social_label_figure,
+    social_label_note,
+    social_label_snapshot,
+    source_state_name,
+)
+from observatory.social_source_ui import (
+    decorate_source_observation_cards,
+    original_text_citation_matches,
+)
 
 UNKNOWN = "(Unknown)"
 NATIVE_COLUMNS = ("url", "publisher", "title", "date", "sponsor", "keyword")
 SOCIAL_COLUMNS = ("platform", "account", "sponsor", "title", "date", "url")
-FILTER_NAMES = ("publishers", "sponsors", "platforms", "keywords", "labels")
+FILTER_NAMES = ("publishers", "sponsors", "platforms", "keywords", "labels", "accounts")
+FILTER_VALUE_COUNT = len(FILTER_NAMES) + 3
 COLORS = {"ink": "#202633", "teal": "#003262", "muted": "#687587", "amber": "#a86b25"}
 QUERY_EXAMPLES = (
     ("example-outlet-count", "Count ads at an outlet", "How many native ads are from the New York Times?"),
@@ -46,6 +63,7 @@ def _page(pathname):
         "/query": "query",
         "/data": "data",
         "/wireframe": "wireframe",
+        "/evaluation": "evaluation",
     }.get((pathname.rstrip("/") or "/") if pathname else pathname, "not-found")
 
 
@@ -54,7 +72,7 @@ def _research_signature(question, scope, dataset, values):
     filters = (
         Filters(dataset="all")
         if scope == "all"
-        else _filters(dataset, *(values[:8] if dataset == "native" else values[8:]))
+        else _filters(dataset, *_collection_filter_values(dataset, values))
     )
     return {
         "question": (question or "").strip(),
@@ -65,7 +83,7 @@ def _research_signature(question, scope, dataset, values):
 def _wireframe(health):
     """A structural diagram of this release, not screenshots or simulated records."""
     native_count = health.get("record_counts", {}).get("native", 0)
-    social_count = health.get("record_counts", {}).get("social", 0)
+    social_count = health.get("countable_record_counts", health.get("record_counts", {})).get("social", 0)
 
     def block(title, note="", class_name=""):
         return html.Div(
@@ -95,9 +113,9 @@ def _wireframe(health):
         html.Div(
             [
                 html.Span("Current product structure", className="eyebrow"),
-                html.H2("Three pages, one collection scope"),
+                html.H2("Query, Data and Evaluation"),
                 html.P(
-                    "Query and Data share collection filters. Navigation keeps the current question and results in place.",
+                    "Query and Data share collection filters. Evaluation reports measured results and remaining review separately.",
                     className="muted",
                 ),
                 html.Div(
@@ -113,7 +131,7 @@ def _wireframe(health):
                         html.Span(
                             "Social · available"
                             if social_count
-                            else "Social · awaiting dataset",
+                            else "Social · no admitted records",
                             className="status-chip status-pending"
                             if not social_count
                             else "status-chip",
@@ -160,8 +178,8 @@ def _wireframe(health):
                                             className="wire-actions",
                                         ),
                                         block(
-                                            "Answer + original evidence",
-                                            "Source links · record and version · exact quotes",
+                                            "Summary + evidence + limits",
+                                            "SQL results or source-grounded findings · original references · separate web supplements",
                                         ),
                                         block(
                                             "Result status",
@@ -180,6 +198,7 @@ def _wireframe(health):
                     "/data",
                     [
                         block("Collection selector", "Same selection as Query"),
+                        block("Views", "Overview / Relationships / Records"),
                         html.Div(
                             [
                                 block(
@@ -218,27 +237,27 @@ def _wireframe(health):
                     ],
                 ),
                 screen(
-                    "Project wireframe",
-                    "/wireframe",
+                    "Evaluation",
+                    "/evaluation",
                     [
                         block(
-                            "Page relationship diagram",
-                            "Query ↔ Data ↔ Project wireframe",
+                            "Requirements and measures",
+                            "Definitions · denominators · calculation and review methods",
                         ),
-                        block("Page structures", "Component layout and shared scope"),
+                        block("Recorded measurements", "Frozen run and collection scope · missing results stay pending"),
                         block(
-                            "Data flow",
-                            "Sources → quality / versions → index → interface",
+                            "Review coverage",
+                            "Answered, failed, reviewed and pending cases remain separate",
                         ),
                         block(
-                            "Delivery boundaries",
-                            "Native data available · social data slot reserved",
+                            "Acceptance boundaries",
+                            "Engineering checks, semantic review and customer acceptance are distinct",
                         ),
                     ],
                 ),
             ],
             className="wire-screens",
-            **{"aria-label": "Wireframes for the three application pages"},
+            **{"aria-label": "Wireframes for Query, Data and Evaluation"},
         ),
         html.Section(
             [
@@ -248,7 +267,7 @@ def _wireframe(health):
                     [
                         block(
                             "01 · Source material",
-                            "Native records / archived articles / supplied exports",
+                            "Native advertisements / social exports / saved source materials",
                         ),
                         html.Span(
                             "→", className="flow-arrow", **{"aria-hidden": "true"}
@@ -271,12 +290,22 @@ def _wireframe(health):
                             [
                                 block(
                                     "Data page",
-                                    "SQL counts → network / charts → paged records / CSV",
+                                    "SQL counts → matrix / graph / charts → records / CSV",
                                     "wire-output",
                                 ),
                                 block(
                                     "Query page",
-                                    "Retrieve → optional model answer → verified source quotes",
+                                    "Interpret → scoped SQL or source retrieval → summary / evidence / limits",
+                                    "wire-output",
+                                ),
+                                block(
+                                    "Offline CLAIMS",
+                                    "Saved classifier outputs → source checks and review states → published annotations",
+                                    "wire-output",
+                                ),
+                                block(
+                                    "Evaluation",
+                                    "Frozen runs → measurement and review → results or pending status",
                                     "wire-output",
                                 ),
                             ],
@@ -286,7 +315,7 @@ def _wireframe(health):
                     className="wire-flow",
                 ),
                 html.P(
-                    "Counts describe the eligible collection. Retrieved passages support what an advertiser said; they do not establish whether a claim is true. Historical CLAIMS labels remain filterable legacy annotations.",
+                    "Counts describe the selected records. Retrieved passages support what an advertiser said, not whether it is true. Queries read published CLAIMS annotations without rerunning classification. Evaluation is separate from answering.",
                     className="wire-caption",
                 ),
             ],
@@ -341,28 +370,70 @@ def _public_rows(rows, links_enabled):
         row["retrievable"] = bool(item.get("retrievable"))
         row["url"] = _url(item.get("url")) if links_enabled else ""
         row["archive_url"] = _url(item.get("archive_url")) if links_enabled else ""
+        if row["dataset"] == "social":
+            row["collection_scope"] = str(item.get("collection_scope") or "collected_company_posts")
+            row["count_unit"] = str(item.get("count_unit") or "source_record")
+            row["paid_ad_status"] = "not_verified"
+            try:
+                row["social_historical_states"] = public_social_states(item)
+                row["social_historical_scheme"] = SCHEME
+                row["social_historical_status"] = STATUS
+            except ValueError:
+                row["social_historical_states"] = []
+                row["social_historical_scheme"] = ""
+                row["social_historical_status"] = ""
         result.append(row)
     return result
 
 
-def _filters(
-    dataset,
-    publishers,
-    sponsors,
-    platforms,
-    keywords,
-    labels,
-    date_from,
-    date_to,
-    unknown_dates,
-):
+def _collection_filter_values(dataset, values):
+    if dataset not in {"native", "social", "all"}:
+        raise ValueError("Unknown collection")
+    start = {"native": 0, "social": FILTER_VALUE_COUNT, "all": 2 * FILTER_VALUE_COUNT}[dataset]
+    return values[start:start + FILTER_VALUE_COUNT]
+
+
+def _social_available(health):
+    counts = health.get("countable_record_counts", health.get("record_counts", {}))
+    return counts.get("social", 0) > 0
+
+
+def _social_admission(health):
+    if health.get("status") != "ok" or not _social_available(health):
+        raise ValueError("Social records are not admitted")
+    counts = health.get("countable_record_counts", health.get("record_counts", {}))
+    return {"count": counts["social"], "data_version": health.get("data_version")}
+
+
+def _current_social_snapshot(service, filters, previous):
+    """Validate a live Data selection; it is not a durable membership freeze."""
+    scope = filters.model_dump(mode="json")
+    if not isinstance(previous, dict) or previous.get("filters") != scope:
+        raise ValueError("Refresh the current selection")
+    admission = _social_admission(service.health())
+    if previous.get("social_admission") != admission:
+        raise ValueError("Social admission changed")
+    dashboard = service.dashboard(filters, offset=0, limit=1)
+    fresh = social_label_snapshot(dashboard.get("social_historical_labels"), scope)
+    if (previous.get("social_historical_labels") != fresh
+            or fresh["total"] != dashboard["stats"]["total"]
+            or _social_admission(service.health()) != admission):
+        raise ValueError("The source-state selection changed")
+    return fresh
+
+
+def _filters(dataset, *values):
+    selections = dict(zip(FILTER_NAMES, values[:len(FILTER_NAMES)], strict=True))
+    if dataset == "all":
+        from .combined_ui import decode_company_selection
+
+        if any(selections[name] for name in ("publishers", "platforms", "labels", "accounts")):
+            raise ValueError("Collection-specific filters require a specific collection")
+        selections["sponsors"] = decode_company_selection(selections["sponsors"] or [])
+    date_from, date_to, unknown_dates = values[len(FILTER_NAMES):]
     filters = Filters(
         dataset=dataset,
-        publishers=publishers or [],
-        sponsors=sponsors or [],
-        platforms=platforms or [],
-        keywords=keywords or [],
-        labels=labels or [],
+        **{name: selected or [] for name, selected in selections.items()},
         date_from=date_from or None,
         date_to=date_to or None,
         include_unknown_dates="include" in (unknown_dates or []),
@@ -558,15 +629,17 @@ def _notice(title, message, kind="info"):
 def _scope_selections(filters):
     collection = {
         "native": "Native advertising",
-        "social": "Social advertising",
-        "all": "Both collections · all eligible records",
+        "social": "Company social posts",
+        "all": "Both collections · all available records",
     }[filters.dataset]
     selections = [collection]
     for name in FILTER_NAMES:
         values = getattr(filters, name)
         if values:
+            display = (sponsor_display if name == "sponsors" else
+                       source_state_name if name == "labels" and filters.dataset == "social" else str)
             selections.append(
-                f"{name.replace('_', ' ').title()}: {', '.join(sponsor_display(v) for v in values) if name == 'sponsors' else ', '.join(values)}"
+                f"{_filter_scope_name(name, filters.dataset)}: {', '.join(dict.fromkeys(display(v) for v in values))}"
             )
     if filters.date_from or filters.date_to:
         selections.append(
@@ -622,14 +695,46 @@ def _answer_status(title, message, next_step, *, eyebrow=None, trace=None, extra
     ], className="answer-card answer-layout")
 
 
-def _statistics_card(result, links_enabled, service):
+def _statistics_card(result, links_enabled, service, *, include_record_browser=True):
     """Display complete SQL categories and all records through scoped paging."""
     from observatory.query_records import statistics_records_panel
 
     data = result["structured_result"]
+    if data.get("kind") == "social_historical_labels":
+        filters = Filters.model_validate(data["filters"])
+        snapshot = social_label_snapshot(data.get("distribution"), filters.model_dump(mode="json"))
+        if (filters.dataset != "social"
+                or data.get("collections") != [{"dataset": "social", "total": snapshot["total"]}]):
+            raise ValueError("Historical source-state counts require the social selection")
+        table = html.Div(html.Table([
+            html.Caption("All 13 historical social source codes · each uses the selected-post denominator"),
+            html.Thead(html.Tr([html.Th(label, scope="col") for label in (
+                "Source code", "Source label", "Level", "Source True", "Source False", "Unknown annotation",
+            )])),
+            html.Tbody([html.Tr([
+                html.Th(html.Code(item["key"]), scope="row"),
+                html.Td(item["label"]), html.Td(item["level"]),
+                *[html.Td(f"{item[state]:,}", className="count-value")
+                  for state in ("source_true", "source_false", "unknown")],
+            ]) for item in snapshot["items"]]),
+        ]), className="statistics-table")
+        return _answer_frame(
+            "Historical social source states", [html.P(
+                f"{snapshot['total']:,} selected posts · {snapshot['valid_annotation_records']:,} with a usable "
+                f"historical annotation · {snapshot['unknown_annotation_records']:,} unknown.", className="answer-text"),
+                html.P("Source True and Source False describe the original export's outputs; Unknown annotation means no usable current-text annotation binding.")],
+            [table, statistics_records_panel(data, service, links_enabled) if include_record_browser else
+             html.P("Submit this question part separately to inspect its matching records.", className="scope-note")],
+            [html.P("Each code uses the same selected-post denominator. Codes can overlap; do not sum their counts. Source True/False are historical automated outputs, not reviewed themes, greenwashing or fact checks.", className="scope-note"),
+             html.P("Unknown annotation means no usable annotation is bound to the current stored text. It does not mean Source False. These source states use a separate scheme from native labels and CLAIMS2.", className="scope-note"),
+             *[html.P(note, className="scope-note") for note in data.get("scope_notes", [])]],
+            eyebrow="Collection statistics · model-assisted query" if result.get("research_trace")
+            else "Collection statistics · no model charge",
+            trace=_research_steps(result), class_name="statistics-answer",
+        )
     collections = data.get("collections", [])
     groups = data.get("groups", [])
-    names = {"native": "Native ad records", "social": "Social ad records"}
+    names = {"native": "Native ad records", "social": "Company posts"}
     model_query = bool(result.get("research_trace"))
     is_share = data.get("kind") == "share"
     is_time = data.get("kind") in {"list_years", "top_years", "compare_periods"}
@@ -667,12 +772,13 @@ def _statistics_card(result, links_enabled, service):
             ]) for period in data.get("periods", []) for item in period.get("collections", [])]),
         ]), className="statistics-table"))
     if groups:
+        social_groups = all(group.get("dataset") == "social" for group in groups)
         sections.append(html.Div(html.Table([
-            html.Caption({"publishers": "All publishers and counts", "sponsors": "All source-listed sponsors / organizations and counts",
-                          "platforms": "All platforms and counts", "years": "Years with the highest count (all ties)"
+            html.Caption({"publishers": "All publishers and counts", "sponsors": "All company affiliations and counts" if social_groups else "All source-listed sponsors / organizations and counts",
+                          "platforms": "All platforms and counts", "accounts": "All source account names and counts", "years": "Years with the highest count (all ties)"
                           if data.get("kind") == "top_years" else "All years and counts"}.get(data.get("group_by"), "All categories and counts")),
             html.Thead(html.Tr([
-                html.Th({"publishers": "News outlet", "sponsors": "Source-listed sponsor / organization", "platforms": "Platform", "years": "Year"}.get(data.get("group_by"), "Category"), scope="col"),
+                html.Th({"publishers": "News outlet", "sponsors": "Company affiliation" if social_groups else "Source-listed sponsor / organization", "platforms": "Platform", "accounts": "Source account name", "years": "Year"}.get(data.get("group_by"), "Category"), scope="col"),
                 html.Th("Collection", scope="col"), html.Th("Records", scope="col"),
             ])),
             html.Tbody([html.Tr([
@@ -691,7 +797,8 @@ def _statistics_card(result, links_enabled, service):
     date_note = (data.get("date_inference") or {}).get("note")
     if date_note:
         scope.append(html.P(date_note, className="scope-note"))
-    sections.append(statistics_records_panel(data, service, links_enabled))
+    sections.append(statistics_records_panel(data, service, links_enabled) if include_record_browser else
+                    html.P("Submit this question part separately to inspect its matching records.", className="scope-note"))
     summary = [html.P(result["answer"], className="answer-text")]
     if groups:
         category_names = list(dict.fromkeys(group.get("display_name") or group["name"] for group in groups))
@@ -730,13 +837,14 @@ def _research_steps(result):
     ], className="research-steps")
 
 
-def _answer_references(indices, citations):
+def _answer_references(indices, citations, available_indices=None):
     """Keep summary links tied to the same one-based visible quote numbering."""
     return [html.A(
         f"[{number}]", href=f"#answer-citation-{number}", className="answer-reference",
         **{"aria-label": f"Read supporting citation {number}"},
     ) for number in indices if isinstance(number, int) and not isinstance(number, bool)
-            and 1 <= number <= len(citations)]
+            and 1 <= number <= len(citations)
+            and (available_indices is None or number in available_indices)]
 
 
 def _rag_scope_notes(result):
@@ -744,9 +852,14 @@ def _rag_scope_notes(result):
     from observatory.date_inference import BASIS_NOTE, UNCHECKED_NOTE
 
     notes = [html.P(
-        "This answer uses the retrieved advertisements within the current filters. It describes what those sources say; it does not independently verify their claims or establish full-collection totals.",
+        "This answer uses the retrieved advertisements within the current filters. Listed advertisements are retrieved candidates, not a complete list of matching ads. Missing results do not establish absence. It describes what those sources say; it does not independently verify their claims or establish full-collection totals.",
         className="scope-note",
     )]
+    if result.get("media_evidence"):
+        notes.append(html.P(
+            "Image descriptions, OCR, captions and transcripts are derived evidence with their own locations. They are not original article quotations; image meaning, transcription and timing are not independently verified. Supplied video times identify segments, not individual words.",
+            className="scope-note",
+        ))
     text = str(result.get("answer") or "").rstrip()
     # Older service versions append these exact disclosures to the flat answer.
     # Preserve only known server text, not arbitrary provider/error details.
@@ -769,6 +882,7 @@ def _rag_scope_notes(result):
 def _grounded_answer_parts(result, message):
     """Use validated structure for any content question; never resummarize old prose."""
     citations = result.get("citations") or []
+    available_indices = _media_answer_citation_indices(result)
     summaries = result.get("summary") or []
     claims = result.get("cited_claims") or []
     sections = result.get("sections") or []
@@ -776,7 +890,7 @@ def _grounded_answer_parts(result, message):
         return [html.P(message, className="answer-text")], []
     summary = [html.P([
         str(item.get("text") or ""), " ",
-        *_answer_references(item.get("citation_indices") or [], citations),
+        *_answer_references(item.get("citation_indices") or [], citations, available_indices),
     ]) for item in summaries if isinstance(item, dict) and item.get("text")]
     groups = []
     for section in sections:
@@ -785,7 +899,7 @@ def _grounded_answer_parts(result, message):
         refs = set(section.get("citation_indices") or [])
         paragraphs = [html.P([
             str(claim.get("text") or ""), " ",
-            *_answer_references(claim.get("citation_indices") or [], citations),
+            *_answer_references(claim.get("citation_indices") or [], citations, available_indices),
         ]) for claim in claims if isinstance(claim, dict) and claim.get("text")
             and refs.intersection(claim.get("citation_indices") or [])]
         if paragraphs:
@@ -867,11 +981,6 @@ def _external_research_card(result, enabled):
         text = str(result.get("answer") or "")
         _, marker, reason = text.partition("\n\nWhy the collection could not answer: ")
         if marker and reason.strip():
-            # Service failures remain generic even after the web route succeeds.
-            if result.get("failure_reason"):
-                reason = ("The collection changed while processing the question; its result was withheld."
-                          if str(result["failure_reason"]).startswith("data_changed") else
-                          "The collection service could not produce a supported answer to this request.")
             scope.append(html.P("Why the collection could not answer: " + reason, className="scope-note"))
     return _answer_frame(
         "Additional web sources", passages,
@@ -892,21 +1001,62 @@ def _external_research_card(result, enabled):
     )
 
 
+def _coverage_count(group, key):
+    value = group.get(key)
+    value = len(value) if isinstance(value, list) else value
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
+def _group_missing_support(group):
+    """A retrieved candidate does not substitute for support used in the answer."""
+    for key in ("cited_records", "evidence_units", "passages"):
+        if key in group:
+            return _coverage_count(group, key) == 0
+    return False
+
+
 def _evidence_coverage(result):
     data = result.get("structured_result") or {}
     if not isinstance(data, dict) or data.get("kind") != "evidence_coverage":
         return None
+    groups = [group for group in data.get("groups") or [] if isinstance(group, dict)]
+    typed = any(any(key in group for key in (
+        "image_units", "video_units", "media_status", "evidence_units", "cited_records",
+    )) for group in groups)
     rows = []
     missing = []
-    for group in data.get("groups") or []:
-        if not isinstance(group, dict):
+    uncited = []
+    no_candidates = []
+    media_labels = {
+        "ok": "Stored media retrieved", "not_configured": "Media collection not configured",
+        "missing_material": "Requested media material not supplied", "no_match": "Supplied media did not match",
+        "unavailable": "Media could not be verified", "disabled": "Media retrieval not enabled",
+    }
+    for group in groups:
+        count = _coverage_count(group, "passages") if "passages" in group else 0
+        if count is None:
             continue
-        passages = group.get("passages", 0)
-        count = len(passages) if isinstance(passages, list) else passages
-        if not isinstance(count, int) or isinstance(count, bool) or count < 0:
-            continue
-        if count == 0:
+        if _group_missing_support(group):
             missing.append(str(group.get("label") or "Search group"))
+        if typed:
+            images = _coverage_count(group, "image_units") or 0
+            videos = _coverage_count(group, "video_units") or 0
+            total = _coverage_count(group, "evidence_units")
+            total = count + images + videos if total is None else total
+            cited = _coverage_count(group, "cited_records")
+            if total == 0:
+                no_candidates.append(str(group.get("label") or "Search group"))
+            elif cited == 0:
+                uncited.append(str(group.get("label") or "Search group"))
+            coverage = (f"{cited:,} cited record{'s' if cited != 1 else ''}" if cited is not None
+                        else "Citation coverage not provided")
+            media = media_labels.get(group.get("media_status"), "Media coverage not provided")
+            rows.append(html.Tr([
+                html.Th(str(group.get("label") or "Search group"), scope="row"),
+                *[html.Td(f"{n:,}", className="count-value") for n in (count, images, videos, total)],
+                html.Td([html.Span(coverage), html.Br(), html.Span(media)]),
+            ]))
+            continue
         rows.append(html.Tr([
             html.Th(str(group.get("label") or "Search group"), scope="row"),
             html.Td(f"{count:,}", className="count-value"),
@@ -916,13 +1066,19 @@ def _evidence_coverage(result):
         return None
     return html.Details([
         html.Summary("Retrieval coverage"),
+        html.P("No evidence retrieved for: " + ", ".join(no_candidates) + ".", className="coverage-warning") if typed and no_candidates else None,
+        html.P("No source cited for: " + ", ".join(uncited) + ".", className="coverage-warning") if typed and uncited else None,
         html.P("No matching stored passages retrieved for: " + ", ".join(missing) + ".",
-               className="coverage-warning") if missing else None,
+               className="coverage-warning") if not typed and missing else None,
         html.Div(html.Table([
-            html.Thead(html.Tr([html.Th(label, scope="col") for label in ("Question group", "Retrieved passages", "Coverage")])),
+            html.Thead(html.Tr([html.Th(label, scope="col") for label in (
+                ("Question group", "Body passages", "Image units", "Video units", "Total evidence units", "Citations and media status")
+                if typed else ("Question group", "Retrieved passages", "Coverage")
+            )])),
             html.Tbody(rows),
         ]), className="statistics-table"),
-        html.P("These passages are a sample of stored text within the current filters. Zero retrieved passages does not prove that a company has no advertisements or no such claims.",
+        html.P("These are bounded retrieved evidence units, not advertisement counts or complete coverage. Missing material, an unconfigured collection or no text match does not prove absence from the advertisement. Retrieved candidates and cited support are reported separately."
+               if typed else "These passages are a sample of stored text within the current filters. Zero retrieved passages does not prove that a company has no advertisements or no such claims.",
                className="scope-note"),
     ], open=bool(missing), className="answer-coverage research-steps")
 
@@ -932,7 +1088,7 @@ def _partial_collection_answer(result):
     data = result.get("structured_result") or {}
     return bool(result.get("status") == "insufficient_evidence" and result.get("summary")
                 and isinstance(data, dict) and data.get("kind") == "evidence_coverage"
-                and any(isinstance(group, dict) and group.get("passages") in (0, [])
+                and any(isinstance(group, dict) and _group_missing_support(group)
                         for group in data.get("groups") or []))
 
 
@@ -945,7 +1101,54 @@ def _tools_card(result, links_enabled):
     kind = data.get("kind")
     sections, scope = [], [html.P(note, className="scope-note") for note in data.get("scope_notes", [])]
     summary, title = [], "Source records"
-    if kind == "claims":
+    if kind == "original_metadata":
+        title = "Original source fields"
+        summary = [html.P(result.get("answer") or "Stored original fields are shown below.", style={"whiteSpace": "pre-line"})]
+        fields = data.get("original_fields") or {}
+        review_fields = set(data.get("review_fields") or [])
+        if "complete" in data:
+            known = len(data.get("known_fields") or [])
+            summary.insert(0, html.P(
+                f"{known} of {len(fields)} requested fields available. "
+                + ("All requested fields are available." if data["complete"]
+                   else "Partial answer; missing or review fields remain unresolved."),
+                className="scope-note"))
+
+        def field_cells(name, item):
+            review = (name in review_fields or item.get("status") == "needs_review"
+                      or (item.get("provenance") or {}).get("status") == "needs_review")
+            value = (str(item["value"]) if item.get("value") is not None
+                     and item.get("status") == "recorded" and not review
+                     else "Awaiting source review" if review else "Unknown")
+            return html.Tr([html.Td(name.replace("_", " ").capitalize()), html.Td(value),
+                            html.Td("Awaiting source review" if review else item.get("status") or "Unknown")])
+
+        sections.append(html.Table([
+            html.Thead(html.Tr([html.Th(label) for label in ("Field", "Stored original value", "Source status")])),
+            html.Tbody([field_cells(name, item) for name, item in fields.items()]),
+        ]))
+        record = data.get("record") or {}
+        if record.get("record_id"):
+            sections.append(dcc.Link("Open source record →", href="/records/" + quote(record["record_id"], safe="")))
+        scope.append(html.P("These are stored source fields. Missing or conflicting values remain unknown; outside pages do not replace them.", className="scope-note"))
+    elif kind == "content_matches":
+        from observatory.content_ui import (
+            MEANING,
+            content_record_cards,
+            content_summary,
+        )
+
+        title = "Reviewed content matches"
+        try:
+            summary = [html.P(content_summary(data))]
+            sections = content_record_cards(data, links_enabled)
+            scope += [html.P(MEANING, className="scope-note"),
+                      html.P("This page and export contain the shown records only. Whole-selection coverage is reported separately.", className="scope-note")]
+            sections.append(dcc.Link("Browse reviewed content questions in Data →", href="/data"))
+        except (KeyError, TypeError, ValueError):
+            return _answer_status(title, "The reviewed content results cannot be verified.",
+                                  "Refresh the question or browse the native collection.", trace=_research_steps(result))
+    elif kind == "claims":
         from observatory.claims_ui import claims_record_cards, public_claims
 
         title = "Published CLAIMS2 assignments"
@@ -1020,16 +1223,44 @@ def _tools_card(result, links_enabled):
 def _render_answer_result(result, links_enabled, service):
     """All answer routes share presentation; failure statuses cannot bypass it."""
     status, mode = result.get("status"), result.get("answer_mode", "rag")
+    data = result.get("structured_result") or {}
+    if mode == "tools" and data.get("kind") == "composite":
+        cards = [html.H3("Completed question parts" if data.get("complete") else "Partial answer")]
+        if status in {"limited", "service_unavailable"}:
+            title = "Paid answers temporarily limited" if status == "limited" else "Answer service unavailable"
+            cards.append(_answer_status(
+                title, "The remaining collection tasks could not be executed.",
+                "Try again later. Completed collection parts are shown below; no web answer was substituted.",
+            ))
+        for part in data.get("parts", []):
+            cards.append(html.H4(part["question_part"]))
+            cards.extend(_render_answer_result({**part["answer"], "compound_part": True}, links_enabled, service))
+        if data.get("pending_parts"):
+            cards.append(html.H4("Still unresolved"))
+            cards.append(html.Ul([html.Li(part["question_part"]) for part in data["pending_parts"]]))
+        if data.get("failure_message"):
+            cards.append(html.P("Why the remaining collection tasks could not be answered: " + data["failure_message"],
+                                className="scope-note"))
+        cards.append(_research_steps(result))
+        return cards
+    if mode == "tools" and data.get("kind") == "original_metadata":
+        return [_tools_card(result, links_enabled)]
     if status == "answered" and result.get("structured_result"):
         if mode == "statistics":
-            return [_statistics_card(result, links_enabled, service)]
+            return [_statistics_card(result, links_enabled, service, include_record_browser=not result.get("compound_part"))]
         if mode == "tools":
             return [_tools_card(result, links_enabled)]
     external = _external_research_card(result, links_enabled)
     if status == "answered" and mode == "web_supplement":
         cards = []
-        local = {**result, "status": "insufficient_evidence", "answer_mode": "rag", "external_research": {}}
-        if _partial_collection_answer(local) and local.get("citations") and local.get("evidence"):
+        collection = (result.get("external_research") or {}).get("collection_answer") or {}
+        local = {**result, "status": collection.get("status", "insufficient_evidence"),
+                 "answer_mode": collection.get("answer_mode", "tools" if data.get("kind") in {"original_metadata", "composite"} else "rag"),
+                 "answer": collection.get("answer", ""), "external_research": {}}
+        has_local_data = data.get("kind") in {"original_metadata", "composite"}
+        has_cited_partial = (_partial_collection_answer(local) and local.get("citations")
+                             and (local.get("evidence") or local.get("media_evidence")))
+        if has_local_data or has_cited_partial:
             cards.extend(item for item in _render_answer_result(local, links_enabled, service) if item is not None)
         cards.append(external if isinstance(external, html.Div) else _answer_status(
             "Web answer unavailable", "No usable cited web answer is available.", "Retry the question or browse the collection.",
@@ -1041,8 +1272,14 @@ def _render_answer_result(result, links_enabled, service):
         evidence = [_answer_section("Findings", findings)] if findings else []
         if result.get("evidence"):
             evidence.extend([
-                html.H5("Advertisements and quoted evidence", className="answer-evidence-title"),
+                html.H5("Records and quoted evidence", className="answer-evidence-title"),
                 *_evidence_cards(result["evidence"], links_enabled, result.get("citations") or []),
+            ])
+        media_cards = _media_evidence_cards(result.get("media_evidence") or [], links_enabled,
+                                             result.get("citations") or [])
+        if media_cards:
+            evidence.extend([
+                html.H5("Image and video evidence", className="answer-evidence-title"), *media_cards,
             ])
         return [_answer_frame(
             "Partial collection evidence" if partial else "Answer with supporting evidence",
@@ -1058,6 +1295,10 @@ def _render_answer_result(result, links_enabled, service):
     elif status == "limited":
         title, message = "Paid answers temporarily limited", "The model request limit or project API budget was reached."
         next_step = "Try again later. You can continue browsing the collection and using keyword search."
+    elif result.get("failure_reason") == "media_evidence_mismatch":
+        title = "Media evidence could not be verified"
+        message = "Image or video evidence could not be checked against its current source. The answer was withheld."
+        next_step = "Submit the question again. Stored records and keyword search remain available."
     else:
         title, message = "Answer service unavailable", "The answer service could not complete this request."
         next_step = "Submit the question again. You can continue browsing the collection and using keyword search."
@@ -1066,8 +1307,13 @@ def _render_answer_result(result, links_enabled, service):
         extras.append(_answer_section("Retrieved passages", _evidence_cards(
             result["evidence"], links_enabled,
         )))
+    media_cards = _media_evidence_cards(result.get("media_evidence") or [], links_enabled)
+    if media_cards:
+        extras.append(_answer_section("Retrieved media evidence", media_cards))
+        extras.append(_answer_section("Scope and limits", _rag_scope_notes(result),
+                                      "answer-section answer-scope"))
     coverage = _evidence_coverage(result)
-    if coverage is not None:
+    if coverage is not None and not media_cards:
         extras.append(coverage)
     label = "model-assisted query" if result.get("research_trace") else "no model charge"
     eyebrow = {
@@ -1095,12 +1341,12 @@ def _keyword_result(report, links_enabled):
     )
 
 
-def _summary(stats):
+def _summary(stats, dataset=None):
     values = [
         (
-            "Selected records",
+            "Unique posts" if dataset == "social" else "Selected records",
             stats.get("total", 0),
-            "Eligible records in this selection",
+            "One per platform and original post URL; source rows are preserved" if dataset == "social" else "Eligible records in this selection",
         ),
         (
             "Searchable records",
@@ -1153,6 +1399,11 @@ def _source_links(item, enabled):
 def _coverage_notice(diagnostics):
     if not diagnostics:
         return None
+    if diagnostics.get("operator") == "literal_phrase":
+        return _notice(
+            "Saved text phrase match",
+            diagnostics.get("reason", "Matched the literal phrase in saved social text. Retrieval rank is not a confidence score."),
+        )
     if diagnostics.get("status") == "unavailable":
         return _notice(
             "Keyword coverage unavailable",
@@ -1206,7 +1457,9 @@ def _evidence_cards(evidence, enabled, citations=()):
         citation = _mapping(citation)
         evidence_id = citation.get("evidence_id")
         quote = citation.get("quote")
-        if isinstance(evidence_id, str) and evidence_id and isinstance(quote, str):
+        if (isinstance(evidence_id, str) and evidence_id and isinstance(quote, str)
+                and citation.get("evidence_type", "article_text") == "article_text"
+                and citation.get("origin", "original_text") == "original_text"):
             citation_quotes.setdefault(evidence_id, []).append((number, quote))
     cards = []
     for rank, value in enumerate(evidence, start=1):
@@ -1240,7 +1493,7 @@ def _evidence_cards(evidence, enabled, citations=()):
                             html.Span(
                                 "Native advertising"
                                 if item.get("dataset") == "native"
-                                else "Social advertising",
+                                else "Company social posts",
                                 className="dataset-chip",
                             ),
                             html.Span(
@@ -1312,6 +1565,116 @@ def _evidence_cards(evidence, enabled, citations=()):
                 className="evidence-card",
             )
         )
+    return decorate_source_observation_cards(cards, evidence, citations)
+
+
+_MEDIA_ORIGINS = {
+    "image": {"ocr": "OCR text", "vision": "Model image description", "human_description": "Human image description"},
+    "video": {"publisher_caption": "Publisher captions", "automatic_caption": "Automatic captions",
+              "transcript": "Speech transcription", "human_description": "Human video description"},
+}
+
+
+def _media_citation_matches(citation, item):
+    return (citation.get("evidence_id") == item.get("evidence_id")
+            and citation.get("evidence_type") == item.get("media_type")
+            and citation.get("origin") == item.get("origin")
+            and isinstance(citation.get("quote"), str) and citation["quote"].strip()
+            and citation["quote"] in str(item.get("evidence_text") or ""))
+
+
+def _media_answer_citation_indices(result):
+    """Mixed answers keep common numbering without links to rejected media quotes."""
+    if not result.get("media_evidence"):
+        return None
+    available = set()
+    body = [_mapping(item) for item in result.get("evidence") or []]
+    media = [_mapping(item) for item in result.get("media_evidence") or []]
+    for number, value in enumerate(result.get("citations") or [], start=1):
+        citation = _mapping(value)
+        if any(_media_citation_matches(citation, item) and item.get("quote_from_original_body") is False
+               and item.get("origin") in _MEDIA_ORIGINS.get(item.get("media_type"), {}) for item in media):
+            available.add(number)
+        elif (citation.get("evidence_type", "article_text") == "article_text"
+              and citation.get("origin", "original_text") == "original_text"
+              and isinstance(citation.get("quote"), str) and citation["quote"].strip()
+              and any(original_text_citation_matches(citation, item) for item in body)):
+            available.add(number)
+    return available
+
+
+def _media_location(item):
+    """Display supplied locations, never infer a region or per-word timing."""
+    location = item.get("locator") or {}
+    if not isinstance(location, dict):
+        location = _mapping(location)
+    if item.get("media_type") == "image":
+        page = location.get("page_number")
+        labels = [f"Page {page}" if isinstance(page, int) and not isinstance(page, bool) and page > 0 else "Page not provided"]
+        region = location.get("region")
+        valid = (location.get("kind") == "image_region" and isinstance(region, list) and len(region) == 4
+                 and all(isinstance(n, (int, float)) and not isinstance(n, bool) and math.isfinite(n) for n in region)
+                 and 0 <= region[0] < region[2] <= 1 and 0 <= region[1] < region[3] <= 1)
+        labels.append("Image region (normalized): " + ", ".join(f"{n:.2f}" for n in region)
+                      if valid else "Image region not provided")
+        frame = location.get("video_time_ms")
+        if location.get("video_asset_id") and isinstance(frame, int) and not isinstance(frame, bool) and frame >= 0:
+            labels.append(f"Supplied video frame: {_media_time(frame)}")
+        return " · ".join(labels)
+    start, end = location.get("start_ms"), location.get("end_ms")
+    if (location.get("kind") == "video_time" and all(isinstance(n, int) and not isinstance(n, bool) for n in (start, end))
+            and 0 <= start < end):
+        return f"Supplied video segment: {_media_time(start)}–{_media_time(end)}. Segment timing is not per-word alignment."
+    return "Video time not provided; no word or segment alignment is inferred."
+
+
+def _media_time(milliseconds):
+    minutes, seconds = divmod(milliseconds / 1000, 60)
+    return f"{int(minutes):02d}:{seconds:06.3f}"
+
+
+def _media_evidence_cards(evidence, enabled, citations=()):
+    """Derived media text has its own cards and must never enter body quote cards."""
+    cards = []
+    for value in evidence:
+        item = _mapping(value)
+        medium, origin = item.get("media_type"), item.get("origin")
+        label = _MEDIA_ORIGINS.get(medium, {}).get(origin)
+        if not label or item.get("quote_from_original_body") is not False or not item.get("evidence_text"):
+            continue
+        description = origin in {"vision", "human_description"}
+        kind = "Derived description" if description else "Derived text quotation"
+        matched = [(number, _mapping(citation)["quote"]) for number, citation in enumerate(citations, start=1)
+                   if _media_citation_matches(_mapping(citation), item)]
+        blocks = [html.Div([
+            html.Span(f"Citation [{number}] · {kind}", className="evidence-code"),
+            html.P(text, className="passage") if description else html.Blockquote(text),
+        ], id=f"answer-citation-{number}", className="citation-quote") for number, text in matched]
+        text = str(item["evidence_text"])
+        if not blocks:
+            blocks = [html.P(text[:520] + ("…" if len(text) > 520 else ""), className="passage")]
+        url = _url(item.get("source_url")) if enabled else ""
+        if url and (urlsplit(url).username or urlsplit(url).password):
+            url = ""
+        details = [html.Span(f"{name.replace('_', ' ').title()}: {item[name]}") for name in (
+            "evidence_id", "asset_id", "record_id", "version_id", "asset_sha256", "text_artifact_id",
+            "artifact_sha256", "derived_start", "derived_end",
+        ) if name in item]
+        cards.append(html.Article([
+            html.Div([html.Span(("Image evidence" if medium == "image" else "Video evidence") + " · "
+                               + ("Native advertising" if item.get("dataset") == "native" else "Company social posts"), className="dataset-chip"),
+                      html.Span(label, className="evidence-code")], className="evidence-heading"),
+            html.H4(str(item.get("title") or "Untitled record")),
+            html.P(f"{kind}; not an original article quotation.", className="scope-note"),
+            html.P(_media_location(item), className="match-note"),
+            *blocks,
+            html.Details([html.Summary("Read derived evidence"), html.P(text, className="passage")]),
+            html.P(str(item.get("quality_label") or "Derived evidence; wording and visual meaning are not independently verified."), className="scope-note"),
+            html.Details([html.Summary("Technical details"), html.Div(details, className="record-reference")]),
+            html.A("View record and archived materials →", href="/records/" + quote(str(item.get("record_id") or ""), safe=""), target="_blank", rel="noopener noreferrer"),
+            html.Div([html.A("Original source ↗", href=url, target="_blank", rel="noopener noreferrer")
+                      if url else html.Span("No public source link available" if enabled else "Source links are disabled", className="source-muted")], className="source-links"),
+        ], className="evidence-card media-evidence-card"))
     return cards
 
 
@@ -1323,27 +1686,37 @@ def _filter_inputs(dataset, dependency=Input):
     ]
 
 
+def _filter_scope_name(name, dataset):
+    if name == "sponsors" and dataset == "all":
+        return "Sponsor / company affiliation"
+    if name == "sponsors" and dataset == "social":
+        return "Company affiliation"
+    if name == "labels" and dataset == "social":
+        return "Historical source states (OR)"
+    return name.replace("_", " ").title()
+
+
 def _filter_panel(dataset, facets):
     native = dataset == "native"
     names = {
         "publishers": "News outlet",
-        "sponsors": "Sponsor / advertiser",
+        "sponsors": "Sponsor / advertiser" if native else "Company affiliation",
         "platforms": "Platform",
         "keywords": "Collection search term",
-        "labels": "Historical automated label",
+        "labels": "Historical automated label" if native else "Historical source state (OR)",
+        "accounts": "Account",
     }
-    controls = []
+    controls = {}
     for field in FILTER_NAMES:
-        hidden = (native and field == "platforms") or (
+        hidden = (native and field in {"platforms", "accounts"}) or (
             not native and field == "publishers"
         )
-        controls.append(
-            html.Div(
+        controls[field] = html.Div(
                 [
                     html.Label(names[field], htmlFor=f"{dataset}-{field}"),
                     dcc.Dropdown(
                         id=f"{dataset}-{field}",
-                        options=[
+                        options=social_state_options() if not native and field == "labels" else [
                             {
                                 "label": sponsor_display(value)
                                 if field == "sponsors"
@@ -1362,10 +1735,8 @@ def _filter_panel(dataset, facets):
                 ],
                 className="filter-field",
                 style={"display": "none"} if hidden else {},
-            )
         )
-    controls += [
-        html.Div(
+    date_control = html.Div(
             [
                 html.Label("Publication date"),
                 dcc.DatePickerRange(
@@ -1381,33 +1752,36 @@ def _filter_panel(dataset, facets):
                 ),
             ],
             className="filter-field date-filter",
-        ),
-        dcc.Checklist(
+        )
+    date_control.children.append(dcc.Checklist(
             id=f"{dataset}-unknown-dates",
             options=[{"label": " Include unknown dates", "value": "include"}],
             value=["include"],
             className="unknown-toggle",
             persistence=True,
             persistence_type="session",
-        ),
-        html.Details(
+        ))
+    about_filters = html.Details(
             [
                 html.Summary("About these filters"),
                 html.P(
                     "Historical labels come from earlier automated classification runs. Collection search terms describe how records were collected; they are not sponsor identities or article themes."
+                    if native else
+                    "Accounts group the source channel.name values, not unique channel IDs. Use Platform with Account to narrow names shared across platforms; names can also be shared within a platform. Company affiliation comes from the source and does not verify paid sponsorship. Unknown values remain selectable. Historical source states use OR: a post matches any selected state. Source True/False are unreviewed automated outputs, not verified themes or greenwashing judgments. Unknown annotation does not mean Source False."
                 ),
             ],
             className="filter-note",
-        ),
-    ]
-    controls[5].children.append(controls[6])
+        )
     return html.Aside(
         [
-            html.Div([controls[1], controls[0] if native else controls[2], controls[5]], className="common-filters"),
+            html.Div([controls["sponsors"], controls["publishers"] if native else controls["platforms"],
+                      controls["accounts"], date_control], className="common-filters"),
+            html.P("Account groups source channel.name values; company affiliation does not establish paid sponsorship.",
+                   className="scope-note") if not native else None,
             html.Details([
                 html.Summary("More filters"),
-                html.Div([controls[3], controls[4], controls[2] if native else controls[0]], className="advanced-filter-fields"),
-                controls[7],
+                html.Div([controls["keywords"], controls["labels"], controls["platforms"] if native else controls["publishers"]], className="advanced-filter-fields"),
+                about_filters,
             ], className="advanced-filters"),
             html.Button("Clear filters", id=f"{dataset}-clear-filters", n_clicks=0, className="button button-quiet clear-filters"),
         ],
@@ -1417,7 +1791,7 @@ def _filter_panel(dataset, facets):
         **{
             "aria-label": "Native advertising filters"
             if native
-            else "Social advertising filters"
+            else "Company social post filters"
         },
     )
 
@@ -1434,7 +1808,8 @@ def create_app(service, settings, record_details=None) -> Dash:
 
         record_details = RecordDetails(service.db, settings)
     enabled = bool(settings.show_source_links)
-    agent_enabled = bool(getattr(settings, "research_agent_enabled", False))
+    agent_enabled = bool(getattr(settings, "research_agent_enabled", False)
+                         or getattr(settings, "question_intent_enabled", False))
     app = Dash(
         __name__,
         assets_folder=str(Path(__file__).parent / "assets"),
@@ -1512,6 +1887,13 @@ def create_app(service, settings, record_details=None) -> Dash:
             except Exception:  # noqa: BLE001 - leave controls usable during service failures.
                 facets[dataset] = {}
 
+        from .combined_ui import combined_filters, combined_panel
+
+        combined_facets = {
+            name: sorted(set(facets["native"].get(name, []) + facets["social"].get(name, [])))
+            for name in FILTER_NAMES
+        }
+
         collection_toolbar = html.Div(
             [
                 html.Div(
@@ -1524,13 +1906,14 @@ def create_app(service, settings, record_details=None) -> Dash:
                         dcc.Dropdown(
                             id="active-dataset",
                             options=[
+                                {"label": "All records", "value": "all"},
                                 {"label": "Native advertising", "value": "native"},
-                                {"label": "Social advertising", "value": "social"},
+                                {"label": "Company social posts", "value": "social"},
                             ],
-                            value="native",
+                            value="all",
                             clearable=False,
                             searchable=False,
-                            persistence=True,
+                            persistence="combined-collections-v1",
                             persistence_type="session",
                             className="collection-picker",
                         ),
@@ -1547,7 +1930,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                         dcc.Textarea(
                             id="research-question",
                             value="",
-                            placeholder="Ask a question about these ads…",
+                            placeholder="Ask a question about these records…",
                             maxLength=2000,
                             className="question-input",
                             persistence=True,
@@ -1580,7 +1963,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                             "value": "current",
                         },
                         {
-                            "label": "Both collections · all eligible records",
+                            "label": "Both collections · all available records",
                             "value": "all",
                         },
                     ],
@@ -1633,6 +2016,12 @@ def create_app(service, settings, record_details=None) -> Dash:
                             "Project wireframe",
                             href="/wireframe",
                             id="nav-wireframe",
+                            className="toolbox-link",
+                        ),
+                        dcc.Link(
+                            "Evaluation",
+                            href="/evaluation",
+                            id="nav-evaluation",
                             className="toolbox-link",
                         ),
                     ],
@@ -1714,6 +2103,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                                     html.Div([
                                         _filter_panel("native", facets["native"]),
                                         _filter_panel("social", facets["social"]),
+                                        combined_filters(combined_facets),
                                     ], id="shared-filters", className="shared-filters"),
                                 ], id="collection-filters", className="collection-filters"),
                                 html.Div(
@@ -1758,6 +2148,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                                                     [
                                                         _panel("native", enabled),
                                                         _panel("social", enabled),
+                                                        combined_panel(enabled, _figure),
                                                     ],
                                                     id="data-page",
                                                     hidden=True,
@@ -1778,6 +2169,12 @@ def create_app(service, settings, record_details=None) -> Dash:
                             id="wireframe-page",
                             hidden=True,
                             **{"aria-label": "Project wireframe"},
+                        ),
+                        html.Section(
+                            evaluation_panel(published_report(settings)),
+                            id="evaluation-page",
+                            hidden=True,
+                            **{"aria-label": "Evaluation"},
                         ),
                         html.Section(
                             [
@@ -1811,6 +2208,7 @@ def create_app(service, settings, record_details=None) -> Dash:
         Output("query-page", "hidden"),
         Output("data-page", "hidden"),
         Output("wireframe-page", "hidden"),
+        Output("evaluation-page", "hidden"),
         Output("not-found-page", "hidden"),
         Output("collection-workspace", "hidden"),
         Output("page-title", "children"),
@@ -1818,6 +2216,7 @@ def create_app(service, settings, record_details=None) -> Dash:
         Output("nav-query", "className"),
         Output("nav-data", "className"),
         Output("nav-wireframe", "className"),
+        Output("nav-evaluation", "className"),
         Output("observatory-app", "className"),
         Output("shared-filters", "hidden"),
         Output("query-composer", "hidden"),
@@ -1841,15 +2240,20 @@ def create_app(service, settings, record_details=None) -> Dash:
                 "Project wireframe",
                 "See the page layouts, shared controls, and data flow behind the Observatory.",
             ),
+            "evaluation": (
+                "Evaluation",
+                "What we measure, how we check it, and what remains to be evaluated.",
+            ),
             "not-found": (
                 "Page not found",
-                "Return to one of the three Observatory pages.",
+                "Return to Query, Data or a page in Tools.",
             ),
         }[page]
         return (
             page != "query",
             page != "data",
             page != "wireframe",
+            page != "evaluation",
             page != "not-found",
             page not in {"query", "data"},
             title,
@@ -1859,6 +2263,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                 for target in ("query", "data")
             ],
             "toolbox-link is-active" if page == "wireframe" else "toolbox-link",
+            "toolbox-link is-active" if page == "evaluation" else "toolbox-link",
             f"view-{page}",
             page not in {"query", "data"},
             page != "query",
@@ -1874,11 +2279,12 @@ def create_app(service, settings, record_details=None) -> Dash:
         Input("page-location", "pathname"),
         *_filter_inputs("native"),
         *_filter_inputs("social"),
+        *_filter_inputs("all"),
     )
     def current_scope(dataset, scope, pathname, *values):
         try:
             filters = _filters(
-                dataset, *(values[:8] if dataset == "native" else values[8:])
+                dataset, *_collection_filter_values(dataset, values)
             )
         except ValueError:
             return _notice(
@@ -1889,8 +2295,10 @@ def create_app(service, settings, record_details=None) -> Dash:
         selected = []
         for field in FILTER_NAMES:
             if getattr(filters, field):
+                display = (sponsor_display if field == "sponsors" else
+                           source_state_name if field == "labels" and dataset == "social" else str)
                 selected.append(
-                    f"{field.title()}: {', '.join(sponsor_display(v) for v in getattr(filters, field)) if field == 'sponsors' else ', '.join(getattr(filters, field))}"
+                    f"{_filter_scope_name(field, dataset)}: {', '.join(dict.fromkeys(display(v) for v in getattr(filters, field)))}"
                 )
         if filters.date_from or filters.date_to:
             selected.append(
@@ -1898,12 +2306,12 @@ def create_app(service, settings, record_details=None) -> Dash:
             )
         if not filters.include_unknown_dates:
             selected.append("Unknown dates excluded")
-        heading = "Native advertising" if dataset == "native" else "Social advertising"
+        heading = {"native": "Native advertising", "social": "Company social posts", "all": "All records"}[dataset]
         message = " · ".join(selected)
         if dataset == "social":
             try:
-                if service.health().get("record_counts", {}).get("social", 0) == 0:
-                    message = "Dataset not connected. " + message
+                if not _social_available(service.health()):
+                    message = "No admitted social records. " + message
             except Exception:  # noqa: BLE001 - no internal health details in the UI.
                 pass
         if _page(pathname) == "query" and scope == "all":
@@ -1912,7 +2320,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                 html.Span(" · Collection filters are bypassed for this query."),
             ]
         if not message and _page(pathname) == "data":
-            message = "All sponsors and outlets · All publication dates · Unknown dates included"
+            message = {"native": "All sponsors and outlets", "social": "All accounts, platforms and company affiliations", "all": "Native advertisements and company social posts"}[dataset] + " · All publication dates · Unknown dates included"
         elif _page(pathname) == "data" and filters.include_unknown_dates:
             message += " · Unknown dates included"
         if not message:
@@ -1930,6 +2338,7 @@ def create_app(service, settings, record_details=None) -> Dash:
         Input("active-dataset", "value"),
         *_filter_inputs("native"),
         *_filter_inputs("social"),
+        *_filter_inputs("all"),
     )
     def research_stale(submitted, question, scope, dataset, *values):
         if not submitted:
@@ -1951,6 +2360,8 @@ def create_app(service, settings, record_details=None) -> Dash:
         Output("social-panel", "style"),
         Output("native-filter-panel", "style"),
         Output("social-filter-panel", "style"),
+        Output("all-panel", "style"),
+        Output("all-filter-panel", "style"),
         Output("shared-filters", "style"),
         Output("collection-layout", "style"),
         Input("active-dataset", "value"),
@@ -1958,18 +2369,64 @@ def create_app(service, settings, record_details=None) -> Dash:
     def change_collection(dataset):
         missing = (
             dataset == "social"
-            and service.health().get("record_counts", {}).get("social", 0) == 0
+            and not _social_available(service.health())
         )
         return (
             {} if dataset == "native" else {"display": "none"},
             {} if dataset == "social" else {"display": "none"},
             {} if dataset == "native" else {"display": "none"},
             {} if dataset == "social" and not missing else {"display": "none"},
+            {} if dataset == "all" else {"display": "none"},
+            {} if dataset == "all" else {"display": "none"},
             {"display": "none"} if missing else {},
             {"gridTemplateColumns": "minmax(0, 1fr)"} if missing else {},
         )
 
     def register_collection(dataset):
+        def social_admission_now():
+            health = service.health()
+            if health.get("status") != "ok":
+                raise RuntimeError("Current collection state unavailable")
+            return health, _social_admission(health) if _social_available(health) else None
+
+        def public_page_rows(source_rows):
+            rows = _public_rows(source_rows, enabled)
+            for row in rows:
+                row["archive_status"] = (
+                    "Online archive" if row.get("archive_url") else "No verified archived copy"
+                )
+            if record_details is not None:
+                summaries = record_details.summaries(source_rows)
+                for row in rows:
+                    row.update(summaries.get(row["record_id"], {}))
+            return rows
+
+        def read_dashboard(filters, **page_options):
+            version_reader = getattr(service, "social_source_state_version", None)
+            if dataset != "social" or not callable(version_reader):
+                dashboard = service.dashboard(filters, **page_options)
+                return dashboard, public_page_rows(dashboard["page"]["rows"]), service.health(), False
+            # One retry tolerates a concurrent import or annotation update. Persistent
+            # changes withhold the response instead of mixing old charts and new rows.
+            for attempt in range(2):
+                _, before = social_admission_now()
+                dashboard = service.dashboard(filters, **page_options)
+                rows = public_page_rows(dashboard["page"]["rows"])
+                health, after = social_admission_now()
+                stable = before == after
+                if stable and after:
+                    try:
+                        snapshot = social_label_snapshot(dashboard.get("social_historical_labels"), filters.model_dump(mode="json"))
+                    except ValueError:
+                        snapshot = None  # Invalid source states are hidden, never treated as zero.
+                    if snapshot:
+                        stable = version_reader(filters) == snapshot["source_state_version"]
+                health, final = social_admission_now()
+                if stable and final == after:
+                    return dashboard, rows, health, bool(attempt)
+                page_options["offset"] = 0
+            raise RuntimeError("Collection changed during the current read")
+
         @app.callback(
             *[Output(f"{dataset}-{name}", "value") for name in FILTER_NAMES],
             Output(f"{dataset}-dates", "start_date"), Output(f"{dataset}-dates", "end_date"),
@@ -1979,7 +2436,7 @@ def create_app(service, settings, record_details=None) -> Dash:
         def clear_filters(clicks):
             if not clicks:
                 raise PreventUpdate
-            return [], [], [], [], [], None, None, ["include"]
+            return [*([] for _ in FILTER_NAMES), None, None, ["include"]]
 
         @app.callback(
             Output(f"{dataset}-grid", "rowData"),
@@ -2002,72 +2459,154 @@ def create_app(service, settings, record_details=None) -> Dash:
             Output(f"{dataset}-page-label", "children"),
             Output(f"{dataset}-page-offset", "data"),
             Output(f"{dataset}-network-data", "data"),
+            Output(f"{dataset}-platforms-chart", "figure"),
             *_filter_inputs(dataset),
             Input(f"{dataset}-metric", "value"),
             Input(f"{dataset}-page-prev", "n_clicks"),
             Input(f"{dataset}-page-next", "n_clicks"),
             Input(f"{dataset}-page-size", "value"),
             Input(f"{dataset}-sort", "value"),
+            Input("active-dataset", "value"),
+            Input("page-location", "pathname"),
             State(f"{dataset}-page-offset", "data"),
             State(f"{dataset}-network-data", "data"),
         )
         def update_collection(*values):
+            (metric_value, _previous, _next, page_size, sort, active_dataset,
+             pathname, page_offset, previous_snapshot) = values[FILTER_VALUE_COUNT:]
+            if active_dataset != dataset or _page(pathname) != "data":
+                raise PreventUpdate
             try:
-                filters = _filters(dataset, *values[:8])
-                size = values[11] if values[11] in (20, 50, 100) else 20
-                offset = max(0, int(values[13] or 0))
+                filters = _filters(dataset, *values[:FILTER_VALUE_COUNT])
+                scope = filters.model_dump(mode="json")
+                metric = "percent" if metric_value == "percent" else "count"
+                size = page_size if page_size in (20, 50, 100) else 20
+                offset = max(0, int(page_offset or 0))
                 if ctx.triggered_id == f"{dataset}-page-next":
                     offset += size
                 elif ctx.triggered_id == f"{dataset}-page-prev":
                     offset = max(0, offset - size)
                 else:
                     offset = 0
-                sort_value = values[12] if values[12] in ("date:desc", "date:asc", "title:asc", "sponsor:asc") else "date:desc"
+                sort_value = sort if sort in ("date:desc", "date:asc", "title:asc", "sponsor:asc") else "date:desc"
                 sort_by, direction = sort_value.split(":")
-                dashboard = service.dashboard(filters, offset=offset, limit=size, sort_by=sort_by, descending=direction == "desc")
+                page_refreshed = False
+                guard_key = "social_page_guard"
+                version_reader = getattr(service, "social_source_state_version", None)
+                page_trigger = ctx.triggered_id in {
+                    "social-page-next", "social-page-prev", "social-page-size", "social-sort",
+                }
+                if dataset == "social" and page_trigger and callable(version_reader):
+                    guard = session.get(guard_key)
+                    _, admission = social_admission_now()
+                    previous = previous_snapshot if isinstance(previous_snapshot, dict) else {}
+                    labels = previous.get("social_historical_labels") or {}
+                    # The signed session records a server-rendered selection. Browser stores
+                    # alone cannot authorize reusing its statistics or source-state chart.
+                    if (isinstance(guard, dict) and admission and admission.get("data_version")
+                            and guard.get("filters") == scope and guard.get("metric") == metric
+                            and guard.get("admission") == admission
+                            and previous.get("filters") == scope
+                            and previous.get("social_admission") == admission
+                            and isinstance(labels, dict)
+                            and labels.get("source_state_version") == guard.get("source_state_version")
+                            and labels.get("total") == guard.get("total")
+                            and version_reader(filters) == guard.get("source_state_version")):
+                        page = service.page(filters, offset=offset, limit=size,
+                                            sort_by=sort_by, descending=direction == "desc")
+                        rows = public_page_rows(page["rows"])
+                        if (page["total"] == guard["total"]
+                                and version_reader(filters) == guard["source_state_version"]
+                                and social_admission_now()[1] == admission):
+                            offset = page["offset"]
+                            result = [no_update] * 21
+                            result[0] = rows
+                            result[15:19] = [
+                                offset == 0, offset + size >= page["total"],
+                                f"{offset + 1 if rows else 0:,}–{offset + len(rows):,} of {page['total']:,}",
+                                offset,
+                            ]
+                            return tuple(result)
+                    # A changed or missing guard requires current aggregates, not a stale page.
+                    offset, page_refreshed = 0, True
+                if dataset == "social":
+                    session.pop(guard_key, None)
+                dashboard, rows, health, retried = read_dashboard(filters, offset=offset, limit=size,
+                                                                  sort_by=sort_by, descending=direction == "desc")
+                page_refreshed = page_refreshed or retried
+                if dataset == "social" and ctx.triggered_id in {"social-page-next", "social-page-prev"}:
+                    try:
+                        current_labels = social_label_snapshot(dashboard.get("social_historical_labels"), filters.model_dump(mode="json"))
+                        current_admission = _social_admission(health)
+                    except ValueError:
+                        current_labels = None
+                        current_admission = None
+                    if (not isinstance(previous_snapshot, dict)
+                            or previous_snapshot.get("social_historical_labels") != current_labels
+                            or previous_snapshot.get("social_admission") != current_admission
+                            or current_labels is None):
+                        if dashboard["page"]["offset"]:
+                            dashboard, rows, health, _ = read_dashboard(filters, offset=0, limit=size,
+                                                                        sort_by=sort_by, descending=direction == "desc")
+                        page_refreshed = True
                 stats, page = dashboard["stats"], dashboard["page"]
-                network_payload = {"relationships": stats.get("relationships", []), "filters": filters.model_dump(mode="json")}
-                source_rows = page["rows"]
                 offset = page["offset"]
-                rows = _public_rows(source_rows, enabled)
-                for row in rows:
-                    row["archive_status"] = (
-                        "Online archive"
-                        if row.get("archive_url")
-                        else "No verified archived copy"
-                    )
-                if record_details is not None:
-                    summaries = record_details.summaries(source_rows)
-                    for row in rows:
-                        row.update(summaries.get(row["record_id"], {}))
                 matrix = dashboard["matrix"]
                 labels = dashboard["labels"]
-                health = service.health()
                 empty_social = (
                     dataset == "social"
-                    and health.get("record_counts", {}).get("social", 0) == 0
+                    and not _social_available(health)
                 )
                 notice = (
                     _notice(
-                        "Social advertising is not connected",
-                        "This collection will become available when the project's social advertising dataset is added.",
+                        "No admitted company social posts",
+                        "These collected company posts are not verified paid advertisements. Exploration becomes available after their source records are admitted.",
                     )
                     if empty_social
-                    else None
+                    else _notice("Collected company posts", "Counts use one post per platform and original URL. Company affiliation is source metadata; paid advertising is not verified. Conflicting source values remain unknown, and conflicting text is excluded from retrieval.") if dataset == "social" else None
                 )
                 if not stats["total"] and not empty_social:
                     notice = _notice(
                         "No matching records",
                         "Try widening the dates or clearing a filter.",
                     )
-                metric = "percent" if values[8] == "percent" else "count"
+                elif page_refreshed and not empty_social:
+                    notice = _notice("Selection refreshed", "The source-state selection changed. Showing the current first page; your filters are preserved.")
+                primary = _bars(stats.get("publishers" if dataset == "native" else "accounts"), metric)
+                network_payload = {"relationships": stats.get("relationships", []), "filters": filters.model_dump(mode="json")}
+                labels_figure = _label_chart(distribution=labels) if dataset == "native" else _figure("Source states unavailable")
+                labels_note = (f"Historical automated labels; a record can have several. {labels['unlabeled_records']:,} of {labels['total']:,} selected records have no historical label. These are not verified themes."
+                               if dataset == "native" else "Historical source-state distribution is unavailable. Refresh the selection when source annotations are available; missing coverage is not zero.")
+                labels_style = {"height": f"{max(340, 38 * len(labels['items']) + 70)}px", "width": "100%"}
+                if dataset == "social":
+                    network_payload["accounts"] = list(primary.data[0].y) if primary.data else []
+                    network_payload["social_historical_labels"] = None
+                    network_payload["social_admission"] = None
+                    if empty_social:
+                        labels_note = "No admitted social records. Historical source-state counts are unavailable."
+                    else:
+                        network_payload["social_admission"] = _social_admission(health)
+                        try:
+                            label_snapshot = social_label_snapshot(dashboard.get("social_historical_labels"), network_payload["filters"])
+                            if label_snapshot["total"] != stats["total"]:
+                                raise ValueError("Source-state denominator differs from the selection")
+                            network_payload["social_historical_labels"] = label_snapshot
+                            labels_figure = social_label_figure(label_snapshot, metric) if stats["total"] else _figure("No matching posts")
+                            labels_note = social_label_note(label_snapshot)
+                            admission = network_payload["social_admission"]
+                            if admission and admission.get("data_version") and callable(version_reader):
+                                session[guard_key] = {
+                                    "filters": scope, "metric": metric, "admission": admission,
+                                    "source_state_version": label_snapshot["source_state_version"],
+                                    "total": stats["total"],
+                                }
+                        except ValueError:
+                            pass
+                    labels_style = {"height": "760px", "width": "100%"}
                 return (
                     rows,
-                    _summary(stats),
-                    _bars(
-                        stats.get("publishers" if dataset == "native" else "platforms"),
-                        metric,
-                    ),
+                    _summary(stats, dataset),
+                    primary,
                     _bars(
                         [
                             dict(item, name=sponsor_display(item["name"]))
@@ -2078,9 +2617,9 @@ def create_app(service, settings, record_details=None) -> Dash:
                     _timeline(dashboard["timeline"]),
                     _relationships(stats.get("relationships")),
                     notice,
-                    f"{stats['total']:,} eligible records in the current selection. Charts and downloads use the full selection.",
-                    _label_chart(distribution=labels),
-                    f"Historical automated labels; a record can have several. {labels['unlabeled_records']:,} of {labels['total']:,} selected records have no historical label. These are not verified themes.",
+                    f"{stats['total']:,} {'unique posts' if dataset == 'social' else 'records'} in the current selection. Charts and downloads use the full selection.",
+                    labels_figure,
+                    labels_note,
                     matrix["table_rows"],
                     matrix["table_columns"],
                     {"display": "none"} if empty_social else {},
@@ -2088,15 +2627,13 @@ def create_app(service, settings, record_details=None) -> Dash:
                         "height": f"{max(380, 38 * len(matrix['sponsors']) + 150)}px",
                         "width": "100%",
                     },
-                    {
-                        "height": f"{max(340, 38 * len(labels['items']) + 70)}px",
-                        "width": "100%",
-                    },
+                    labels_style,
                     offset == 0,
                     offset + size >= page["total"],
                     f"{offset + 1 if rows else 0:,}–{offset + len(rows):,} of {page['total']:,}",
                     offset,
-                    no_update if network_payload == values[14] else network_payload,
+                    no_update if network_payload == previous_snapshot else network_payload,
+                    _bars(stats.get("platforms"), metric),
                 )
             except ValueError:
                 message = _notice(
@@ -2127,6 +2664,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                 {"height": "340px", "width": "100%"},
                 {"height": "300px", "width": "100%"},
                 True, True, "Unavailable", 0, {"relationships": [], "filters": {}},
+                _figure("Unavailable"),
             )
 
         @app.callback(
@@ -2155,6 +2693,7 @@ def create_app(service, settings, record_details=None) -> Dash:
             Output(f"{dataset}-export-status", "children"),
             Input(f"{dataset}-export", "n_clicks"),
             *_filter_inputs(dataset, State),
+            *([State("social-network-data", "data")] if dataset == "social" else []),
             State("page-location", "pathname"),
             prevent_initial_call=True,
         )
@@ -2163,10 +2702,30 @@ def create_app(service, settings, record_details=None) -> Dash:
                 raise PreventUpdate
             values = values[:-1]
             try:
-                rows = _public_rows(service.browse(_filters(dataset, *values)), enabled)
+                previous = values[-1] if dataset == "social" else None
+                filter_values = values[:-1] if dataset == "social" else values
+                filters = _filters(dataset, *filter_values)
+                snapshot = _current_social_snapshot(service, filters, previous) if dataset == "social" else None
+                source_rows = service.browse(filters)
+                if dataset == "social":
+                    identifiers = set()
+                    for raw in source_rows:
+                        row = _mapping(raw)
+                        states = public_social_states(row)
+                        if (not row.get("record_id") or not row.get("version_id")
+                                or row["record_id"] in identifiers
+                                or (filters.labels and not set(filters.labels).intersection(states))):
+                            raise ValueError("Export membership differs from the selection")
+                        identifiers.add(row["record_id"])
+                    if len(source_rows) != snapshot["total"] or _current_social_snapshot(service, filters, previous) != snapshot:
+                        raise ValueError("Export selection changed")
+                rows = _public_rows(source_rows, enabled)
                 fields = list(
                     NATIVE_COLUMNS if dataset == "native" else SOCIAL_COLUMNS
                 ) + ["record_id", "version_id", "labels", "retrievable"]
+                if dataset == "social":
+                    fields[fields.index("sponsor")] = "company_affiliation"
+                    fields.extend(["collection_scope", "count_unit", "paid_ad_status", "social_historical_states", "social_historical_scheme", "social_historical_status"])
                 if enabled:
                     fields.append("archive_url")
                 output = StringIO(newline="")
@@ -2176,6 +2735,9 @@ def create_app(service, settings, record_details=None) -> Dash:
                 writer.writeheader()
                 for row in rows:
                     row = dict(row, labels="; ".join(row["labels"]))
+                    if dataset == "social":
+                        row["company_affiliation"] = row.pop("sponsor")
+                        row["social_historical_states"] = "; ".join(row["social_historical_states"])
                     # Keep spreadsheet applications from interpreting source text as formulas.
                     writer.writerow(
                         {
@@ -2188,17 +2750,75 @@ def create_app(service, settings, record_details=None) -> Dash:
                     )
                 return {
                     "content": output.getvalue(),
-                    "filename": f"{dataset}-advertising.csv",
+                    "filename": "social-company-posts.csv" if dataset == "social" else "native-advertising.csv",
                     "type": "text/csv",
                 }, f"Downloaded {len(rows):,} selected records."
             except Exception:  # noqa: BLE001 - public boundary must hide unexpected service details.
                 return (
                     None,
-                    "Download is unavailable. Your current filters are preserved.",
+                    "Download is unavailable. Refresh the current source-state selection and retry; your filters are preserved."
+                    if dataset == "social" else "Download is unavailable. Your current filters are preserved.",
                 )
 
     register_collection("native")
     register_collection("social")
+
+    @app.callback(
+        Output("social-accounts", "value", allow_duplicate=True),
+        Output("social-view", "value"),
+        Input("social-primary-chart", "clickData"),
+        State("social-network-data", "data"),
+        *_filter_inputs("social", State),
+        prevent_initial_call=True,
+    )
+    def select_social_account(click, snapshot, *values):
+        try:
+            filters = _filters("social", *values)
+            if not snapshot or snapshot.get("filters") != filters.model_dump(mode="json"):
+                raise PreventUpdate
+            points = (click or {}).get("points") or []
+            if len(points) != 1:
+                raise PreventUpdate
+            point = points[0]
+            index = point.get("pointNumber")
+            curve = point.get("curveNumber")
+            names = snapshot.get("accounts") or []
+            if (not isinstance(names, list) or not isinstance(curve, int)
+                    or isinstance(curve, bool) or curve != 0 or not isinstance(index, int)
+                    or isinstance(index, bool) or not 0 <= index < len(names)
+                    or not isinstance(names[index], str) or point.get("y") != names[index]):
+                raise PreventUpdate
+            account = names[index]
+            if filters.accounts and account not in filters.accounts:
+                raise PreventUpdate
+            return [account], "records"
+        except (TypeError, ValueError, AttributeError, KeyError):
+            raise PreventUpdate from None
+
+    @app.callback(
+        Output("social-labels", "value", allow_duplicate=True),
+        Output("social-view", "value", allow_duplicate=True),
+        Output("social-label-click-status", "children"),
+        Input("social-labels-chart", "clickData"),
+        State("social-network-data", "data"),
+        *_filter_inputs("social", State),
+        State("page-location", "pathname"),
+        State("active-dataset", "value"),
+        State("social-view", "value"),
+        prevent_initial_call=True,
+    )
+    def select_social_label(click, previous, *values):
+        if values[-3:] != ("/data", "social", "overview"):
+            raise PreventUpdate
+        try:
+            filters = _filters("social", *values[:-3])
+            current = _current_social_snapshot(service, filters, previous)
+            identifier = clicked_social_state(click, current)
+            if filters.labels and identifier not in filters.labels:
+                return no_update, no_update, "This segment is outside the selected OR states. Change or clear the Historical source state dropdown before exploring it."
+            return [identifier], "records", f"Showing posts with {source_state_name(identifier)}. Other filters are preserved."
+        except Exception:  # noqa: BLE001 - do not expose service details or change scope on a stale click.
+            raise PreventUpdate from None
 
     from observatory.knowledge_ui import register_knowledge_graph
 
@@ -2210,6 +2830,10 @@ def create_app(service, settings, record_details=None) -> Dash:
 
     register_data_views(app, service, enabled)
 
+    from .combined_ui import register_combined
+
+    register_combined(app, service, enabled, record_details=record_details)
+
     from observatory.research_explorer import register_research_explorer
 
     register_research_explorer(app, service, enabled)
@@ -2219,6 +2843,9 @@ def create_app(service, settings, record_details=None) -> Dash:
     from observatory.claims_ui import register_claims_browser
 
     register_claims_browser(app, service, enabled)
+    from observatory.content_ui import register_content_browser
+
+    register_content_browser(app, service, enabled)
 
     @app.callback(
         Output("research-question", "value"),
@@ -2251,6 +2878,7 @@ def create_app(service, settings, record_details=None) -> Dash:
         State("active-dataset", "value"),
         *_filter_inputs("native", State),
         *_filter_inputs("social", State),
+        *_filter_inputs("all", State),
         State("research-progress-token", "data"),
         State("page-location", "pathname"),
         prevent_initial_call=True,
@@ -2299,7 +2927,7 @@ def create_app(service, settings, record_details=None) -> Dash:
                 Filters(dataset="all")
                 if scope == "all"
                 else _filters(
-                    dataset, *(values[:8] if dataset == "native" else values[8:])
+                    dataset, *_collection_filter_values(dataset, values)
                 )
             )
         except ValueError:

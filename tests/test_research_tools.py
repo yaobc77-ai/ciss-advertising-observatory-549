@@ -37,19 +37,23 @@ class SourceDB:
         self.loaded = True
 
     def health(self):
-        return {"status": "ok", "record_counts": {"native": len(self.rows)} if self.loaded else {},
+        return {"status": "ok", "record_counts": dict(Counter(row["dataset"] for row in self.rows)) if self.loaded else {},
                 "data_version": self.version}
 
     def select(self, filters):
         self.reads.append(filters.model_copy(deep=True))
         result = []
         for row in deepcopy(self.rows):
+            if not row.get("active", True) or not row.get("countable", True):
+                continue
             if filters.dataset not in ("all", row["dataset"]):
                 continue
             if any(getattr(filters, dimension) and row.get(dimension[:-1]) not in getattr(filters, dimension)
                    for dimension in ("publishers", "sponsors", "platforms", "keywords")):
                 continue
             if filters.record_ids and row["record_id"] not in filters.record_ids:
+                continue
+            if filters.labels and not set(filters.labels).intersection(row.get("labels", [])):
                 continue
             if filters.date_presence == "known" and not row["date"] or filters.date_presence == "missing" and row["date"]:
                 continue
@@ -79,6 +83,13 @@ class SourceDB:
     def public_rows(self, filters):
         return self.select(filters)
 
+    def versioned_record(self, filters, record_id):
+        if filters.record_ids and record_id not in filters.record_ids:
+            return None
+        scoped = filters.model_copy(update={"record_ids": [record_id]}, deep=True)
+        rows = self.select(scoped)
+        return rows[0] if rows else None
+
     def knowledge_page(self, filters, offset=0, limit=5):
         assert filters.dataset == "native"
         rows = self.select(filters)
@@ -92,7 +103,7 @@ class SourceDB:
                     title=row["title"], publisher=row["publisher"], sponsor=row["sponsor"],
                     text=row["body"], start=0, end=len(row["body"]), url=row["url"])
                     for row in rows],
-                "diagnostics": {"status": "ok", "terms": ["emissions"], "private_sql": "never-public"}}
+                "diagnostics": {"status": "available", "terms": ["emissions"], "private_sql": "never-public"}}
 
 
 def make_catalog(base=None, *, links=True):
@@ -104,7 +115,7 @@ def make_catalog(base=None, *, links=True):
 def test_catalog_strict_transport_schemas_are_bounded_and_closed():
     catalog, _ = make_catalog()
     definitions = catalog.definitions()
-    assert len(definitions) == 8
+    assert len(definitions) == 10
 
     def verify(node):
         if isinstance(node, dict):
@@ -423,3 +434,250 @@ def test_missing_dates_cannot_be_read_when_the_selection_excludes_them():
     both = make_catalog()[0].call("record_statistics", {"filters": {
         "date_presence": "missing", "date_from": "2020-01-01", "date_to": "2020-12-31"}})
     assert both["status"] == "clarify"
+
+
+@pytest.mark.parametrize("base", [
+    Filters(include_inferred_dates=False, date_presence="known", include_unknown_dates=False,
+            date_from=date(2020, 1, 1), date_to=date(2020, 12, 31)),
+    Filters(include_inferred_dates=True, date_presence="missing"),
+])
+def test_tools_cannot_change_the_trusted_publication_date_basis(base):
+    # Both directions can admit records excluded by the trusted date selection.
+    catalog, db = make_catalog(base)
+    result = catalog.call("record_statistics", {"filters": {
+        "include_inferred_dates": not base.include_inferred_dates}})
+    assert result["status"] == "clarify"
+    assert "publication-date basis" in result["message"]
+    assert catalog.base_filters == base
+    assert not db.reads
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("explicit", [False, True])
+def test_tools_preserve_omitted_or_matching_publication_date_basis(enabled, explicit):
+    base = Filters(include_inferred_dates=enabled)
+    catalog, _ = make_catalog(base)
+    arguments = {"filters": {"include_inferred_dates": enabled}} if explicit else {}
+    result = catalog.call("record_statistics", arguments)
+    assert result["status"] == "ok"
+    assert result["filters"]["include_inferred_dates"] is enabled
+    assert catalog.base_filters == base
+
+
+def social_catalog(base=None, *, links=True):
+    catalog, db = make_catalog(base or Filters(dataset="social"), links=links)
+    row = source("junkipedia:42", "", "ExxonMobil", body="甲😀We support lower emissions.乙")
+    row.update(dataset="social", platform="Twitter", account="ExxonMobil account",
+               sponsor_basis="company_affiliation_not_verified_paid_sponsor",
+               url="https://twitter.com/exxonmobil/status/42",
+               archive_url="https://www.junkipedia.org/posts/42",
+               annotations=[{"ordinal": 0, "payload": {"version": "claims-social-export-v1",
+                   "labels": ["green", "climate_science"], "values": {"green": True},
+                   "body_sha256": row["body_hash"], "explanations": "never-public",
+                   "source_path": "C:/private/social"}}])
+    db.rows.append(row)
+    return catalog, db, row
+
+
+@pytest.mark.parametrize("dataset", ["social", "all"])
+def test_social_versioned_record_preserves_scope_source_and_unicode(dataset):
+    base = Filters(dataset=dataset, sponsors=["ExxonMobil"], platforms=["Twitter"],
+                   keywords=["energy"], record_ids=["junkipedia:42"],
+                   date_from=date(2020, 1, 1), date_to=date(2020, 12, 31))
+    catalog, db, row = social_catalog(base)
+    result = catalog.call("get_record", {"record_id": row["record_id"], "body_start": 1, "body_limit": 5})
+    assert result["status"] == "ok"
+    assert result["body"]["text"] == row["body"][1:6]
+    assert result["source_refs"][0]["version_id"] == row["version_id"]
+    assert result["source_refs"][0]["body_hash"] == row["body_hash"]
+    assert result["record"]["dataset"] == "social"
+    assert result["record"]["platform"] == "Twitter"
+    assert result["record"]["account"] == row["account"]
+    assert result["record"]["company_affiliation"] == "ExxonMobil"
+    assert result["record"]["sponsor_basis"] == row["sponsor_basis"]
+    assert catalog.base_filters == base
+    assert all(read.dataset == dataset for read in db.reads)
+
+
+@pytest.mark.parametrize("tool", ["get_record", "get_record_sources"])
+@pytest.mark.parametrize("base", [
+    Filters(dataset="native"),
+    Filters(dataset="social", record_ids=["another-post"]),
+    Filters(dataset="social", date_from=date(2021, 1, 1)),
+    Filters(dataset="social", date_to=date(2019, 12, 31)),
+    Filters(dataset="social", date_presence="missing"),
+    Filters(dataset="social", publishers=["The Washington Post"]),
+    Filters(dataset="social", sponsors=["bp"]),
+    Filters(dataset="social", platforms=["Instagram"]),
+    Filters(dataset="social", keywords=["another-keyword"]),
+    Filters(dataset="social", labels=["claims-social-export-v1:green_binary:source_true"]),
+])
+def test_social_details_cannot_read_outside_any_active_filter(base, tool):
+    catalog, _, row = social_catalog(base)
+    assert catalog.call(tool, {"record_id": row["record_id"]})["status"] == "clarify"
+
+
+@pytest.mark.parametrize("tool", ["get_record", "get_record_sources"])
+@pytest.mark.parametrize("state", [{"countable": False}, {"active": False}])
+@pytest.mark.parametrize("dataset", ["native", "social"])
+def test_details_do_not_admit_pending_or_inactive_records(tool, state, dataset):
+    if dataset == "social":
+        catalog, _, row = social_catalog()
+    else:
+        catalog, db = make_catalog()
+        row = db.rows[0]
+    row.update(state)
+    assert catalog.call(tool, {"record_id": row["record_id"]})["status"] == "clarify"
+
+
+def test_social_details_reject_native_ids_and_missing_version():
+    catalog, _, row = social_catalog()
+    assert catalog.call("get_record", {"record_id": "r1"})["status"] == "clarify"
+    row["version_id"] = ""
+    assert catalog.call("get_record", {"record_id": row["record_id"]})["status"] == "clarify"
+
+
+@pytest.mark.parametrize("links", [True, False])
+def test_social_sources_are_direct_public_references_without_native_graph_or_private_labels(links, monkeypatch):
+    catalog, _, row = social_catalog(links=links)
+    monkeypatch.setattr("observatory.research_tools.build_graph", lambda *a, **kw: pytest.fail("social source reads must not build a native graph"))
+    result = catalog.call("get_record_sources", {"record_id": row["record_id"]})
+    assert result["status"] == "ok"
+    assert len(result["source_artifacts"]) == (2 if links else 0)
+    assert result["record"]["url"] == (row["url"] if links else "")
+    assert result["record"]["archive_url"] == (row["archive_url"] if links else "")
+    assert result["claims_status"] == "historical_unverified"
+    assert result["annotations"] == []
+    assert result["warnings"][0]["code"] == "social_annotations_unverified"
+    assert all(ref["provenance"]["version_id"] == row["version_id"] for ref in result["source_relations"])
+    serialized = json.dumps(result)
+    assert "never-public" not in serialized and "C:/private" not in serialized
+    projected = result["social_historical_annotation"]
+    assert projected["scheme"] == "claims-social-export-v1"
+    assert projected["validation_state"] == "invalid"
+    assert len(projected["values"]) == 13
+    assert all(item["state"] == "unknown" and item["value"] is None for item in projected["values"])
+    assert projected["explanations"] == []
+    if not links:
+        assert "twitter.com" not in serialized and "junkipedia.org" not in serialized
+
+
+@pytest.mark.parametrize("bad_url", ["file:///C:/private/social", "https://user:secret@example.org/post", "javascript:alert(1)"])
+def test_social_sources_omit_unsafe_links_and_unknown_relation_basis(bad_url):
+    catalog, _, row = social_catalog()
+    row.update(url=bad_url, archive_url=bad_url, sponsor_basis="C:/private/never-public")
+    result = catalog.call("get_record_sources", {"record_id": row["record_id"]})
+    assert result["status"] == "ok"
+    assert result["source_artifacts"] == [] and result["source_relations"] == []
+    assert result["record"]["sponsor_basis"] == "not_recorded"
+    assert result["record"]["company_affiliation"] == ""
+    assert "never-public" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("dataset", ["social", "all"])
+def test_social_search_now_validates_current_version_hash_offsets_and_dataset(dataset):
+    catalog, _, row = social_catalog(Filters(dataset=dataset, record_ids=["junkipedia:42"]))
+    result = catalog.call("search_records", {"query": "emissions"})
+    assert len(result["evidence"]) == 1 and result["rejected_evidence"] == 0
+    assert result["source_refs"][0]["verification_status"] == "exact_character_match"
+    assert result["source_refs"][0]["body_hash"] == row["body_hash"]
+
+
+@pytest.mark.parametrize("damage", [
+    {"version_id": "stale-version"}, {"dataset": "native"}, {"dataset": "unexpected"},
+    {"start": -1}, {"start": 1}, {"end": 999}, {"text": "fabricated text"},
+    {"record_id": "r1"},
+])
+def test_social_search_rejects_injected_wrong_versions_collections_coordinates_and_ids(damage):
+    catalog, db, _ = social_catalog()
+    original = db.search_report
+
+    def damaged(*args, **kwargs):
+        result = original(*args, **kwargs)
+        result["evidence"][0] = result["evidence"][0].model_copy(update=damage)
+        return result
+
+    db.search_report = damaged
+    result = catalog.call("search_records", {"query": "emissions"})
+    # Every retrieved passage was rejected: fail closed, never report a database miss.
+    assert result["status"] == "unavailable" and result["search_status"] == "failed"
+    assert result["evidence"] == [] and result["rejected_evidence"] == 1
+
+
+@pytest.mark.parametrize("damage", [
+    {"body_hash": "0" * 64}, {"retrievable": False},
+    {"retrieval_ranges": [[2, 12]]}, {"retrieval_end": 12}, {"countable": False}, {"active": False},
+])
+def test_social_search_rejects_changed_or_disallowed_current_source(damage):
+    catalog, db, row = social_catalog()
+    captured = db.search_report("emissions", catalog.base_filters)
+    db.search_report = lambda *args, **kwargs: captured
+    row.update(damage)
+    result = catalog.call("search_records", {"query": "emissions"})
+    # Every retrieved passage was rejected: fail closed, never report a database miss.
+    assert result["status"] == "unavailable" and result["search_status"] == "failed"
+    assert result["evidence"] == [] and result["rejected_evidence"] == 1
+
+
+def test_social_excerpt_hash_mismatch_and_out_of_range_fail_closed():
+    catalog, _, row = social_catalog()
+    assert catalog.call("get_record", {"record_id": row["record_id"], "body_start": 999})["status"] == "clarify"
+    row["body_hash"] = "0" * 64
+    result = catalog.call("get_record", {"record_id": row["record_id"]})
+    assert result["status"] == "unavailable" and "body" not in result
+    sources = catalog.call("get_record_sources", {"record_id": row["record_id"]})
+    assert sources["source_refs"][0]["verification_status"] == "missing_or_mismatched"
+    assert sources["source_refs"][0]["body_hash"] == ""
+
+
+def test_social_detail_capability_does_not_enable_native_graph_for_social():
+    catalog, _, _ = social_catalog()
+    schema = catalog.call("get_graph_schema", {})
+    assert schema["adapters"]["versioned_record_detail"] == ["native", "social"]
+    assert schema["adapters"]["knowledge_graph"] == ["native"]
+    assert catalog.call("get_graph_neighborhood", {})["status"] == "unavailable"
+
+
+def test_all_collection_search_verifies_both_source_kinds_without_merging_them():
+    catalog, _, row = social_catalog(Filters(dataset="all"))
+    result = catalog.call("search_records", {"query": "emissions"})
+    assert result["status"] == "ok" and result["rejected_evidence"] == 0
+    assert {ref["dataset"] for ref in result["source_refs"]} == {"native", "social"}
+    assert len(result["evidence"]) == 4
+    assert next(ref for ref in result["source_refs"] if ref["dataset"] == "social")["record_id"] == row["record_id"]
+    native = catalog.call("get_record", {"record_id": "r1"})
+    assert native["status"] == "ok" and native["record"]["dataset"] == "native"
+    assert "company_affiliation" not in native["record"]
+
+
+def test_social_details_preserve_inclusive_date_endpoints_and_exclude_unknown_when_requested():
+    base = Filters(dataset="social", date_from=date(2020, 3, 1), date_to=date(2020, 3, 1),
+                   include_unknown_dates=False)
+    catalog, _, row = social_catalog(base)
+    assert catalog.call("get_record", {"record_id": row["record_id"]})["status"] == "ok"
+    row["date"] = None
+    assert catalog.call("get_record_sources", {"record_id": row["record_id"]})["status"] == "clarify"
+
+
+@pytest.mark.parametrize("links", [True, False])
+def test_social_search_never_exposes_private_import_fields_and_honors_link_switch(links):
+    catalog, _, _ = social_catalog(links=links)
+    result = catalog.call("search_records", {"query": "emissions"})
+    assert result["status"] == "ok" and len(result["evidence"]) == 1
+    serialized = json.dumps(result)
+    assert "never-public" not in serialized and "C:/private" not in serialized
+    assert result["evidence"][0]["url"] == ("https://twitter.com/exxonmobil/status/42" if links else "")
+
+
+@pytest.mark.parametrize("damage", [{"start": True}, {"end": 1.5}, {"retrieval_ranges": [[0, 999]]}])
+def test_social_search_corrupt_coordinates_or_retrieval_bounds_fail_closed(damage):
+    catalog, db, row = social_catalog()
+    captured = db.search_report("emissions", catalog.base_filters)
+    db.search_report = lambda *args, **kwargs: captured
+    if "retrieval_ranges" in damage:
+        row.update(damage)
+    else:
+        captured["evidence"][0] = captured["evidence"][0].model_copy(update=damage)
+    result = catalog.call("search_records", {"query": "emissions"})
+    assert result.get("evidence", []) == []
+    assert result["status"] in {"ok", "unavailable"}

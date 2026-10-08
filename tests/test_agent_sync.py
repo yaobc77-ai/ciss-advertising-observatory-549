@@ -15,6 +15,15 @@ SPEC.loader.exec_module(sync)
 @pytest.fixture
 def shared(tmp_path, monkeypatch):
     monkeypatch.setenv("OBS_COORD_DIR", str(tmp_path / "coord"))
+
+    def fixture_git(*args):
+        if args == ("rev-parse", "--show-toplevel"):
+            return str(tmp_path)
+        if args == ("branch", "--show-current"):
+            return "synthetic-fixture-branch"
+        raise AssertionError("Unexpected Git command in coordination-only fixture")
+
+    monkeypatch.setattr(sync, "git", fixture_git)
     for key in ("AGENT_NAME", "CLAUDECODE"):
         monkeypatch.delenv(key, raising=False)
     return tmp_path / "coord"

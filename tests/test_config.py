@@ -54,3 +54,27 @@ def test_private_record_assets_are_optional_by_default(monkeypatch):
     settings = Settings.from_env()
     assert settings.record_asset_root == ""
     assert settings.record_asset_manifest_sha256 == ""
+
+
+def test_evaluation_report_settings_remain_server_only(monkeypatch):
+    _clear(monkeypatch)
+    monkeypatch.setenv("OBS_EVALUATION_REPORT_PATH", "/private/reviewed-report.json")
+    monkeypatch.setenv("OBS_EVALUATION_REPORT_SHA256", "b" * 64)
+    monkeypatch.setenv("OBS_EVALUATION_PLAN_SHA256", "c" * 64)
+    settings = Settings.from_env()
+    assert settings.evaluation_report_path == "/private/reviewed-report.json"
+    assert settings.evaluation_report_sha256 == "b" * 64
+    assert settings.evaluation_plan_sha256 == "c" * 64
+    assert "/private/reviewed-report.json" not in repr(settings)
+
+
+def test_content_publication_settings_remain_server_only(monkeypatch):
+    _clear(monkeypatch)
+    monkeypatch.setenv("OBS_CONTENT_PUBLICATION_PATH", "/private/content-publication.json")
+    monkeypatch.setenv("OBS_CONTENT_PUBLICATION_SHA256", "d" * 64)
+    monkeypatch.setenv("OBS_CONTENT_REVIEW_SHA256", "e" * 64)
+    settings = Settings.from_env()
+    assert settings.content_publication_path == "/private/content-publication.json"
+    assert settings.content_publication_sha256 == "d" * 64
+    assert settings.content_review_sha256 == "e" * 64
+    assert "/private/content-publication.json" not in repr(settings)

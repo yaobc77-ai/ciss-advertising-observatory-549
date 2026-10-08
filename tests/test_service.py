@@ -125,18 +125,17 @@ def test_verbatim_citation_retains_versioned_evidence():
 
 
 def test_no_evidence_output_does_not_publish_model_claims():
-    result = validate_answer(
-        ModelAnswer(
-            status="insufficient_evidence",
-            claims=[GroundedClaim(text="Fabrication", evidence_id="x", quote="x")],
-        ),
-        [evidence()],
-    )
-    assert (
-        result.status == "insufficient_evidence"
-        and not result.citations
-        and "Fabrication" not in result.answer
-    )
+    # A refusal carrying claims is contradictory output and is rejected, never published.
+    with pytest.raises(ValueError, match="Contradictory answer status"):
+        validate_answer(
+            ModelAnswer(
+                status="insufficient_evidence",
+                claims=[GroundedClaim(text="Fabrication", evidence_id="x", quote="x")],
+            ),
+            [evidence()],
+        )
+    result = validate_answer(ModelAnswer(status="insufficient_evidence", claims=[]), [evidence()])
+    assert result.status == "insufficient_evidence" and not result.citations
 
 
 def test_unsupported_count_question_never_calls_model():
@@ -187,8 +186,11 @@ def test_quote_selection_preserves_unicode_and_limits_length_without_model_copyi
                 "claims": [{"text": "Claim", "passage_id": "invented"}],
             }
         )
+    # A clipped sentence must be completed with its exact neighbouring passages.
+    context = catalog["Q1"]["context"]["sentence_context_passage_ids"]
     parsed = schema.model_validate(
-        {"status": "answered", "claims": [{"text": "Claim", "passage_id": "Q1"}]}
+        {"status": "answered", "claims": [{"text": "Claim", "passage_id": "Q1",
+                                           "support_passage_ids": [pid for pid in context if pid != "Q1"]}]}
     )
     grounded = materialize_selections(parsed, catalog)
     assert grounded.claims[0].quote.startswith("CO₂ emissions —")

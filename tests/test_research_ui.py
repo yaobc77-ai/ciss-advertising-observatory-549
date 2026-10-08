@@ -156,7 +156,7 @@ def test_empty_social_collection_hides_empty_content_and_filters(research_ui):
     app, client, _ = research_ui
     result = update_collection(research_ui, dataset="social")
     assert result["social-content"]["style"] == {"display": "none"}
-    assert "Social advertising is not connected" in json.dumps(
+    assert "No admitted company social posts" in json.dumps(
         result["social-status"]["children"]
     )
     selected = callback(

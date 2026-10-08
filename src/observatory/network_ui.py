@@ -16,11 +16,30 @@ def record_cards(rows, links_enabled=True):
     for row in rows:
         title = row.get("title") or "Untitled record"
         source = safe_url(row.get("url")) if links_enabled else ""
-        metadata = [
-            html.Span(relationship_label("sponsor", row.get("sponsor")), className="record-sponsor"),
-            " · ",
-            html.Span(relationship_label("publisher", row.get("publisher")), className="record-outlet"),
-        ]
+        metadata_note = []
+        if row.get("dataset") == "social":
+            metadata = []
+            for label, field, class_name in (
+                ("Account", "account", "record-account"),
+                ("Platform", "platform", "record-platform"),
+                ("Company affiliation", "sponsor", "record-affiliation"),
+            ):
+                value = row.get(field)
+                if value in (None, "", "(Unknown)"):
+                    value = "Unknown " + label.lower()
+                if metadata:
+                    metadata.append(" · ")
+                metadata.append(html.Span(f"{label}: {value}", className=class_name))
+            metadata_note = [html.P(
+                "Source-listed company affiliation does not establish paid sponsorship.",
+                className="scope-note",
+            )]
+        else:
+            metadata = [
+                html.Span(relationship_label("sponsor", row.get("sponsor")), className="record-sponsor"),
+                " · ",
+                html.Span(relationship_label("publisher", row.get("publisher")), className="record-outlet"),
+            ]
         cards.append(html.Article([
             html.Div([
                 html.A(title, href="/records/" + quote(str(row["record_id"]), safe=""),
@@ -28,6 +47,7 @@ def record_cards(rows, links_enabled=True):
                 html.Span(row.get("date") or "Unknown date", className="muted"),
             ], className="network-record-heading"),
             html.P(metadata, className="muted record-metadata"),
+            *metadata_note,
             html.A("Original source ↗", href=source, target="_blank", rel="noopener noreferrer",
                    className="record-source-link") if source else None,
             html.Details([

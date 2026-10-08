@@ -114,6 +114,20 @@ def test_candidate_title_match_is_not_a_verified_attachment(setup):
     assert result["archive_status"] == "No verified archived copy linked"
 
 
+@pytest.mark.parametrize("code,status,phrase", [
+    ("body_source_partial", "partial", "partial capture"),
+    ("body_source_completeness_unestablished", "captured_text", "has not been verified"),
+    ("body_saved_text_reviewed", "captured_text", "supplied TXT"),
+])
+def test_saved_text_completeness_limit_is_public_without_private_review(setup, code, status, phrase):
+    setup.row["issues"] = [{"code": code, "detail": SECRET, "source": SECRET}]
+    item = details(setup).get("record-a")
+    assert item["body_status"] == status
+    assert any(phrase in note for note in item["quality_notes"])
+    assert all("PDF" not in note for note in item["quality_notes"])
+    assert SECRET not in json.dumps(item)
+
+
 @pytest.mark.parametrize("changed", ["url", "body_hash"])
 def test_changed_record_identity_disables_snapshot(setup, changed):
     setup.row[changed] = "different-value"

@@ -3,7 +3,6 @@
 import json
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -103,17 +102,14 @@ def test_missing_runtime_does_not_attempt_initialization(pg_runtime):
 
 
 @pytest.mark.parametrize("legacy_marker", [False, True])
-def test_setup_preflight_resolves_project_junction_without_migrating(tmp_path, legacy_marker):
+def test_setup_preflight_resolves_project_junction_without_migrating(tmp_path, legacy_marker, monkeypatch):
     actual = tmp_path / "project real"
     actual.mkdir()
     alias = tmp_path / "project alias"
     if os.name == "nt":
-        quoted_alias = "'" + str(alias).replace("'", "''") + "'"
-        quoted_actual = "'" + str(actual).replace("'", "''") + "'"
-        subprocess.run([
-            "powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
-            f"New-Item -ItemType Junction -Path {quoted_alias} -Value {quoted_actual} | Out-Null",
-        ], check=True, capture_output=True, text=True)
+        import _winapi
+
+        _winapi.CreateJunction(str(actual), str(alias))
     else:
         alias.symlink_to(actual, target_is_directory=True)
     runtime = actual / ".runtime"
@@ -126,11 +122,12 @@ def test_setup_preflight_resolves_project_junction_without_migrating(tmp_path, l
     setup = (Path(__file__).resolve().parents[1] / "scripts" / "Setup-Postgres.ps1").read_text(encoding="utf-8")
     preflight = re.search(r"@'\n(.*?)\n'@ \| & \$taskPython -X utf8 - \$taskRuntime", setup, re.DOTALL)
     assert preflight is not None
-    result = subprocess.run([
-        sys.executable, "-X", "utf8", "-", str(alias / ".runtime"),
-    ], input=preflight[1], capture_output=True, text=True)
-    assert result.returncode == (1 if legacy_marker else 0), result.stderr
+    monkeypatch.setattr(sys, "argv", ["preflight", str(alias / ".runtime")])
+    code = compile(preflight[1], "Setup-Postgres.ps1:preflight", "exec")
     if legacy_marker:
-        assert "requires the reviewed PostgreSQL 18 migration" in result.stderr
+        with pytest.raises(SystemExit, match="requires the reviewed PostgreSQL 18 migration"):
+            exec(code, {})
         assert not (runtime / "pgdata18").exists()
+    else:
+        exec(code, {})
     assert marker.read_text(encoding="utf-8") == contents

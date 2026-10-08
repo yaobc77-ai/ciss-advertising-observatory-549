@@ -138,7 +138,7 @@ def test_review_filter_is_independent_of_historical_collection_label_filters(cla
     inputs["claims2-review.value"] = "automatic_unverified"
     result = browse(claims_app, inputs, "claims2-apply.n_clicks")
     filters, options = claims_app[2].calls[-1]
-    assert filters.model_dump(mode="json") == inputs["native-network-data.data"]["filters"] | {"record_ids": [], "date_presence": "any", "include_inferred_dates": False}
+    assert filters.model_dump(mode="json") == inputs["native-network-data.data"]["filters"] | {"record_ids": [], "date_presence": "any", "include_inferred_dates": False, "accounts": []}
     assert options["review_state"] == "automatic_unverified"
     assert "13 assignments" in json.dumps(result)
     assert "Human-reviewed assignment" not in json.dumps(result)

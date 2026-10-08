@@ -17,7 +17,7 @@ from observatory.analytics import (
     yearly_timeline,
 )
 from observatory.config import Settings
-from observatory.db import Database
+from observatory.db import Database, digest
 from observatory.models import Filters, RecordInput
 from observatory.service import Service, summarize
 
@@ -41,7 +41,8 @@ def dashboard_db():
         with db.connect() as conn:
             conn.execute("""CREATE TABLE records (
                 record_id text PRIMARY KEY, dataset text, current_version text, active boolean DEFAULT true);
-                CREATE TABLE record_versions (version_id text PRIMARY KEY, payload jsonb);
+                CREATE TABLE record_versions (version_id text PRIMARY KEY, payload jsonb,
+                    body text NOT NULL, body_hash text NOT NULL);
                 CREATE TABLE annotations (version_id text, ordinal integer, payload jsonb);
                 CREATE TABLE date_inferences (version_id text, method text, tier text,
                     inferred_date date, precision text, review_state text, evidence jsonb);""")
@@ -65,8 +66,8 @@ def dashboard_db():
             _insert(conn, RecordInput(record_id="uncountable", dataset="native", countable=False))
             _insert(conn, RecordInput(record_id="inactive", dataset="native"))
             conn.execute("UPDATE records SET active=false WHERE record_id='inactive'")
-            conn.execute("INSERT INTO record_versions VALUES ('old-native',%s)", (
-                Jsonb({"sponsor": "Old sponsor", "countable": True}),
+            conn.execute("INSERT INTO record_versions VALUES ('old-native',%s,%s,%s)", (
+                Jsonb({"sponsor": "Old sponsor", "countable": True}), "", digest(""),
             ))
         yield db
     finally:
@@ -78,8 +79,8 @@ def _insert(conn, record):
     version = f"v-{record.record_id}"
     conn.execute("INSERT INTO records(record_id,dataset,current_version) VALUES (%s,%s,%s)",
                  (record.record_id, record.dataset, version))
-    conn.execute("INSERT INTO record_versions VALUES (%s,%s)",
-                 (version, Jsonb(record.model_dump(mode="json"))))
+    conn.execute("INSERT INTO record_versions VALUES (%s,%s,%s,%s)",
+                 (version, Jsonb(record.model_dump(mode="json")), record.body, digest(record.body)))
     for index, annotation in enumerate(record.annotations):
         conn.execute("INSERT INTO annotations VALUES (%s,%s,%s)",
                      (version, index, Jsonb(annotation)))
@@ -98,7 +99,8 @@ def test_sql_aggregates_match_existing_record_semantics(dashboard_db, filters):
     result = dashboard_db.dashboard(filters)
     assert result["stats"] == summarize(rows)
     assert result["timeline"] == yearly_timeline(rows)
-    assert result["labels"] == historical_label_distribution(rows)
+    native_rows = [row for row in rows if row["dataset"] == "native"]
+    assert result["labels"] == historical_label_distribution(native_rows)
     assert result["matrix"] == sponsor_publisher_matrix(rows)
     assert result["page"] == {"rows": rows[:20], "total": len(rows), "offset": 0}
 

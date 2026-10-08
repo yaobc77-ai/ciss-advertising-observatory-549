@@ -29,11 +29,16 @@ def source(body, start=0, end=None, *, evidence_id="e1", **metadata):
     return Evidence(**values)
 
 
+def quotes(catalog):
+    """Source identity and text only; context and private view fields are checked elsewhere."""
+    return {pid: {"evidence_id": p["evidence_id"], "quote": p["quote"]} for pid, p in catalog.items()}
+
+
 def assert_original_quotes(catalog, evidence):
     by_id = {e.evidence_id: e for e in evidence}
     assert catalog
     for passage in catalog.values():
-        assert set(passage) == {"evidence_id", "quote"}
+        assert {key for key in passage if not key.startswith("_")} == {"evidence_id", "quote", "context"}
         original = by_id[passage["evidence_id"]]
         assert passage["quote"] in original.text
         assert len(passage["quote"].split()) <= MAX_QUOTE_WORDS
@@ -66,7 +71,7 @@ def test_source_choice_is_deterministic_and_uses_existing_ids():
     ]
     forward = quote_catalog(evidence)
     assert forward == quote_catalog(list(reversed(evidence)))
-    assert forward == {"Q1": {"evidence_id": "a", "quote": body}}
+    assert quotes(forward) == {"Q1": {"evidence_id": "a", "quote": body}}
     assert_original_quotes(forward, evidence)
 
 
@@ -157,7 +162,7 @@ def test_unlocated_inputs_cannot_be_merged_by_text_similarity():
         SimpleNamespace(evidence_id="one", text="Identical sentence."),
         SimpleNamespace(evidence_id="two", text="Identical sentence."),
     ]
-    assert quote_catalog(evidence) == {
+    assert quotes(quote_catalog(evidence)) == {
         "Q1": {"evidence_id": "one", "quote": "Identical sentence."},
         "Q2": {"evidence_id": "two", "quote": "Identical sentence."},
     }

@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from observatory import evaluate
 from observatory.config import Settings
-from observatory.models import Answer, Citation, Evidence
+from observatory.models import Answer, Citation, Evidence, Filters
 
 
 def case(case_id="case-1", **changes):
@@ -376,9 +376,12 @@ def test_evidence_from_wrong_collection_does_not_pass_locator_checks(monkeypatch
 
 
 def statistics_result(filters=None, total=1, dataset="native", **changes):
+    serialized_filters = Filters.model_validate(
+        filters if filters is not None else {"dataset": dataset}
+    ).model_dump(mode="json")
     values = {
         "status": "answered", "answer_mode": "statistics", "answer": "A database result.",
-        "structured_result": {"method": "database", "kind": "count", "filters": filters or {"dataset": dataset},
+        "structured_result": {"method": "database", "kind": "count", "filters": serialized_filters,
                               "collections": [{"dataset": dataset, "total": total}]},
         "research_trace": {"route": "statistics", "fixture": True},
     }
@@ -433,11 +436,63 @@ def test_count_answer_equal_number_with_wrong_scope_does_not_pass(monkeypatch):
     assert row["answer_count_scope_valid"] is False and row["answer_count_exact"] is False
 
 
+@pytest.mark.parametrize("missing_key", list(Filters.model_fields))
+def test_count_answer_requires_every_serialized_filter(monkeypatch, missing_key):
+    answer = statistics_result()
+    del answer.structured_result["filters"][missing_key]
+    service = FakeService(result=answer)
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    row = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["count_exact"] is True
+    assert row["answer_count_scope_valid"] is False and row["answer_count_exact"] is False
+
+
+def test_count_answer_rejects_undeclared_filter_keys(monkeypatch):
+    answer = statistics_result()
+    answer.structured_result["filters"]["made_up_scope"] = "native"
+    service = FakeService(result=answer)
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    row = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["answer_count_scope_valid"] is False and row["answer_count_exact"] is False
+
+
+@pytest.mark.parametrize("key,value", [
+    ("include_unknown_dates", 1),
+    ("include_unknown_dates", "true"),
+    ("include_inferred_dates", 0),
+    ("publishers", ()),
+    ("publishers", ""),
+    ("publishers", [1]),
+    ("date_from", ""),
+])
+def test_count_answer_scope_rejects_json_type_confusion(monkeypatch, key, value):
+    answer = statistics_result()
+    answer.structured_result["filters"][key] = value
+    service = FakeService(result=answer)
+    bind(monkeypatch, service)
+    count = case(case_type="count", support_quote=[], expected_count=1)
+    row = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["answer_count_scope_valid"] is False and row["answer_count_exact"] is False
+
+
+def test_count_answer_preserves_valid_zero_in_complete_scope(monkeypatch):
+    count = case(case_type="count", filters={"dataset": "native", "record_ids": ["not-selected"]},
+                 required_record_ids=[], support_quote=[], expected_count=0)
+    service = FakeService(result=statistics_result(filters=count.filters.model_dump(mode="json"), total=0))
+    bind(monkeypatch, service)
+    row = evaluate.run_evaluation([count], service, paid=True, answer_counts=True)["cases"][0]
+    assert row["count_exact"] is True and row["answer_count_exact"] is True
+    assert row["answer_count_scope_valid"] is True and row["answer_collection_counts"] == {"native": 0}
+
+
 @pytest.mark.parametrize("answer", [
     statistics_result(total=2),
     statistics_result(dataset="social"),
     Answer(status="answered", answer="There is 1 ad.", answer_mode="rag"),
     statistics_result(status="service_unavailable", failure_reason="research_agent_unavailable"),
+    statistics_result(failure_reason="data_changed_during_tool_research"),
 ])
 def test_bad_count_answer_retains_failure_in_the_denominator(monkeypatch, answer):
     service = FakeService(result=answer)

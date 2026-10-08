@@ -105,14 +105,14 @@ def chunk_body(
 ) -> list[dict]:
     if not isinstance(body, str):
         raise TypeError("body must be a string")
-    if strategy not in ("legacy", "sentence"):
-        raise ValueError("strategy must be 'legacy' or 'sentence'")
+    if strategy not in ("legacy", "sentence", "sentence_coverage"):
+        raise ValueError("strategy must be 'legacy', 'sentence' or 'sentence_coverage'")
     if max_tokens < 1 or overlap_tokens < 0 or overlap_tokens >= max_tokens:
         raise ValueError("require max_tokens > overlap_tokens >= 0")
     if not body.strip():
         return []
-    if strategy == "sentence":
-        return _sentence_chunks(body, max_tokens, overlap_tokens)
+    if strategy in ("sentence", "sentence_coverage"):
+        return _sentence_chunks(body, max_tokens, overlap_tokens, coverage_fallback=strategy == "sentence_coverage")
     paragraphs = _paragraphs(body)
     chunks = []
     start = 0
@@ -149,14 +149,14 @@ def chunk_body(
     return chunks
 
 
-def _sentence_chunks(body: str, max_tokens: int, overlap_tokens: int) -> list[dict]:
+def _sentence_chunks(body: str, max_tokens: int, overlap_tokens: int, *, coverage_fallback: bool = False) -> list[dict]:
     """Pack sentence endings; use token boundaries only when no ending fits.
 
     Overlap uses a sentence start within the requested token allowance, or no
     overlap when a whole sentence cannot fit that allowance. Cuts inside an
     overlong sentence use the existing Unicode-safe token overlap fallback.
     """
-    sentences = sentence_spans(body)
+    sentences = sentence_spans(body, coverage_fallback=True) if coverage_fallback else sentence_spans(body)
     paragraphs = _paragraphs(body)
     chunks = []
     start = 0
@@ -230,8 +230,8 @@ def chunk_retrieval_body(
     """Chunk each retained interval separately, retaining full-body paragraph IDs."""
     if max_tokens < 1 or overlap_tokens < 0 or overlap_tokens >= max_tokens:
         raise ValueError("require max_tokens > overlap_tokens >= 0")
-    if strategy not in ("legacy", "sentence"):
-        raise ValueError("strategy must be 'legacy' or 'sentence'")
+    if strategy not in ("legacy", "sentence", "sentence_coverage"):
+        raise ValueError("strategy must be 'legacy', 'sentence' or 'sentence_coverage'")
     ranges = retrieval_spans(
         body, retrieval_ranges=retrieval_ranges, retrieval_end=retrieval_end
     )

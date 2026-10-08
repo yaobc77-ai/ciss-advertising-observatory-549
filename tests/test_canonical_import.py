@@ -140,3 +140,37 @@ def test_migrations_are_ordered_and_line_endings_do_not_change_hash(tmp_path):
     (tmp_path / "0003_gap.sql").write_text("SELECT 3;", encoding="utf-8")
     with pytest.raises(ValueError, match="consecutive"):
         discover_migrations(tmp_path)
+
+
+@pytest.mark.parametrize("changes", [
+    {"body": "Private source\u0000text"},
+    {"raw": {"nested": [{"text": "Private\u0000explanation"}]}},
+    {"raw": {"Private\u0000key": "value"}},
+    {"annotations": [{"explanation": "Private\u0000value"}]},
+])
+def test_nul_is_rejected_without_disclosing_source_text(tmp_path, changes):
+    path = write_records(tmp_path / "nul.jsonl", record(), record(record_id="second", **changes))
+    with pytest.raises(ValueError, match="No records imported") as caught:
+        load_records(path)
+    assert "line 2" in str(caught.value)
+    assert "Private" not in str(caught.value)
+
+
+@pytest.mark.parametrize("where", ["record", "candidate", "rejected", "source_hashes"])
+def test_mutated_batch_with_nul_fails_before_database_connection(monkeypatch, where):
+    from observatory.db import Database
+    from observatory.models import ImportBatch, Issue, RecordInput
+
+    batch = ImportBatch(records=[RecordInput(**record())])
+    if where == "record":
+        batch.records.append(RecordInput(**record(record_id="second")))
+        batch.records[-1].raw = {"nested": ["bad\u0000value"]}
+    elif where == "candidate":
+        batch.candidates = [{"note": "bad\u0000value"}]
+    elif where == "rejected":
+        batch.rejected = [Issue(code="bad", detail="bad\u0000value")]
+    else:
+        batch.source_hashes = {"bad\u0000key": "hash"}
+    monkeypatch.setattr(Database, "connect", lambda *args: pytest.fail("Invalid batch connected to the DB"))
+    with pytest.raises(ValueError, match=r"U\+0000"):
+        Database("unused").import_batch(batch)

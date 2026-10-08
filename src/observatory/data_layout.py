@@ -5,6 +5,7 @@ from dash import dcc, html
 
 from .claims_ui import claims_panel
 from .collection_graph_ui import collection_graph_panel
+from .content_ui import content_panel
 from .historical_theme_ui import historical_theme_panel
 from .knowledge_ui import knowledge_panel
 from .network import network_figure
@@ -60,11 +61,11 @@ def data_panel(dataset, links_enabled, empty_figure):
         ], className="chart-card chart-wide" if wide else "chart-card")
 
     columns = [
-        {"field": "title", "headerName": "Article", "cellRenderer": "RecordTitle", "tooltipField": "title",
+        {"field": "title", "headerName": "Article" if native else "Post", "cellRenderer": "RecordTitle", "tooltipField": "title",
          "minWidth": 260, "flex": 3, "wrapText": True, "autoHeight": True},
-        {"field": "sponsor", "headerName": "Sponsor / organization", "minWidth": 165, "flex": 1,
+        {"field": "sponsor", "headerName": "Sponsor / organization" if native else "Company affiliation", "minWidth": 165, "flex": 1,
          "wrapText": True, "autoHeight": True,
-         "headerTooltip": "Source-listed sponsor: may be a company, trade group or event."},
+         "headerTooltip": "Source-listed sponsor: may be a company, trade group or event." if native else "Source company affiliation; paid sponsorship is not verified."},
         {"field": "publisher" if native else "platform", "headerName": "News outlet" if native else "Platform",
          "minWidth": 165, "flex": 1, "wrapText": True},
         {"field": "date", "headerName": "Published", "width": 125, "minWidth": 125},
@@ -74,7 +75,8 @@ def data_panel(dataset, links_enabled, empty_figure):
          "cellRendererParams": {"enabled": links_enabled}, "width": 160, "minWidth": 160},
     ]
     if not native:
-        columns.insert(3, {"field": "account", "headerName": "Account", "minWidth": 150, "flex": 1})
+        columns.insert(3, {"field": "account", "headerName": "Account", "minWidth": 150, "flex": 1,
+                           "headerTooltip": "Source channel.name; names do not identify unique channel IDs."})
 
     cross_tab = html.Details([
         html.Summary("View the complete count table"),
@@ -111,15 +113,27 @@ def data_panel(dataset, links_enabled, empty_figure):
                            value="count", inline=True, className="metric-toggle"),
         ], className="chart-toolbar"),
         html.Div([
-            chart("primary-chart", "Where were the ads published?" if native else "Which platforms appear?", "Top 10 · current selection"),
-            chart("sponsors-chart", "Which sponsors appear most?", "Top 10 · current selection"),
-            chart("timeline-chart", "When were the ads published?", "Annual records in this collection; unknown dates are shown separately.", wide=True),
+            chart("primary-chart", "Where were the ads published?" if native else "Which accounts appear most?",
+                  "Top 10 · current selection" if native else "Top 10 source channel.name values · select a bar to browse its posts. Names can be shared across platforms and channel IDs."),
+            chart("sponsors-chart", "Which sponsors appear most?" if native else "Which company affiliations appear most?",
+                  "Top 10 · current selection" if native else "Top 10 · source company affiliations, not verified paid sponsors."),
+            html.Div(chart("platforms-chart", "Which platforms appear?", "Top 10 · current selection"),
+                     style={"display": "none"} if native else {}),
+            chart("timeline-chart", "When were the ads published?" if native else "When were the posts published?",
+                  "Annual records in this collection; unknown dates are shown separately.", wide=True),
             html.Div([
-                chart("labels-chart", "Which historical labels appear?", "Earlier automated classifications; not verified themes. Select a bar to read its articles.", wide=True),
+                chart("labels-chart", "Which historical labels appear?" if native else "Historical source states by code",
+                      "Earlier automated classifications; not verified themes. Select a bar to read its articles." if native else
+                      "13 codes from the social export · Source True, Source False and Unknown annotation. Select a segment to browse its posts.", wide=True),
                 historical_theme_panel() if native else None,
-            ], className="exploration-split historical-theme-split chart-wide" if native else "chart-wide"),
+                html.P(id="social-label-click-status", role="status", className="scope-note") if not native else None,
+            ], className="exploration-split historical-theme-split chart-wide" if native else "chart-wide",
+                style={}),
+            html.P("Historical source states are unreviewed automated outputs from the social export. They are not CLAIMS2 themes, greenwashing judgments or fact checks. Codes can overlap; each uses the selected-post denominator. Multiple dropdown states use OR. With an existing selection, click only an already selected state to narrow it; change or clear the dropdown to explore another state.",
+                   className="scope-note") if not native else None,
         ], className="charts-grid"),
         claims_panel() if native else None,
+        content_panel() if native else None,
     ], id=f"{dataset}-overview", className="data-view")
 
     records = html.Section([
@@ -132,10 +146,12 @@ def data_panel(dataset, links_enabled, empty_figure):
             html.Div([html.Label("Sort records", htmlFor=f"{dataset}-sort"),
                       dcc.Dropdown(id=f"{dataset}-sort", options=[
                           {"label": "Newest first", "value": "date:desc"}, {"label": "Oldest first", "value": "date:asc"},
-                          {"label": "Title A–Z", "value": "title:asc"}, {"label": "Sponsor A–Z", "value": "sponsor:asc"},
+                          {"label": "Title A–Z", "value": "title:asc"},
+                          {"label": "Sponsor A–Z" if native else "Company affiliation A–Z", "value": "sponsor:asc"},
                       ], value="date:desc", clearable=False, searchable=False)]),
         ], className="record-page-controls"),
-        html.P("Open an article title for the stored text, collection search term and available original materials.", className="scope-note"),
+        html.P("Open an article title for the stored text, collection search term and available original materials."
+               if native else "Open a post title for text, source variants and original materials. Counts use unique platform and post URLs, not source rows. Account and company affiliation are source metadata; conflicting values stay unknown and paid advertising is not verified.", className="scope-note"),
         dag.AgGrid(id=f"{dataset}-grid", columnDefs=columns, rowData=[],
                    defaultColDef={"sortable": False, "resizable": True, "filter": False},
                    dashGridOptions={"rowHeight": 68, "animateRows": False, "suppressCellFocus": False},

@@ -124,7 +124,9 @@ def test_query_and_single_channel_rrf_match_current_database_search(question):
     if not query:
         assert existing == [] and captured == []
     else:
-        assert captured[0][0] == query == captured[0][-1]
+        # First parameter is the plain term list used for lexical coverage ranking.
+        assert captured[0][1] == query == captured[0][-1]
+        assert captured[0][0] == query.replace("\"", "").replace(" OR ", " ")
         derived = comparison.select_records([{**row, "chunk_id": row["evidence_id"]} for row in rows], chunks_per_record=3)
         assert [(row.evidence_id, row.score) for row in existing] == [(row["chunk_id"], row["score"]) for row in derived]
         assert len({row["record_id"] for row in derived}) == 5

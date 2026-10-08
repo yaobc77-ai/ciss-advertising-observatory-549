@@ -42,6 +42,10 @@ def main():
     social.add_argument("--mapping", type=Path, required=True)
     social.add_argument("--out", default="outputs/social_import.json")
     social.add_argument("--mode", choices=["upsert", "snapshot"], default="upsert")
+    prepare_social = sub.add_parser("prepare-social", help="Prepare supplied nested social JSON or ZIP offline; no database or model calls")
+    prepare_social.add_argument("path", type=Path)
+    prepare_social.add_argument("--out", type=Path, required=True, help="New private canonical JSONL output")
+    prepare_social.add_argument("--report", type=Path, required=True, help="New private audit JSON output")
     records = sub.add_parser("import-records", help="Import validated canonical RecordInput JSONL")
     records.add_argument("path", type=Path)
     records.add_argument("--dataset", choices=["native", "social"],
@@ -104,6 +108,11 @@ def main():
         )
         p.add_argument("--out")
     args = parser.parse_args()
+    if args.command == "prepare-social":
+        from .social_archive import prepare_social_archive
+
+        emit(prepare_social_archive(args.path, out=args.out, report=args.report))
+        return
     if args.command == "claims-source-review-packet":
         from .claims_source_review import write_source_review_packet
 

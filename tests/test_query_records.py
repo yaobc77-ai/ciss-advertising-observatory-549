@@ -9,7 +9,7 @@ from test_app import SECRET, FakeService, callback, component_tree, research_val
 
 from observatory.app import create_app
 from observatory.models import Answer, Filters
-from observatory.query_records import PAGE_SIZE
+from observatory.query_records import PAGE_SIZE, statistics_records_panel
 
 
 def row(index, *, dataset="native", publisher="The New York Times", sponsor="exxonmobil"):
@@ -253,7 +253,7 @@ def test_collection_switch_keeps_units_separate_and_resets_offset(query_ui):
     values.update({"query-records-collection.value": "social", "query-records-offset.data": 20})
     response = page(query_ui, values, "query-records-collection.value")
     assert service.page_calls[-1][0] == Filters(dataset="social") and response["query-records-offset"]["data"] == 0
-    assert "12 matching social ad records" in json.dumps(response) and len(record_ids(response)) == 10
+    assert "12 matching company social posts" in json.dumps(response) and len(record_ids(response)) == 10
     assert all(identifier.startswith("social-") for identifier in record_ids(response))
     values.update({"query-records-next.n_clicks": 1, "query-records-offset.data": 0})
     final = page(query_ui, values, "query-records-next.n_clicks")
@@ -293,6 +293,50 @@ def test_matching_total_change_even_with_same_version_requires_resubmit(query_ui
     service.rows.pop(0)
     response = page(query_ui, values)
     assert "collection changed" in json.dumps(response) and not record_ids(response)
+
+
+@pytest.mark.parametrize("dataset", ["native", "social"])
+def test_active_but_unadmitted_collection_cannot_create_zero_record_browser(query_ui, monkeypatch, dataset):
+    app, _, service = query_ui
+    if dataset == "social":
+        service.rows.append(row(0, dataset="social"))
+    answer = statistics_result(service, Filters(dataset=dataset))
+    answer.structured_result.update(records=[])
+    answer.structured_result["collections"][0]["total"] = 0
+    health = service.health() | {"countable_record_counts": {"native": 0, "social": 0}}
+    assert health["record_counts"][dataset] > 0
+    monkeypatch.setattr(service, "health", lambda: copy.deepcopy(health))
+    with app.server.test_request_context("/query"):
+        panel = statistics_records_panel(answer.structured_result, service, True)
+    rendered = json.loads(json.dumps(panel, default=lambda node: node.to_plotly_json()))
+    assert "No admitted collection" in json.dumps(rendered)
+    assert not any(node["props"].get("id") == "query-records-scope" for node in component_tree(rendered))
+    assert not record_ids(rendered) and service.page_calls == []
+
+
+@pytest.mark.parametrize("dataset", ["native", "social"])
+@pytest.mark.parametrize("after_read", [False, True])
+def test_saved_browser_rechecks_admission_before_and_after_page_read(query_ui, monkeypatch, dataset, after_read):
+    service = query_ui[2]
+    if dataset == "social":
+        service.rows.extend(row(i, dataset="social") for i in range(12))
+    _, values = submit(query_ui, statistics_result(service, Filters(dataset=dataset)))
+    health = service.health()
+    health["countable_record_counts"] = dict(health["record_counts"])
+    monkeypatch.setattr(service, "health", lambda: copy.deepcopy(health))
+
+    def revoke_admission():
+        health["countable_record_counts"][dataset] = 0
+
+    if after_read:
+        service.page_after_hook = revoke_admission
+    else:
+        revoke_admission()
+    response = page(query_ui, values)
+    assert "no admitted records" in json.dumps(response) and not record_ids(response)
+    assert len(service.page_calls) == int(after_read)
+    assert service.version == "source-v1"  # The availability check is independent of the version check.
+    assert len(service.answer_calls) == 1 and service.search_calls == []
 
 
 def test_trusted_answer_source_version_prevents_rendering_a_newer_collection(query_ui):

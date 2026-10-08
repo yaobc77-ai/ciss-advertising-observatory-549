@@ -23,17 +23,33 @@ jobs:
           node-version: "22"
       - name: Install locked dependencies
         run: uv sync --frozen --extra test --extra mcp
-      - name: Lint Python and check browser JavaScript
-        run: |
-          uv run --no-sync ruff check src tests
-          for file in src/observatory/assets/*.js; do
-            node --check "$file"
-          done
+      - name: Run complete development-collectable offline gate
+        run: uv run --no-sync python scripts/run_project_checks.py --report-dir .runtime/project_checks_ci
+      - name: Preserve offline gate scope, logs and JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-development-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/project_checks_ci/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
       - name: Build and install the release wheel
         run: |
           uv build --wheel --out-dir dist
           uv pip install --no-deps --force-reinstall dist/*.whl
-      - name: Test the installed artifact without databases or paid models
+      - name: Verify installed wheel resources and CLI separately
         env:
           OBS_RELEASE_WHEEL: "dist/*.whl"
-        run: uv run --no-sync pytest -q -m "not integration and not live"
+          PYTHON_DOTENV_DISABLED: "1"
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: uv run --no-sync python -m pytest tests/test_release_configuration.py -q --junitxml=.runtime/release-wheel-ci/junit.xml
+      - name: Preserve release wheel check JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-wheel-check-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/release-wheel-ci/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
